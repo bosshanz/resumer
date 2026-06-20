@@ -24,16 +24,6 @@
     margin: 0;
     box-shadow: none;
   }
-  .resume-page a[href]::after {
-    content: " (" attr(href) ")";
-    font-size: 0.85em;
-    opacity: 0.6;
-  }
-  .resume-page a[href^="mailto:"]::after,
-  .resume-page a[href^="tel:"]::after,
-  .resume-page a[href^="#"]::after {
-    content: "";
-  }
 }
 
 /* Shared photo baseline: portrait crop, anchored on the face.
