@@ -1,6 +1,8 @@
 import { MinimalTemplate, minimalDefaultTheme } from "./minimal";
 import { TechTemplate, techDefaultTheme } from "./tech";
 import { DeveloperTemplate, developerDefaultTheme } from "./developer";
+import { GridTemplate, gridDefaultTheme } from "./grid";
+import { EditorialTemplate, editorialDefaultTheme } from "./editorial";
 import { TemplateProps } from "./base";
 import { ThemeVariables } from "../types";
 
@@ -15,7 +17,7 @@ export interface TemplateDefinition {
     accent: string;
     bg: string;
     fg: string;
-    flavor: "serif" | "sans" | "mono-accent";
+    flavor: "serif" | "sans" | "mono-accent" | "grid" | "italic";
   };
 }
 
@@ -60,6 +62,34 @@ export const templates: TemplateDefinition[] = [
       bg: "#fbfaf7",
       fg: "#0d2818",
       flavor: "sans",
+    },
+  },
+  {
+    id: "grid",
+    name: "网格",
+    description: "瑞士排版，左侧时间轴 + 朱砂红，强结构，设计师/产品取向",
+    component: GridTemplate,
+    defaultTheme: gridDefaultTheme,
+    preview: {
+      fontFamily: "var(--font-geist-sans), sans-serif",
+      accent: "#dc2626",
+      bg: "#ffffff",
+      fg: "#000000",
+      flavor: "grid",
+    },
+  },
+  {
+    id: "editorial",
+    name: "编辑",
+    description: "杂志风，巨幅斜体衬线 + drop cap + 装饰花饰，文字/创意取向",
+    component: EditorialTemplate,
+    defaultTheme: editorialDefaultTheme,
+    preview: {
+      fontFamily: "var(--font-fraunces), serif",
+      accent: "#a87b3f",
+      bg: "#faf6ed",
+      fg: "#3a2415",
+      flavor: "italic",
     },
   },
 ];

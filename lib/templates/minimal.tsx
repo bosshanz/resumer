@@ -1,6 +1,7 @@
 import React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { ModernHeader } from "@/components/modern-header";
 import { TemplateProps, TemplateBase, mergeThemeVariables } from "./base";
 import { themedMarkdownComponents } from "./markdown";
 import { ThemeVariables } from "../types";
@@ -35,31 +36,39 @@ function joinContact(c?: TemplateProps["frontmatter"]["contact"]): string[] {
 export function MinimalTemplate({ frontmatter, body, themeVariables, photo }: TemplateProps) {
   const vars = mergeThemeVariables(minimalDefaultTheme, themeVariables);
   const contactParts = joinContact(frontmatter.contact);
+  const useModernHeader = vars.photoLayout === "floating-monolith";
 
   return (
     <TemplateBase themeId="minimal" vars={vars}>
-      <header style={{ marginBottom: "2.2em" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1em" }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
+      {useModernHeader && photo ? (
+        <ModernHeader frontmatter={frontmatter} photo={photo} />
+      ) : (
+        <header className="resume-minimal-header">
+          {photo && (
+            <figure className="resume-photo-figure resume-photo-figure--minimal">
+              <div className="resume-photo-mat">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={photo} alt="" className="resume-photo" />
+              </div>
+              <figcaption className="resume-photo-caption">portrait</figcaption>
+            </figure>
+          )}
+          <div className="resume-minimal-titling">
             {frontmatter.title && <div className="resume-eyebrow">{frontmatter.title}</div>}
             {frontmatter.name && (
-              <h1 className="resume-h1" style={{ marginTop: "0.45em", marginBottom: "0.7em" }}>
+              <h1 className="resume-h1" style={{ marginTop: "0.35em", marginBottom: "0.6em" }}>
                 {frontmatter.name}
               </h1>
             )}
+            <hr className="resume-divider" />
+            {contactParts.length > 0 && (
+              <p className="resume-meta" style={{ marginTop: "0.7em" }}>
+                {contactParts.join(" · ")}
+              </p>
+            )}
           </div>
-          {photo && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={photo} alt="" className="resume-photo" />
-          )}
-        </div>
-        <hr className="resume-divider" />
-        {contactParts.length > 0 && (
-          <p className="resume-meta" style={{ marginTop: "0.7em" }}>
-            {contactParts.join(" · ")}
-          </p>
-        )}
-      </header>
+        </header>
+      )}
 
       {frontmatter.summary && (
         <section

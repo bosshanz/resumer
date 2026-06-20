@@ -154,6 +154,17 @@ export function ThemePanel({ value, onChange, onReset }: ThemePanelProps) {
           />
         </Section>
 
+        <Section label="照片排版">
+          <Segmented
+            options={[
+              { id: "default", label: "模板默认" },
+              { id: "floating-monolith", label: "浮岛肖像" },
+            ]}
+            value={value.photoLayout || "default"}
+            onChange={(id) => onChange({ ...value, photoLayout: id as "default" | "floating-monolith" })}
+          />
+        </Section>
+
         <div className="mt-4 border-t border-zinc-200 pt-3 dark:border-zinc-800">
           <button
             type="button"

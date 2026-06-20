@@ -32,6 +32,7 @@ export const themeVariablesSchema = z.object({
   marginBottom: z.string().optional(),
   marginLeft: z.string().optional(),
   marginRight: z.string().optional(),
+  photoLayout: z.enum(["default", "floating-monolith"]).optional(),
 }).catchall(z.union([z.string(), z.number(), z.boolean()]));
 
 export type ThemeVariables = z.infer<typeof themeVariablesSchema>;
