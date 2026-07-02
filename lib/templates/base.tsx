@@ -40,7 +40,7 @@ export function TemplateBase({
   vars,
   children,
 }: {
-  themeId: "minimal" | "tech" | "developer" | "grid" | "editorial";
+  themeId: "minimal" | "tech" | "developer" | "grid" | "editorial" | "executive" | "compact";
   vars: ThemeVariables;
   children: React.ReactNode;
 }) {

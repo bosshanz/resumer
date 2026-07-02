@@ -1,0 +1,181 @@
+/* ============================================================
+   Resume page foundation
+   ============================================================ */
+
+@page {
+  size: A4;
+}
+
+.resume-page {
+  width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto;
+  background: white;
+  box-sizing: border-box;
+  position: relative;
+  /* Bleed-safe rendering for Puppeteer */
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+@media print {
+  .resume-page {
+    margin: 0;
+    box-shadow: none;
+  }
+}
+
+/* Shared photo baseline: portrait crop, anchored on the face.
+   Each theme owns its own aspect ratio, frame, filter, and caption —
+   the photo is part of the header composition, not a stamp pasted in.
+   Sizes are in mm so PDF (print) and screen render identically. */
+.resume-photo {
+  display: block;
+  flex-shrink: 0;
+  object-fit: cover;
+  object-position: center 20%;
+}
+
+/* Shared photo caption — a small line under the photo that ties it to
+   the header. Themes pick mono or italic serif via their own rules. */
+.resume-photo-caption {
+  margin: 0;
+  text-align: inherit;
+  line-height: 1.2;
+}
+
+/* ============================================================
+   Markdown body — shared baseline (templates override)
+   ============================================================ */
+
+.resume-body > * + * {
+  margin-top: 0.7em;
+}
+
+.resume-body h1,
+.resume-body h2,
+.resume-body h3,
+.resume-body h4 {
+  margin: 0;
+  page-break-after: avoid;
+  break-after: avoid;
+}
+
+.resume-body h2 {
+  margin-top: 1.4em;
+}
+.resume-body h3 {
+  margin-top: 1em;
+}
+.resume-body h4 {
+  margin-top: 0.7em;
+}
+.resume-body h2:first-child,
+.resume-body h3:first-child,
+.resume-body h4:first-child {
+  margin-top: 0;
+}
+
+.resume-body p {
+  margin: 0;
+}
+.resume-body p + p {
+  margin-top: 0.5em;
+}
+
+.resume-body ul,
+.resume-body ol {
+  margin: 0.4em 0 0 0;
+  padding-left: 1.2em;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.resume-body ul {
+  list-style: disc;
+}
+.resume-body ol {
+  list-style: decimal;
+}
+
+.resume-body li {
+  margin: 0.15em 0;
+}
+
+.resume-body a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+.resume-body strong {
+  font-weight: 600;
+}
+
+.resume-body code {
+  font-family: var(--font-geist-mono), "JetBrains Mono", monospace;
+  font-size: 0.92em;
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.resume-body hr {
+  border: 0;
+  border-top: 1px solid currentColor;
+  opacity: 0.18;
+  margin: 1.2em 0;
+}
+
+.resume-body blockquote {
+  margin: 0;
+  padding-left: 1em;
+  border-left: 2px solid currentColor;
+  opacity: 0.85;
+}
+
+/* Avoid orphaned headings + first list item splits */
+.resume-section {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+/* ============================================================
+   Shared body extensions: subhead, meta line, dividers
+   Defined per theme so styling matches each aesthetic.
+   ============================================================ */
+
+/* Sub-heading rendered from `**Project Name**` paragraphs */
+.resume-body .resume-subhead {
+  margin: 1em 0 0.25em;
+  font-size: 0.98em;
+  font-weight: 600;
+  page-break-after: avoid;
+  break-after: avoid;
+}
+.resume-body .resume-subhead strong {
+  font-weight: inherit;
+}
+
+/* Meta line: a `<p>` immediately after `<h3>` (date / location / link).
+   We can't restyle generic `p` (would catch real prose), but the convention
+   `### Heading` → next paragraph = meta works for most resumes. */
+.resume-body h3 + p {
+  font-size: 0.82em;
+  margin-top: 0.15em;
+  opacity: 0.72;
+}
+.resume-body h3 + p a {
+  text-decoration: none;
+  border-bottom: 0.5px solid currentColor;
+  opacity: 0.85;
+}
+
+/* Horizontal rule (`---`) — section divider */
+.resume-body hr {
+  border: 0;
+  border-top: 1px solid currentColor;
+  opacity: 0.14;
+  margin: 1.6em 0 0.6em;
+}

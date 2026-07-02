@@ -10,8 +10,8 @@ const { generateResumePdf } = require("../lib/pdf.ts");
 const { defaultResumeContent } = require("../lib/types.ts");
 
 async function main() {
-  const pdf = await generateResumePdf(defaultResumeContent, "minimal", {});
-  const outputPath = path.join(os.tmpdir(), "test-resume.pdf");
+  const pdf = await generateResumePdf(defaultResumeContent, "tech", {});
+  const outputPath = path.join(os.tmpdir(), "tech-resume.pdf");
   fs.writeFileSync(outputPath, pdf);
   console.log("PDF generated:", pdf.length, "bytes", outputPath);
 }

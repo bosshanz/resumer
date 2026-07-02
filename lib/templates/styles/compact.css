@@ -1,0 +1,173 @@
+/* ============================================================
+   THEME: compact — dense one-page scan, strict rhythm
+   ============================================================ */
+
+.theme-compact {
+  font-family: var(--font-geist-sans), -apple-system, sans-serif;
+  color: var(--resume-fg, #111827);
+  background: var(--resume-bg, #fff);
+  font-feature-settings: "cv11", "ss01";
+}
+
+.theme-compact .resume-compact-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.2em;
+  padding-bottom: 0.85em;
+  border-bottom: 3px solid var(--resume-accent, #111827);
+  margin-bottom: 0.85em;
+}
+
+.theme-compact .resume-compact-identity {
+  min-width: 0;
+}
+
+.theme-compact .resume-h1 {
+  font-family: var(--font-geist-sans), sans-serif;
+  font-size: 2.15em;
+  font-weight: 750;
+  line-height: 0.98;
+  margin: 0;
+  color: var(--resume-accent, #111827);
+}
+
+.theme-compact .resume-compact-title {
+  margin-top: 0.2em;
+  font-size: 0.92em;
+  font-weight: 700;
+  color: var(--resume-muted, #2563eb);
+}
+
+.theme-compact .resume-compact-contact {
+  margin: 0.45em 0 0;
+  font-size: 0.75em;
+  line-height: 1.35;
+  color: color-mix(in srgb, var(--resume-fg, #111827) 72%, transparent);
+  overflow-wrap: anywhere;
+}
+
+.theme-compact .resume-photo-figure--compact {
+  margin: 0;
+  padding: 0.7mm;
+  border: 1px solid var(--resume-accent, #111827);
+  flex-shrink: 0;
+}
+
+.theme-compact .resume-photo-figure--compact .resume-photo {
+  width: 22mm;
+  height: 22mm;
+  filter: contrast(1.04);
+}
+
+.theme-compact .resume-compact-overview {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 1em;
+  padding: 0.72em 0;
+  margin-bottom: 0.75em;
+  border-bottom: 1px solid color-mix(in srgb, var(--resume-accent, #111827) 16%, transparent);
+}
+
+.theme-compact .resume-compact-overview h2 {
+  margin: 0 0 0.25em;
+  font-size: 0.7em;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  color: var(--resume-muted, #2563eb);
+}
+
+.theme-compact .resume-compact-overview p {
+  margin: 0;
+  font-size: 0.86em;
+  line-height: 1.38;
+}
+
+.theme-compact .resume-body {
+  line-height: 1.38;
+}
+
+.theme-compact .resume-body > * + * {
+  margin-top: 0.48em;
+}
+
+.theme-compact .resume-body h2 {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.65em;
+  align-items: center;
+  font-family: var(--font-geist-sans), sans-serif;
+  font-size: 0.78em;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  color: var(--resume-muted, #2563eb);
+  margin-top: 1.05em;
+  margin-bottom: 0.35em;
+}
+
+.theme-compact .resume-body h2::after {
+  content: "";
+  height: 1px;
+  background: color-mix(in srgb, var(--resume-accent, #111827) 34%, transparent);
+}
+
+.theme-compact .resume-body h3 {
+  font-family: var(--font-geist-sans), sans-serif;
+  font-size: 0.98em;
+  font-weight: 780;
+  line-height: 1.25;
+  margin-top: 0.7em;
+  color: var(--resume-accent, #111827);
+}
+
+.theme-compact .resume-body h3 + p {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.72em;
+  margin-top: 0.1em;
+  color: color-mix(in srgb, var(--resume-fg, #111827) 64%, transparent);
+  opacity: 1;
+}
+
+.theme-compact .resume-body ul,
+.theme-compact .resume-body ol {
+  margin-top: 0.22em;
+  padding-left: 1.05em;
+}
+
+.theme-compact .resume-body li {
+  margin: 0.08em 0;
+}
+
+.theme-compact .resume-body ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.theme-compact .resume-body ul > li {
+  position: relative;
+  padding-left: 0.9em;
+}
+
+.theme-compact .resume-body ul > li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.58em;
+  width: 0.42em;
+  height: 1px;
+  background: var(--resume-muted, #2563eb);
+}
+
+.theme-compact .resume-body .resume-subhead {
+  font-size: 0.88em;
+  color: var(--resume-muted, #2563eb);
+  margin-top: 0.72em;
+}
+
+.theme-compact .resume-body hr {
+  margin: 0.9em 0 0.35em;
+  border-top: 1px solid color-mix(in srgb, var(--resume-accent, #111827) 28%, transparent);
+  opacity: 1;
+}

@@ -3,6 +3,8 @@ import { TechTemplate, techDefaultTheme } from "./tech";
 import { DeveloperTemplate, developerDefaultTheme } from "./developer";
 import { GridTemplate, gridDefaultTheme } from "./grid";
 import { EditorialTemplate, editorialDefaultTheme } from "./editorial";
+import { ExecutiveTemplate, executiveDefaultTheme } from "./executive";
+import { CompactTemplate, compactDefaultTheme } from "./compact";
 import { TemplateProps } from "./base";
 import { ThemeVariables } from "../types";
 
@@ -17,7 +19,7 @@ export interface TemplateDefinition {
     accent: string;
     bg: string;
     fg: string;
-    flavor: "serif" | "sans" | "mono-accent" | "grid" | "italic";
+    flavor: "serif" | "sans" | "mono-accent" | "grid" | "italic" | "executive" | "compact";
   };
 }
 
@@ -90,6 +92,34 @@ export const templates: TemplateDefinition[] = [
       bg: "#faf6ed",
       fg: "#3a2415",
       flavor: "italic",
+    },
+  },
+  {
+    id: "executive",
+    name: "商务",
+    description: "董事会式留白、联系人条和金色细节，适合管理/咨询/高级岗位",
+    component: ExecutiveTemplate,
+    defaultTheme: executiveDefaultTheme,
+    preview: {
+      fontFamily: "var(--font-inter-tight), sans-serif",
+      accent: "#b68b2d",
+      bg: "#fcfcfa",
+      fg: "#173b35",
+      flavor: "executive",
+    },
+  },
+  {
+    id: "compact",
+    name: "紧凑",
+    description: "低页边距、高密度信息结构，适合内容较多的一页技术简历",
+    component: CompactTemplate,
+    defaultTheme: compactDefaultTheme,
+    preview: {
+      fontFamily: "var(--font-geist-sans), sans-serif",
+      accent: "#2563eb",
+      bg: "#ffffff",
+      fg: "#111827",
+      flavor: "compact",
     },
   },
 ];

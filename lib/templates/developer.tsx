@@ -91,7 +91,7 @@ export function DeveloperTemplate({ frontmatter, body, themeVariables, photo }: 
       {frontmatter.skills && frontmatter.skills.length > 0 && (
         <section className="resume-skills resume-section" aria-label="skills">
           {frontmatter.skills.map((s, i) => (
-            <span key={i} className={`resume-skill${i < 3 ? " resume-skill-primary" : ""}`}>
+            <span key={i} className="resume-skill resume-skill-primary">
               {s}
             </span>
           ))}

@@ -1,11 +1,9 @@
+import React from "react";
 import { renderToString } from "react-dom/server";
 import { defaultResumeContent } from "../lib/types.ts";
 import { parseResumeContent } from "../lib/parser.ts";
-import { MinimalTemplate } from "../lib/templates/minimal.tsx";
-import { TechTemplate } from "../lib/templates/tech.tsx";
-import { DeveloperTemplate } from "../lib/templates/developer.tsx";
-import { GridTemplate } from "../lib/templates/grid.tsx";
-import { EditorialTemplate } from "../lib/templates/editorial.tsx";
+import { templates } from "../lib/templates/index.ts";
+import type { TemplateProps } from "../lib/templates/base.tsx";
 
 const PHOTO =
   "data:image/svg+xml;utf8," +
@@ -14,26 +12,19 @@ const PHOTO =
   );
 
 const { frontmatter, body } = parseResumeContent(defaultResumeContent);
-const templates = [
-  ["minimal", MinimalTemplate],
-  ["tech", TechTemplate],
-  ["developer", DeveloperTemplate],
-  ["grid", GridTemplate],
-  ["editorial", EditorialTemplate],
-] as const;
 
 let fail = 0;
-for (const [id, Cmp] of templates) {
+for (const template of templates) {
   try {
+    const Component = template.component as React.FC<TemplateProps>;
     const html = renderToString(
-      // @ts-expect-error union of component types is fine for a render probe
-      <Cmp frontmatter={frontmatter} body={body} themeVariables={{}} photo={PHOTO} />
+      React.createElement(Component, { frontmatter, body, themeVariables: {}, photo: PHOTO })
     );
     const hasPhoto = html.includes("resume-photo");
-    console.log(`✓ ${id.padEnd(10)} render=${html.length}b  photo=${hasPhoto}`);
+    console.log(`✓ ${template.id.padEnd(10)} render=${html.length}b  photo=${hasPhoto}`);
   } catch (e) {
     fail++;
-    console.error(`✗ ${id} threw:`, e);
+    console.error(`✗ ${template.id} threw:`, e);
   }
 }
 console.log(fail === 0 ? "\nALL OK" : `\n${fail} FAILED`);

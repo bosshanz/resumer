@@ -10,7 +10,7 @@ interface TemplateSelectorProps {
 
 export function TemplateSelector({ value, onChange }: TemplateSelectorProps) {
   return (
-    <div className="flex items-center gap-1.5" role="radiogroup" aria-label="模板">
+    <div className="flex max-w-[46vw] items-center gap-1.5 overflow-x-auto py-0.5" role="radiogroup" aria-label="模板">
       {templates.map((t) => {
         const active = t.id === value;
         const p = t.preview;
@@ -23,7 +23,7 @@ export function TemplateSelector({ value, onChange }: TemplateSelectorProps) {
             onClick={() => onChange(t.id)}
             title={`${t.name} — ${t.description}`}
             className={[
-              "group relative flex h-10 items-center gap-2 overflow-hidden rounded-md border px-2 transition-all",
+              "group relative flex h-10 flex-shrink-0 items-center gap-2 overflow-hidden rounded-md border px-2 transition-all",
               active
                 ? "border-zinc-900 shadow-sm dark:border-zinc-100"
                 : "border-zinc-200 hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-600",

@@ -44,7 +44,25 @@ async function getOrCreateResume(userId: string): Promise<Resume> {
   return normalizeResume(created);
 }
 
-export default async function Home() {
+async function getResume(userId: string, resumeId?: string): Promise<Resume> {
+  if (resumeId) {
+    const existing = db
+      .prepare(`SELECT * FROM resumes WHERE id = ? AND user_id = ?`)
+      .get(resumeId, userId) as Record<string, unknown> | undefined;
+
+    if (existing) {
+      return normalizeResume(existing);
+    }
+  }
+
+  return getOrCreateResume(userId);
+}
+
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ resumeId?: string }>;
+}) {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
@@ -63,7 +81,8 @@ export default async function Home() {
     );
   }
 
-  const resume = await getOrCreateResume(session.user.id);
+  const { resumeId } = await searchParams;
+  const resume = await getResume(session.user.id, resumeId);
 
   return (
     <Providers>

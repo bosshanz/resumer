@@ -1,0 +1,203 @@
+/* ============================================================
+   THEME: grid — Swiss / Müller-Brockmann
+   Pure black + vermillion accent, strict left time-gutter
+   ============================================================ */
+
+.theme-grid {
+  font-family: var(--font-geist-sans), -apple-system, sans-serif;
+  color: #0a0a0a;
+  background: #ffffff;
+  font-feature-settings: "ss01", "cv11";
+}
+
+.theme-grid .resume-photo {
+  border-radius: 0;
+}
+.theme-grid .resume-grid-header {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1.8em;
+  align-items: start;
+  border-bottom: 2px solid #000;
+  padding-bottom: 1.1em;
+  margin-bottom: 1.5em;
+}
+.theme-grid .resume-grid-header .resume-photo {
+  width: 30mm;
+  height: 30mm;
+  border: 1px solid #000;
+  filter: contrast(1.04);
+}
+.theme-grid .resume-grid-header-text {
+  min-width: 0;
+}
+
+.theme-grid .resume-eyebrow {
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 0.7em;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: var(--resume-muted, #dc2626);
+  margin-bottom: 0.6em;
+}
+
+.theme-grid .resume-h1 {
+  font-family: var(--font-geist-sans), sans-serif;
+  font-size: 3em;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  margin: 0 0 0.5em 0;
+  color: #000;
+}
+
+.theme-grid .resume-contact-grid {
+  display: grid;
+  grid-template-columns: max-content 1fr max-content 1fr;
+  gap: 0.25em 1em;
+  margin: 0;
+  font-size: 0.8em;
+  font-family: var(--font-plex-mono), monospace;
+}
+.theme-grid .resume-contact-grid dt {
+  color: var(--resume-muted, #dc2626);
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+.theme-grid .resume-contact-grid dd {
+  margin: 0;
+  color: #0a0a0a;
+}
+
+.theme-grid .resume-summary {
+  font-size: 1.1em;
+  line-height: 1.45;
+  font-weight: 500;
+  max-width: 56ch;
+  margin: 0 0 1.6em 0;
+  color: #000;
+}
+
+.theme-grid .resume-skills {
+  margin-bottom: 1.8em;
+}
+.theme-grid .resume-skills h2 {
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 0.7em;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--resume-muted, #dc2626);
+  margin: 0 0 0.4em 0;
+}
+.theme-grid .resume-skills p {
+  margin: 0;
+  font-size: 0.95em;
+  line-height: 1.45;
+}
+
+.theme-grid .resume-body h2 {
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 0.72em;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--resume-muted, #dc2626);
+  margin-top: 1.8em;
+  margin-bottom: 0.7em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid #000;
+  position: relative;
+}
+.theme-grid .resume-body h2::before {
+  content: counter(resume-section, decimal-leading-zero);
+  counter-increment: resume-section;
+  position: absolute;
+  right: 0;
+  bottom: 0.3em;
+  color: #0a0a0a;
+  font-size: 1em;
+}
+.theme-grid .resume-body {
+  counter-reset: resume-section;
+}
+
+.theme-grid .resume-body h3 {
+  font-family: var(--font-geist-sans), sans-serif;
+  font-weight: 600;
+  font-size: 1em;
+  margin-top: 1.2em;
+  margin-bottom: 0.25em;
+  padding-left: 0.6em;
+  letter-spacing: -0.005em;
+  line-height: 1.35;
+  color: #000;
+  position: relative;
+}
+.theme-grid .resume-body h3::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.48em;
+  width: 0.35em;
+  height: 1.5px;
+  background: var(--resume-muted, #dc2626);
+}
+.theme-grid .resume-body h3 + ul {
+  margin-top: 0.55em;
+}
+
+/* Meta line (date / location / link) sits inline under h3 in the right
+   column — no float, no negative margin. Keeps layout stable in PDF. */
+.theme-grid .resume-body h3 + p {
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 0.76em;
+  font-weight: 400;
+  margin-top: 0.15em;
+  margin-bottom: 0.6em;
+  color: #0a0a0a;
+  opacity: 0.7;
+  letter-spacing: 0.02em;
+}
+.theme-grid .resume-body h3 + p a {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 0.5px solid currentColor;
+  opacity: 0.7;
+}
+
+/* Body subhead — vermillion eyebrow */
+.theme-grid .resume-body .resume-subhead {
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 0.74em;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--resume-muted, #dc2626);
+  margin-top: 1em;
+}
+
+.theme-grid .resume-body ul {
+  list-style: none;
+  padding-left: 0;
+}
+.theme-grid .resume-body ul > li {
+  position: relative;
+  padding-left: 1.1em;
+}
+.theme-grid .resume-body ul > li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 0.6em;
+  height: 1.5px;
+  background: var(--resume-muted, #dc2626);
+}
+
+.theme-grid .resume-body hr {
+  border: 0;
+  border-top: 2px solid #000;
+  opacity: 1;
+  margin: 2em 0 1em;
+}

@@ -2,9 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { Preview } from "./preview";
 import { TemplateSelector } from "./template-selector";
 import { ThemePanel } from "./theme-panel";
+import { ResumeSelector, ResumeListItem } from "./resume-selector";
+import { ConfirmDialog } from "./confirm-dialog";
 import { Resume, ThemeVariables } from "@/lib/types";
 import { getDefaultTheme } from "@/lib/templates";
 import {
@@ -32,6 +35,8 @@ type FocusMode = "split" | "edit" | "preview";
 
 export function Editor({ initialResume }: EditorProps) {
   const { data: session } = useSession();
+  const router = useRouter();
+  const [currentResumeId, setCurrentResumeId] = useState(initialResume.id);
   const [title, setTitleState] = useState(initialResume.title);
   const [content, setContentState] = useState(initialResume.content);
   const [templateId, setTemplateIdState] = useState(initialResume.templateId);
@@ -46,6 +51,9 @@ export function Editor({ initialResume }: EditorProps) {
   const [focusMode, setFocusMode] = useState<FocusMode>("split");
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [photo, setPhotoState] = useState<string | undefined>(initialResume.photo);
+  const [resumes, setResumes] = useState<ResumeListItem[]>([]);
+  const [isSwitching, setIsSwitching] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<ResumeListItem | null>(null);
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -58,22 +66,31 @@ export function Editor({ initialResume }: EditorProps) {
   const setPhoto = useCallback((v: string | undefined) => { setPhotoState(v); markUnsaved(); }, [markUnsaved]);
 
   const saveResume = useCallback(
-    async (data: Partial<Pick<Resume, "title" | "content" | "templateId" | "themeVariables" | "photo">>) => {
+    async (
+      data: Partial<Pick<Resume, "title" | "content" | "templateId" | "themeVariables" | "photo">>
+    ): Promise<boolean> => {
       setSaveStatus("saving");
       try {
-        const res = await fetch(`/api/resumes/${initialResume.id}`, {
+        const res = await fetch(`/api/resumes/${currentResumeId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         });
         if (!res.ok) throw new Error("Save failed");
         setSaveStatus("saved");
+        if (data.title !== undefined) {
+          setResumes((prev) =>
+            prev.map((r) => (r.id === currentResumeId ? { ...r, title: data.title as string } : r))
+          );
+        }
+        return true;
       } catch (err) {
         console.error(err);
         setSaveStatus("error");
+        return false;
       }
     },
-    [initialResume.id]
+    [currentResumeId]
   );
 
   useEffect(() => {
@@ -154,6 +171,186 @@ export function Editor({ initialResume }: EditorProps) {
 
   const resetTheme = () => setThemeVariables(getDefaultTheme(templateId));
 
+  const applyResume = useCallback((resume: Resume) => {
+    setCurrentResumeId(resume.id);
+    setTitleState(resume.title);
+    setContentState(resume.content);
+    setTemplateIdState(resume.templateId);
+    setThemeVariablesState(
+      resume.themeVariables && Object.keys(resume.themeVariables).length > 0
+        ? resume.themeVariables
+        : getDefaultTheme(resume.templateId)
+    );
+    setPhotoState(resume.photo);
+    setSaveStatus("saved");
+  }, []);
+
+  const loadResumes = useCallback(async () => {
+    try {
+      const res = await fetch("/api/resumes");
+      if (!res.ok) throw new Error("Failed to load resumes");
+      const data = await res.json();
+      setResumes(data.resumes as ResumeListItem[]);
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/resumes")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load resumes");
+        return res.json();
+      })
+      .then((data) => {
+        if (!cancelled) {
+          setResumes(data.resumes as ResumeListItem[]);
+        }
+      })
+      .catch((err) => console.error(err));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const fetchAndApplyResume = useCallback(
+    async (resumeId: string) => {
+      const res = await fetch(`/api/resumes/${resumeId}`);
+      if (!res.ok) throw new Error("Failed to load resume");
+      const data = await res.json();
+      applyResume(data.resume as Resume);
+      router.replace(`/?resumeId=${resumeId}`);
+    },
+    [applyResume, router]
+  );
+
+  const flushCurrentResume = useCallback(async () => {
+    if (saveStatus === "saved") {
+      return true;
+    }
+
+    return saveResume({ title, content, templateId, themeVariables, photo });
+  }, [saveStatus, saveResume, title, content, templateId, themeVariables, photo]);
+
+  const handleSwitchResume = useCallback(
+    async (resumeId: string) => {
+      if (resumeId === currentResumeId) return;
+
+      setIsSwitching(true);
+      try {
+        if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+
+        const saved = await flushCurrentResume();
+        if (!saved) {
+          alert("保存当前简历失败，请检查网络后重试");
+          return;
+        }
+
+        await fetchAndApplyResume(resumeId);
+      } catch (err) {
+        console.error(err);
+        alert("切换简历失败，请重试");
+      } finally {
+        setIsSwitching(false);
+      }
+    },
+    [currentResumeId, flushCurrentResume, fetchAndApplyResume]
+  );
+
+  const handleCreateResume = useCallback(
+    async (skipFlush?: boolean) => {
+      setIsSwitching(true);
+      try {
+        if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+
+        if (!skipFlush) {
+          const saved = await flushCurrentResume();
+          if (!saved) {
+            alert("保存当前简历失败，请检查网络后重试");
+            return;
+          }
+        }
+
+        const res = await fetch("/api/resumes", { method: "POST" });
+        if (!res.ok) throw new Error("Create failed");
+        const data = await res.json();
+        const resume = data.resume as Resume;
+        await loadResumes();
+        applyResume(resume);
+        router.replace(`/?resumeId=${resume.id}`);
+      } catch (err) {
+        console.error(err);
+        alert("新建简历失败，请重试");
+      } finally {
+        setIsSwitching(false);
+      }
+    },
+    [flushCurrentResume, loadResumes, applyResume, router]
+  );
+
+  const handleDuplicateResume = useCallback(async () => {
+    setIsSwitching(true);
+    try {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+
+      const saved = await flushCurrentResume();
+      if (!saved) {
+        alert("保存当前简历失败，请检查网络后重试");
+        return;
+      }
+
+      const res = await fetch("/api/resumes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sourceResumeId: currentResumeId }),
+      });
+      if (!res.ok) throw new Error("Duplicate failed");
+      const data = await res.json();
+      const resume = data.resume as Resume;
+      await loadResumes();
+      applyResume(resume);
+      router.replace(`/?resumeId=${resume.id}`);
+    } catch (err) {
+      console.error(err);
+      alert("复制简历失败，请重试");
+    } finally {
+      setIsSwitching(false);
+    }
+  }, [currentResumeId, flushCurrentResume, loadResumes, applyResume, router]);
+
+  const handleDeleteResume = useCallback(
+    async (resumeId: string) => {
+      try {
+        const res = await fetch(`/api/resumes/${resumeId}`, { method: "DELETE" });
+        if (!res.ok) throw new Error("Delete failed");
+
+        const remaining = resumes.filter((r) => r.id !== resumeId);
+        setResumes(remaining);
+
+        if (resumeId === currentResumeId) {
+          setIsSwitching(true);
+          try {
+            if (remaining.length > 0) {
+              await fetchAndApplyResume(remaining[0].id);
+            } else {
+              await handleCreateResume(true);
+            }
+          } catch (err) {
+            console.error(err);
+            alert("切换简历失败，请重试");
+          } finally {
+            setIsSwitching(false);
+          }
+        }
+      } catch (err) {
+        console.error(err);
+        alert("删除简历失败，请重试");
+      }
+    },
+    [resumes, currentResumeId, fetchAndApplyResume, handleCreateResume]
+  );
+
   const showEditor = focusMode === "split" || focusMode === "edit";
   const showPreview = focusMode === "split" || focusMode === "preview";
 
@@ -184,7 +381,7 @@ export function Editor({ initialResume }: EditorProps) {
 
   return (
     <div className="flex h-screen flex-col bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
-      <header className="flex flex-shrink-0 items-center gap-3 border-b border-zinc-200 bg-white/80 px-4 py-2 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-900/80">
+      <header className="relative z-50 flex flex-shrink-0 items-center gap-3 border-b border-zinc-200 bg-white/80 px-4 py-2 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-900/80">
         <div className="flex min-w-0 items-center gap-2">
           <span className="select-none text-base font-semibold tracking-tight">Resumer</span>
           <span
@@ -197,7 +394,16 @@ export function Editor({ initialResume }: EditorProps) {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="未命名简历"
-            className="min-w-0 max-w-[18ch] truncate border-0 bg-transparent px-1 py-0.5 text-sm text-zinc-700 outline-none placeholder:text-zinc-400 hover:bg-zinc-100/70 focus:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800/60 dark:focus:bg-zinc-800"
+            className="min-w-0 max-w-[14ch] truncate border-0 bg-transparent px-1 py-0.5 text-sm text-zinc-700 outline-none placeholder:text-zinc-400 hover:bg-zinc-100/70 focus:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800/60 dark:focus:bg-zinc-800"
+          />
+          <ResumeSelector
+            resumes={resumes}
+            currentId={currentResumeId}
+            disabled={isSwitching}
+            onSelect={handleSwitchResume}
+            onCreate={handleCreateResume}
+            onDuplicate={handleDuplicateResume}
+            onDelete={(id) => setDeleteTarget(resumes.find((r) => r.id === id) || null)}
           />
         </div>
 
@@ -389,6 +595,22 @@ export function Editor({ initialResume }: EditorProps) {
           </button>
         </aside>
       </main>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="删除简历"
+        message={`确定要删除「${deleteTarget?.title?.trim() || "未命名简历"}」吗？此操作无法撤销。`}
+        confirmLabel="删除"
+        cancelLabel="取消"
+        confirmVariant="danger"
+        onConfirm={() => {
+          if (deleteTarget) {
+            handleDeleteResume(deleteTarget.id);
+          }
+          setDeleteTarget(null);
+        }}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

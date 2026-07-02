@@ -1,0 +1,179 @@
+/* ============================================================
+   THEME: executive — formal boardroom, high-trust, quiet details
+   ============================================================ */
+
+.theme-executive {
+  font-family: var(--font-inter-tight), -apple-system, sans-serif;
+  color: var(--resume-fg, #182421);
+  background: var(--resume-bg, #fcfcfa);
+  font-feature-settings: "cv11", "ss01";
+}
+
+.theme-executive .resume-executive-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1.4em 2em;
+  align-items: start;
+  padding-bottom: 1.15em;
+  border-bottom: 2px solid var(--resume-accent, #173b35);
+  margin-bottom: 1.4em;
+}
+
+.theme-executive .resume-executive-titling {
+  min-width: 0;
+}
+
+.theme-executive .resume-executive-kicker {
+  font-size: 0.78em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  color: var(--resume-muted, #b68b2d);
+  margin-bottom: 0.35em;
+}
+
+.theme-executive .resume-h1 {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: 2.65em;
+  font-weight: 500;
+  line-height: 1;
+  margin: 0;
+  color: var(--resume-accent, #173b35);
+  font-variation-settings: "opsz" 144, "SOFT" 35;
+}
+
+.theme-executive .resume-photo-figure--executive {
+  margin: 0;
+  padding: 1mm;
+  border: 1px solid color-mix(in srgb, var(--resume-accent, #173b35) 22%, transparent);
+  background: color-mix(in srgb, var(--resume-bg, #fcfcfa) 84%, white 16%);
+}
+
+.theme-executive .resume-photo-figure--executive .resume-photo {
+  width: 26mm;
+  height: 34mm;
+  filter: saturate(0.9) contrast(1.04);
+}
+
+.theme-executive .resume-executive-contact {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, max-content minmax(0, 1fr));
+  gap: 0.26em 0.7em;
+  margin: 0;
+  padding-top: 0.85em;
+  border-top: 1px solid color-mix(in srgb, var(--resume-accent, #173b35) 18%, transparent);
+  font-size: 0.78em;
+}
+
+.theme-executive .resume-executive-contact dt {
+  color: var(--resume-muted, #b68b2d);
+  font-weight: 700;
+}
+
+.theme-executive .resume-executive-contact dd {
+  margin: 0;
+  min-width: 0;
+  color: var(--resume-fg, #182421);
+  overflow-wrap: anywhere;
+}
+
+.theme-executive .resume-executive-summary {
+  display: grid;
+  grid-template-columns: 24mm 1fr;
+  gap: 1em;
+  align-items: start;
+  margin-bottom: 1.25em;
+  padding: 0.85em 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--resume-accent, #173b35) 16%, transparent);
+}
+
+.theme-executive .resume-executive-summary span,
+.theme-executive .resume-executive-skills h2 {
+  margin: 0;
+  font-size: 0.72em;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  color: var(--resume-muted, #b68b2d);
+}
+
+.theme-executive .resume-executive-summary p {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.theme-executive .resume-executive-skills {
+  display: grid;
+  grid-template-columns: 24mm 1fr;
+  gap: 1em;
+  align-items: start;
+  margin-bottom: 1.4em;
+}
+
+.theme-executive .resume-executive-skills p {
+  margin: 0;
+  font-size: 0.9em;
+  line-height: 1.45;
+}
+
+.theme-executive .resume-body h2 {
+  font-family: var(--font-inter-tight), sans-serif;
+  font-size: 0.82em;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  margin-top: 1.45em;
+  margin-bottom: 0.55em;
+  padding: 0.36em 0;
+  border-top: 1px solid var(--resume-accent, #173b35);
+  border-bottom: 1px solid color-mix(in srgb, var(--resume-accent, #173b35) 18%, transparent);
+  color: var(--resume-accent, #173b35);
+}
+
+.theme-executive .resume-body h3 {
+  font-family: var(--font-inter-tight), sans-serif;
+  font-size: 1em;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--resume-fg, #182421);
+  margin-top: 0.95em;
+}
+
+.theme-executive .resume-body h3 + p {
+  font-size: 0.78em;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--resume-fg, #182421) 68%, transparent);
+  opacity: 1;
+}
+
+.theme-executive .resume-body ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.theme-executive .resume-body ul > li {
+  position: relative;
+  padding-left: 1em;
+}
+
+.theme-executive .resume-body ul > li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 0.42em;
+  height: 1px;
+  background: var(--resume-muted, #b68b2d);
+}
+
+.theme-executive .resume-body .resume-subhead {
+  font-family: var(--font-inter-tight), sans-serif;
+  font-size: 0.92em;
+  color: var(--resume-accent, #173b35);
+}
+
+.theme-executive .resume-body hr {
+  border-top: 1px solid color-mix(in srgb, var(--resume-accent, #173b35) 24%, transparent);
+  opacity: 1;
+}
