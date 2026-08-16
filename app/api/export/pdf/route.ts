@@ -8,7 +8,7 @@ import { z } from "zod";
 export const runtime = "nodejs";
 
 const requestSchema = z.object({
-  content: z.string().min(1),
+  content: z.string(),
   templateId: z.string().min(1),
   themeVariables: themeVariablesSchema.default({}),
   photo: z.string().optional(),

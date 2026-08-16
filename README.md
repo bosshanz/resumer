@@ -151,6 +151,7 @@ scripts/                模板渲染、PDF 和多简历验收脚本
 ```bash
 npm run lint
 npm run build
+npm test
 npx tsx scripts/test-render.tsx
 node scripts/test-all-pdfs.mjs
 ```

@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { getDatabase, initDb } from "@/lib/db";
+import { normalizeResume } from "@/lib/resumes";
 import { defaultResumeContent } from "@/lib/types";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -81,19 +82,4 @@ export async function POST(request: Request) {
     .get(id) as Record<string, unknown> | undefined;
 
   return NextResponse.json({ resume: normalizeResume(resume) }, { status: 201 });
-}
-
-function normalizeResume(row: Record<string, unknown> | undefined) {
-  if (!row) return null;
-  return {
-    id: row.id,
-    userId: row.user_id,
-    title: row.title,
-    content: row.content,
-    templateId: row.template_id,
-    themeVariables: JSON.parse(String(row.theme_variables || "{}")),
-    photo: row.photo ? String(row.photo) : undefined,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  };
 }

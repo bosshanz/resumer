@@ -32,6 +32,13 @@ interface EditorProps {
 
 type SaveStatus = "saved" | "saving" | "unsaved" | "error";
 type FocusMode = "split" | "edit" | "preview";
+type SavePayload = Pick<Resume, "title" | "content" | "templateId" | "themeVariables" | "photo">;
+
+function resolveThemeVariables(resume: Resume): ThemeVariables {
+  return resume.themeVariables && Object.keys(resume.themeVariables).length > 0
+    ? resume.themeVariables
+    : getDefaultTheme(resume.templateId);
+}
 
 export function Editor({ initialResume }: EditorProps) {
   const { data: session } = useSession();
@@ -41,9 +48,7 @@ export function Editor({ initialResume }: EditorProps) {
   const [content, setContentState] = useState(initialResume.content);
   const [templateId, setTemplateIdState] = useState(initialResume.templateId);
   const [themeVariables, setThemeVariablesState] = useState<ThemeVariables>(
-    initialResume.themeVariables && Object.keys(initialResume.themeVariables).length > 0
-      ? initialResume.themeVariables
-      : getDefaultTheme(initialResume.templateId)
+    resolveThemeVariables(initialResume)
   );
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
   const [isExporting, setIsExporting] = useState(false);
@@ -57,6 +62,17 @@ export function Editor({ initialResume }: EditorProps) {
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  // 最近一次已持久化的快照，自动保存只提交与它的差异（避免每次全量重发照片等大字段）
+  const lastSavedRef = useRef<SavePayload>({
+    title: initialResume.title,
+    content: initialResume.content,
+    templateId: initialResume.templateId,
+    themeVariables: resolveThemeVariables(initialResume),
+    photo: initialResume.photo,
+  });
+  const currentResumeIdRef = useRef(initialResume.id);
+  // 串行化保存请求，避免快速连续保存时旧响应覆盖新数据
+  const saveChainRef = useRef<Promise<boolean>>(Promise.resolve(false));
 
   const markUnsaved = useCallback(() => setSaveStatus("unsaved"), []);
   const setContent = useCallback((v: string) => { setContentState(v); markUnsaved(); }, [markUnsaved]);
@@ -70,42 +86,79 @@ export function Editor({ initialResume }: EditorProps) {
   const setPhoto = useCallback((v: string | undefined) => { setPhotoState(v); markUnsaved(); }, [markUnsaved]);
 
   const saveResume = useCallback(
-    async (
-      data: Partial<Pick<Resume, "title" | "content" | "templateId" | "themeVariables" | "photo">>
-    ): Promise<boolean> => {
+    async (data: Partial<SavePayload>): Promise<boolean> => {
       setSaveStatus("saving");
-      try {
-        const res = await fetch(`/api/resumes/${currentResumeId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        });
-        if (!res.ok) throw new Error("Save failed");
-        setSaveStatus("saved");
-        if (data.title !== undefined) {
-          setResumes((prev) =>
-            prev.map((r) => (r.id === currentResumeId ? { ...r, title: data.title as string } : r))
-          );
+      const resumeId = currentResumeId;
+      const run = saveChainRef.current.then(async () => {
+        try {
+          const res = await fetch(`/api/resumes/${resumeId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          });
+          if (!res.ok) throw new Error("Save failed");
+          // 保存期间可能已切换简历，此时不要把旧简历的数据混入新快照
+          if (currentResumeIdRef.current === resumeId) {
+            lastSavedRef.current = { ...lastSavedRef.current, ...data };
+            setSaveStatus("saved");
+            if (data.title !== undefined) {
+              setResumes((prev) =>
+                prev.map((r) => (r.id === resumeId ? { ...r, title: data.title as string } : r))
+              );
+            }
+          }
+          return true;
+        } catch (err) {
+          console.error(err);
+          if (currentResumeIdRef.current === resumeId) {
+            setSaveStatus("error");
+          }
+          return false;
         }
-        return true;
-      } catch (err) {
-        console.error(err);
-        setSaveStatus("error");
-        return false;
-      }
+      });
+      saveChainRef.current = run;
+      return run;
     },
     [currentResumeId]
   );
 
+  const diffPayload = useCallback((): Partial<SavePayload> | null => {
+    const saved = lastSavedRef.current;
+    const diff: Partial<SavePayload> = {};
+    if (title !== saved.title) diff.title = title;
+    if (content !== saved.content) diff.content = content;
+    if (templateId !== saved.templateId) diff.templateId = templateId;
+    if (themeVariables !== saved.themeVariables) diff.themeVariables = themeVariables;
+    if ((photo ?? "") !== (saved.photo ?? "")) diff.photo = photo ?? "";
+    return Object.keys(diff).length > 0 ? diff : null;
+  }, [title, content, templateId, themeVariables, photo]);
+
   useEffect(() => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
-      saveResume({ title, content, templateId, themeVariables, photo });
+      const diff = diffPayload();
+      if (!diff) {
+        // 内容与已保存快照一致（如输入后又撤销），无需请求
+        setSaveStatus((s) => (s === "unsaved" ? "saved" : s));
+        return;
+      }
+      saveResume(diff);
     }, 1000);
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
-  }, [title, content, templateId, themeVariables, photo, saveResume]);
+  }, [title, content, templateId, themeVariables, photo, diffPayload, saveResume]);
+
+  // 未保存时提醒，避免关闭标签页丢数据
+  useEffect(() => {
+    if (saveStatus === "saved") return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [saveStatus]);
 
   const handleExportPdf = async () => {
     setIsExporting(true);
@@ -176,16 +229,21 @@ export function Editor({ initialResume }: EditorProps) {
   const resetTheme = () => setThemeVariables(getDefaultTheme(templateId));
 
   const applyResume = useCallback((resume: Resume) => {
+    currentResumeIdRef.current = resume.id;
     setCurrentResumeId(resume.id);
     setTitleState(resume.title);
     setContentState(resume.content);
     setTemplateIdState(resume.templateId);
-    setThemeVariablesState(
-      resume.themeVariables && Object.keys(resume.themeVariables).length > 0
-        ? resume.themeVariables
-        : getDefaultTheme(resume.templateId)
-    );
+    const theme = resolveThemeVariables(resume);
+    setThemeVariablesState(theme);
     setPhotoState(resume.photo);
+    lastSavedRef.current = {
+      title: resume.title,
+      content: resume.content,
+      templateId: resume.templateId,
+      themeVariables: theme,
+      photo: resume.photo,
+    };
     setSaveStatus("saved");
   }, []);
 
@@ -230,12 +288,13 @@ export function Editor({ initialResume }: EditorProps) {
   );
 
   const flushCurrentResume = useCallback(async () => {
-    if (saveStatus === "saved") {
+    const diff = diffPayload();
+    if (!diff) {
+      setSaveStatus("saved");
       return true;
     }
-
-    return saveResume({ title, content, templateId, themeVariables, photo });
-  }, [saveStatus, saveResume, title, content, templateId, themeVariables, photo]);
+    return saveResume(diff);
+  }, [diffPayload, saveResume]);
 
   const handleSwitchResume = useCallback(
     async (resumeId: string) => {
@@ -333,6 +392,8 @@ export function Editor({ initialResume }: EditorProps) {
         setResumes(remaining);
 
         if (resumeId === currentResumeId) {
+          // 当前简历即将被删除/切换，取消挂起的自动保存，避免写入到已切换的上下文
+          if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
           setIsSwitching(true);
           try {
             if (remaining.length > 0) {
@@ -363,12 +424,17 @@ export function Editor({ initialResume }: EditorProps) {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "s") {
         e.preventDefault();
-        saveResume({ title, content, templateId, themeVariables, photo });
+        const diff = diffPayload();
+        if (diff) {
+          saveResume(diff);
+        } else {
+          setSaveStatus((s) => (s === "unsaved" ? "saved" : s));
+        }
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [title, content, templateId, themeVariables, photo, saveResume]);
+  }, [diffPayload, saveResume]);
 
   const saveDot = useMemo(() => {
     switch (saveStatus) {
@@ -586,7 +652,7 @@ export function Editor({ initialResume }: EditorProps) {
             "absolute right-0 top-0 z-20 flex h-full w-[320px] flex-col border-l border-zinc-200 bg-white shadow-xl transition-transform duration-200 dark:border-zinc-800 dark:bg-zinc-900",
             drawerOpen ? "translate-x-0" : "translate-x-full",
           ].join(" ")}
-          aria-hidden={!drawerOpen}
+          inert={!drawerOpen}
         >
           <ThemePanel value={themeVariables} onChange={setThemeVariables} onReset={resetTheme} />
           <button

@@ -19,19 +19,29 @@ export const resumeFrontmatterSchema = z.object({
 
 export type ResumeFrontmatter = z.infer<typeof resumeFrontmatterSchema>;
 
+// theme 值会被拼进 PDF 渲染的 <style> 与模板内联样式，只放行安全的 CSS 片段
+// （颜色、长度、字体名等）；不合法的值在保存/导出时被丢弃，模板回退到默认值。
+const safeCssValue = /^[\p{L}\p{N}\s\-#%(),./'"]*$/u;
+
+const safeCssString = z
+  .string()
+  .regex(safeCssValue)
+  .optional()
+  .catch(undefined);
+
 export const themeVariablesSchema = z.object({
-  primaryColor: z.string().optional(),
-  secondaryColor: z.string().optional(),
-  backgroundColor: z.string().optional(),
-  textColor: z.string().optional(),
-  fontFamily: z.string().optional(),
-  headingFontFamily: z.string().optional(),
-  baseFontSize: z.string().optional(),
-  lineHeight: z.number().or(z.string()).optional(),
-  marginTop: z.string().optional(),
-  marginBottom: z.string().optional(),
-  marginLeft: z.string().optional(),
-  marginRight: z.string().optional(),
+  primaryColor: safeCssString,
+  secondaryColor: safeCssString,
+  backgroundColor: safeCssString,
+  textColor: safeCssString,
+  fontFamily: safeCssString,
+  headingFontFamily: safeCssString,
+  baseFontSize: safeCssString,
+  lineHeight: z.union([z.number(), z.string().regex(safeCssValue)]).optional().catch(undefined),
+  marginTop: safeCssString,
+  marginBottom: safeCssString,
+  marginLeft: safeCssString,
+  marginRight: safeCssString,
   photoLayout: z.enum(["default", "floating-monolith"]).optional(),
 }).catchall(z.union([z.string(), z.number(), z.boolean()]));
 
@@ -40,6 +50,7 @@ export type ThemeVariables = z.infer<typeof themeVariablesSchema>;
 export interface ParsedResume {
   frontmatter: ResumeFrontmatter;
   body: string;
+  frontmatterError?: string;
 }
 
 export interface Resume {

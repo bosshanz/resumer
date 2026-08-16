@@ -1,7 +1,8 @@
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { authOptions, isGithubAuthConfigured } from "@/lib/auth";
 import { getDatabase, initDb } from "@/lib/db";
-import { Resume, defaultResumeContent } from "@/lib/types";
+import { normalizeResume } from "@/lib/resumes";
+import { defaultResumeContent, Resume } from "@/lib/types";
 import { Editor } from "@/components/editor";
 import { Providers } from "@/components/providers";
 import { LoginButton } from "@/components/login-button";
@@ -12,27 +13,13 @@ export const runtime = "nodejs";
 initDb();
 const db = getDatabase();
 
-function normalizeResume(row: Record<string, unknown>): Resume {
-  return {
-    id: String(row.id),
-    userId: String(row.user_id),
-    title: String(row.title),
-    content: String(row.content),
-    templateId: String(row.template_id),
-    themeVariables: JSON.parse(String(row.theme_variables || "{}")),
-    photo: row.photo ? String(row.photo) : undefined,
-    createdAt: String(row.created_at),
-    updatedAt: String(row.updated_at),
-  };
-}
-
 async function getOrCreateResume(userId: string): Promise<Resume> {
   const existing = db
     .prepare(`SELECT * FROM resumes WHERE user_id = ? ORDER BY updated_at DESC LIMIT 1`)
     .get(userId) as Record<string, unknown> | undefined;
 
   if (existing) {
-    return normalizeResume(existing);
+    return normalizeResume(existing)!;
   }
 
   const id = crypto.randomUUID();
@@ -41,7 +28,7 @@ async function getOrCreateResume(userId: string): Promise<Resume> {
   ).run(id, userId, "未命名简历", defaultResumeContent, "minimal", JSON.stringify({}));
 
   const created = db.prepare(`SELECT * FROM resumes WHERE id = ?`).get(id) as Record<string, unknown>;
-  return normalizeResume(created);
+  return normalizeResume(created)!;
 }
 
 async function getResume(userId: string, resumeId?: string): Promise<Resume> {
@@ -51,7 +38,7 @@ async function getResume(userId: string, resumeId?: string): Promise<Resume> {
       .get(resumeId, userId) as Record<string, unknown> | undefined;
 
     if (existing) {
-      return normalizeResume(existing);
+      return normalizeResume(existing)!;
     }
   }
 
@@ -74,7 +61,7 @@ export default async function Home({
             <p className="mb-6 text-zinc-600 dark:text-zinc-400">
               面向程序员的 Markdown 简历生成器。登录后开始编写你的简历。
             </p>
-            <LoginButton />
+            <LoginButton githubEnabled={isGithubAuthConfigured()} />
           </div>
         </div>
       </Providers>

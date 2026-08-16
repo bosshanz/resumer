@@ -18,6 +18,7 @@ export function parseResumeContent(raw: string): ParsedResume {
     return {
       frontmatter: {},
       body: trimmed,
+      frontmatterError: "Frontmatter 缺少结束分隔符 ---",
     };
   }
 
@@ -25,19 +26,26 @@ export function parseResumeContent(raw: string): ParsedResume {
   const body = trimmed.slice(endIndex + FRONTMATTER_DELIMITER.length + 1).trim();
 
   let frontmatter: ResumeFrontmatter = {};
+  let frontmatterError: string | undefined;
   try {
     const parsed = YAML.parse(frontmatterRaw);
     const result = resumeFrontmatterSchema.safeParse(parsed || {});
     if (result.success) {
       frontmatter = result.data;
+    } else {
+      const detail = result.error.issues
+        .map((issue) => `${issue.path.join(".") || "(根字段)"}: ${issue.message}`)
+        .join("；");
+      frontmatterError = `Frontmatter 字段格式不正确（${detail}）`;
     }
-  } catch {
-    frontmatter = {};
+  } catch (err) {
+    frontmatterError = `Frontmatter YAML 解析失败：${err instanceof Error ? err.message : String(err)}`;
   }
 
   return {
     frontmatter,
     body,
+    frontmatterError,
   };
 }
 

@@ -1,5 +1,6 @@
 import React from "react";
 import puppeteer from "puppeteer-core";
+import type { Browser, Page } from "puppeteer-core";
 import { parseResumeContent } from "./parser";
 import { getTemplate } from "./templates";
 import { readResumeTemplateCss } from "./templates/css";
@@ -24,6 +25,59 @@ function getExecutablePath(): string {
     return "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
   }
   return "/usr/bin/chromium";
+}
+
+// 复用浏览器实例，连续导出时省去每次约 1s 的冷启动；空闲一段时间后自动关闭，
+// 避免常驻进程。unref 保证定时器不会阻止脚本进程退出。
+const BROWSER_IDLE_CLOSE_MS = 30_000;
+
+let browserPromise: Promise<Browser> | null = null;
+let browserIdleTimer: NodeJS.Timeout | null = null;
+
+async function closeBrowser() {
+  const closing = browserPromise;
+  browserPromise = null;
+  if (!closing) return;
+  try {
+    await (await closing).close();
+  } catch {
+    // 浏览器可能已退出
+  }
+}
+
+function scheduleBrowserClose() {
+  if (browserIdleTimer) clearTimeout(browserIdleTimer);
+  browserIdleTimer = setTimeout(() => {
+    browserIdleTimer = null;
+    void closeBrowser();
+  }, BROWSER_IDLE_CLOSE_MS);
+  browserIdleTimer.unref();
+}
+
+function getBrowser(): Promise<Browser> {
+  if (!browserPromise) {
+    const promise = puppeteer.launch({
+      executablePath: getExecutablePath(),
+      headless: true,
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-accelerated-2d-canvas",
+        "--no-first-run",
+        "--no-zygote",
+        "--single-process",
+        "--disable-gpu",
+      ],
+    });
+    browserPromise = promise;
+    promise.catch(() => {
+      // 启动失败时清空引用，下次导出可以重试
+      if (browserPromise === promise) browserPromise = null;
+    });
+  }
+  scheduleBrowserClose();
+  return browserPromise;
 }
 
 export async function renderResumeHtml(
@@ -100,23 +154,17 @@ export async function generateResumePdf(
   photo?: string
 ): Promise<Buffer> {
   const html = await renderResumeHtml(content, templateId, themeVariables, photo);
-  const browser = await puppeteer.launch({
-    executablePath: getExecutablePath(),
-    headless: true,
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--disable-accelerated-2d-canvas",
-      "--no-first-run",
-      "--no-zygote",
-      "--single-process",
-      "--disable-gpu",
-    ],
-  });
+
+  let page: Page;
+  try {
+    page = await (await getBrowser()).newPage();
+  } catch {
+    // 复用的实例可能已崩溃或被关闭，重置后重试一次
+    await closeBrowser();
+    page = await (await getBrowser()).newPage();
+  }
 
   try {
-    const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "load" });
 
     const pdf = await page.pdf({
@@ -127,6 +175,7 @@ export async function generateResumePdf(
 
     return Buffer.from(pdf);
   } finally {
-    await browser.close();
+    await page.close().catch(() => {});
+    scheduleBrowserClose();
   }
 }

@@ -30,6 +30,9 @@ const db = getDatabase();
 
 const githubConfigured = Boolean(process.env.GITHUB_ID && process.env.GITHUB_SECRET);
 
+// 登录页据此决定渲染 GitHub OAuth 按钮还是开发模式用户名登录
+export const isGithubAuthConfigured = () => githubConfigured;
+
 if (!process.env.NEXTAUTH_SECRET) {
   console.warn(
     "[auth] NEXTAUTH_SECRET is not set. Auth.js will fail with Configuration error. Generate one with: openssl rand -base64 32"
