@@ -11,6 +11,9 @@ export const resumeTemplateStyleFiles = [
   "editorial.css",
   "executive.css",
   "compact.css",
+  "ledger.css",
+  "authority.css",
+  "blueprint.css",
 ] as const;
 
 export function readResumeTemplateCss(): string {

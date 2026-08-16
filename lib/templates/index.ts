@@ -5,6 +5,9 @@ import { GridTemplate, gridDefaultTheme } from "./grid";
 import { EditorialTemplate, editorialDefaultTheme } from "./editorial";
 import { ExecutiveTemplate, executiveDefaultTheme } from "./executive";
 import { CompactTemplate, compactDefaultTheme } from "./compact";
+import { LedgerTemplate, ledgerDefaultTheme } from "./ledger";
+import { AuthorityTemplate, authorityDefaultTheme } from "./authority";
+import { BlueprintTemplate, blueprintDefaultTheme } from "./blueprint";
 import { TemplateProps } from "./base";
 import { ThemeVariables } from "../types";
 
@@ -120,6 +123,48 @@ export const templates: TemplateDefinition[] = [
       bg: "#ffffff",
       fg: "#111827",
       flavor: "compact",
+    },
+  },
+  {
+    id: "ledger",
+    name: "账本",
+    description: "瑞士精密排版，编号侧栏与严格时间轴，适合高级工程师",
+    component: LedgerTemplate,
+    defaultTheme: ledgerDefaultTheme,
+    preview: {
+      fontFamily: "var(--font-inter-tight), sans-serif",
+      accent: "#d42c24",
+      bg: "#ffffff",
+      fg: "#111214",
+      flavor: "grid",
+    },
+  },
+  {
+    id: "authority",
+    name: "沉静",
+    description: "象牙纸、森林墨与黄铜细节，稳重的高级编辑风",
+    component: AuthorityTemplate,
+    defaultTheme: authorityDefaultTheme,
+    preview: {
+      fontFamily: "var(--font-fraunces), serif",
+      accent: "#a97828",
+      bg: "#fbf8f1",
+      fg: "#213b36",
+      flavor: "executive",
+    },
+  },
+  {
+    id: "blueprint",
+    name: "蓝图",
+    description: "技术文档式网格与钴蓝标注，适合系统型工程师",
+    component: BlueprintTemplate,
+    defaultTheme: blueprintDefaultTheme,
+    preview: {
+      fontFamily: "var(--font-plex-sans), sans-serif",
+      accent: "#1452c2",
+      bg: "#ffffff",
+      fg: "#111a2d",
+      flavor: "mono-accent",
     },
   },
 ];

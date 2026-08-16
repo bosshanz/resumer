@@ -1,0 +1,233 @@
+/* ============================================================
+   THEME: blueprint — technical document grid
+   ============================================================ */
+
+.theme-blueprint {
+  font-family: var(--font-plex-sans), -apple-system, sans-serif;
+  color: var(--resume-fg, #111a2d);
+  background: var(--resume-bg, #ffffff);
+  border: 1px solid var(--resume-accent, #1452c2);
+  font-feature-settings: "tnum" 1;
+}
+
+.theme-blueprint .resume-blueprint-frame-label {
+  display: flex;
+  justify-content: space-between;
+  padding: 2.4mm 4mm;
+  border-bottom: 1px solid var(--resume-accent, #1452c2);
+  color: var(--resume-accent, #1452c2);
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 0.7em;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.theme-blueprint .resume-blueprint-header {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 7mm;
+  padding: 5mm;
+  border-bottom: 1px solid var(--resume-accent, #1452c2);
+}
+
+.theme-blueprint .resume-blueprint-header.has-photo {
+  grid-template-columns: 31mm 1fr;
+}
+
+.theme-blueprint .resume-blueprint-photo {
+  width: 29mm;
+  height: 34mm;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--resume-accent, #1452c2);
+}
+
+.theme-blueprint .resume-blueprint-photo .resume-photo {
+  width: 100%;
+  height: 100%;
+}
+
+.theme-blueprint .resume-blueprint-name-row {
+  display: flex;
+  align-items: center;
+  gap: 7mm;
+  padding-bottom: 4mm;
+  border-bottom: 1px dashed color-mix(in srgb, var(--resume-accent, #1452c2) 62%, transparent);
+}
+
+.theme-blueprint .resume-blueprint-name-row h1 {
+  margin: 0;
+  padding-right: 7mm;
+  border-right: 1px solid color-mix(in srgb, var(--resume-accent, #1452c2) 42%, transparent);
+  font-family: var(--font-inter-tight), -apple-system, sans-serif;
+  font-size: 3.7em;
+  font-weight: 700;
+  letter-spacing: -0.065em;
+  line-height: 0.9;
+}
+
+.theme-blueprint .resume-blueprint-role {
+  margin: 0;
+  color: var(--resume-accent, #1452c2);
+  font-size: 1.18em;
+  font-weight: 650;
+}
+
+.theme-blueprint .resume-blueprint-focus {
+  margin: 1mm 0 0;
+  color: color-mix(in srgb, var(--resume-fg, #111a2d) 78%, transparent);
+  font-size: 0.88em;
+}
+
+.theme-blueprint .resume-blueprint-contact {
+  display: grid;
+  grid-template-columns: 1.25fr 0.85fr 1.2fr;
+  margin-top: 4mm;
+}
+
+.theme-blueprint .resume-blueprint-contact span {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 2.2mm;
+  padding: 2.2mm 3mm;
+  border-right: 1px dashed color-mix(in srgb, var(--resume-accent, #1452c2) 46%, transparent);
+  font-size: 0.7em;
+  white-space: nowrap;
+}
+
+.theme-blueprint .resume-blueprint-contact span:nth-child(3n) {
+  border-right: 0;
+}
+
+.theme-blueprint .resume-blueprint-contact svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  color: var(--resume-accent, #1452c2);
+}
+
+.theme-blueprint .resume-blueprint-layout {
+  display: grid;
+  grid-template-columns: 48mm 1fr;
+  align-items: stretch;
+}
+
+.theme-blueprint .resume-blueprint-sidebar {
+  border-right: 1px solid var(--resume-accent, #1452c2);
+}
+
+.theme-blueprint .resume-blueprint-panel {
+  padding: 4mm;
+  border-bottom: 1px solid color-mix(in srgb, var(--resume-accent, #1452c2) 62%, transparent);
+}
+
+.theme-blueprint .resume-blueprint-panel h2,
+.theme-blueprint .resume-blueprint-section-heading h2 {
+  margin: 0 0 3mm;
+  color: var(--resume-accent, #1452c2);
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 0.78em;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.theme-blueprint .resume-blueprint-panel p {
+  margin: 0;
+  line-height: 1.58;
+}
+
+.theme-blueprint .resume-blueprint-panel ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.theme-blueprint .resume-blueprint-panel li {
+  padding: 1.5mm 0;
+  border-bottom: 1px dotted color-mix(in srgb, var(--resume-accent, #1452c2) 28%, transparent);
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 0.78em;
+}
+
+.theme-blueprint .resume-blueprint-meta dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2mm 3mm;
+  margin: 0;
+  font-size: 0.72em;
+}
+
+.theme-blueprint .resume-blueprint-meta dt {
+  color: var(--resume-accent, #1452c2);
+  font-family: var(--font-plex-mono), monospace;
+}
+
+.theme-blueprint .resume-blueprint-meta dd {
+  margin: 0;
+}
+
+.theme-blueprint .resume-blueprint-section {
+  padding: 4mm 5mm;
+  border-bottom: 1px solid color-mix(in srgb, var(--resume-accent, #1452c2) 55%, transparent);
+}
+
+.theme-blueprint .resume-blueprint-section-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 5mm;
+  margin-bottom: 3mm;
+  border-bottom: 1px solid color-mix(in srgb, var(--resume-accent, #1452c2) 68%, transparent);
+}
+
+.theme-blueprint .resume-blueprint-section-heading h2 {
+  margin-bottom: 2mm;
+}
+
+.theme-blueprint .resume-blueprint-section-heading span {
+  color: var(--resume-accent, #1452c2);
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 0.68em;
+}
+
+.theme-blueprint .resume-body > * + * {
+  margin-top: 0.4em;
+}
+
+.theme-blueprint .resume-body h3 {
+  margin: 0.85em 0 0;
+  padding-top: 0.65em;
+  border-top: 1px dashed color-mix(in srgb, var(--resume-accent, #1452c2) 36%, transparent);
+  font-size: 1.02em;
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.theme-blueprint .resume-body h3:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.theme-blueprint .resume-body ul {
+  margin-top: 0.35em;
+  padding-left: 1.1em;
+}
+
+.theme-blueprint .resume-body li {
+  margin: 0.1em 0;
+}
+
+.theme-blueprint .resume-body li::marker {
+  color: var(--resume-accent, #1452c2);
+}
+
+.theme-blueprint .resume-body .resume-subhead {
+  margin-top: 0.7em;
+  padding-left: 2.5mm;
+  border-left: 2px solid var(--resume-accent, #1452c2);
+  font-size: 1em;
+  font-weight: 650;
+}

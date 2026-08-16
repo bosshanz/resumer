@@ -61,7 +61,11 @@ export function Editor({ initialResume }: EditorProps) {
   const markUnsaved = useCallback(() => setSaveStatus("unsaved"), []);
   const setContent = useCallback((v: string) => { setContentState(v); markUnsaved(); }, [markUnsaved]);
   const setTitle = useCallback((v: string) => { setTitleState(v); markUnsaved(); }, [markUnsaved]);
-  const setTemplateId = useCallback((v: string) => { setTemplateIdState(v); markUnsaved(); }, [markUnsaved]);
+  const setTemplateId = useCallback((v: string) => {
+    setTemplateIdState(v);
+    setThemeVariablesState(getDefaultTheme(v));
+    markUnsaved();
+  }, [markUnsaved]);
   const setThemeVariables = useCallback((v: ThemeVariables) => { setThemeVariablesState(v); markUnsaved(); }, [markUnsaved]);
   const setPhoto = useCallback((v: string | undefined) => { setPhotoState(v); markUnsaved(); }, [markUnsaved]);
 

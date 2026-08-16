@@ -15,14 +15,19 @@ interface Palette {
   name: string;
   primary: string;
   secondary: string;
+  background: string;
+  text: string;
 }
 
 const palettes: Palette[] = [
-  { id: "mono", name: "纯黑", primary: "#111111", secondary: "#666666" },
-  { id: "ocean", name: "深海", primary: "#0a3a5c", secondary: "#ff7a45" },
-  { id: "forest", name: "森林", primary: "#2d5a3d", secondary: "#c2723a" },
-  { id: "crimson", name: "朱砂", primary: "#8b1e3f", secondary: "#d4a574" },
-  { id: "slate", name: "板岩", primary: "#334155", secondary: "#0ea5e9" },
+  { id: "ink", name: "墨黑", primary: "#111111", secondary: "#666666", background: "#ffffff", text: "#111111" },
+  { id: "ocean", name: "深海", primary: "#0a3a5c", secondary: "#ff7a45", background: "#fbfaf6", text: "#1a2332" },
+  { id: "pine", name: "松林", primary: "#2d5a3d", secondary: "#c2723a", background: "#fbfaf7", text: "#18221c" },
+  { id: "signal", name: "信号", primary: "#000000", secondary: "#dc2626", background: "#ffffff", text: "#0a0a0a" },
+  { id: "editorial", name: "纸墨", primary: "#3a2415", secondary: "#a87b3f", background: "#faf6ed", text: "#2a1c10" },
+  { id: "oxide", name: "氧化", primary: "#d42c24", secondary: "#687078", background: "#ffffff", text: "#111214" },
+  { id: "brass", name: "铜绿", primary: "#213b36", secondary: "#a97828", background: "#fbf8f1", text: "#202725" },
+  { id: "blueprint", name: "蓝图", primary: "#1452c2", secondary: "#52647d", background: "#ffffff", text: "#111a2d" },
 ];
 
 interface SizingPreset {
@@ -51,7 +56,13 @@ const margins: MarginPreset[] = [
 
 function activePalette(v: ThemeVariables): string | null {
   return (
-    palettes.find((p) => p.primary === v.primaryColor && p.secondary === v.secondaryColor)?.id ??
+    palettes.find(
+      (p) =>
+        p.primary === v.primaryColor &&
+        p.secondary === v.secondaryColor &&
+        p.background === v.backgroundColor &&
+        p.text === v.textColor
+    )?.id ??
     null
   );
 }
@@ -72,7 +83,13 @@ export function ThemePanel({ value, onChange, onReset }: ThemePanelProps) {
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
   const applyPalette = (p: Palette) =>
-    onChange({ ...value, primaryColor: p.primary, secondaryColor: p.secondary });
+    onChange({
+      ...value,
+      primaryColor: p.primary,
+      secondaryColor: p.secondary,
+      backgroundColor: p.background,
+      textColor: p.text,
+    });
   const applySize = (s: SizingPreset) =>
     onChange({ ...value, baseFontSize: s.baseFontSize, lineHeight: s.lineHeight });
   const applyMargin = (m: MarginPreset) =>
@@ -97,7 +114,7 @@ export function ThemePanel({ value, onChange, onReset }: ThemePanelProps) {
 
       <div className="flex-1 overflow-y-auto px-4 py-4">
         <Section label="配色">
-          <div className="flex gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {palettes.map((p) => {
               const active = palId === p.id;
               return (
@@ -108,20 +125,21 @@ export function ThemePanel({ value, onChange, onReset }: ThemePanelProps) {
                   title={p.name}
                   aria-pressed={active}
                   className={[
-                    "group relative h-12 w-full overflow-hidden rounded-md border transition-all",
+                    "group relative h-12 overflow-hidden rounded-md border transition-all",
                     active
                       ? "border-zinc-900 ring-1 ring-zinc-900 dark:border-zinc-100 dark:ring-zinc-100"
                       : "border-zinc-200 hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-600",
-                  ].join(" ")}
-                >
-                  <span className="absolute inset-0 flex">
+                ].join(" ")}
+                style={{ backgroundColor: p.background, color: p.text }}
+              >
+                  <span className="absolute inset-x-0 top-0 flex h-7">
                     <span className="flex-[3]" style={{ background: p.primary }} />
                     <span className="flex-1" style={{ background: p.secondary }} />
                   </span>
                   <span
                     className={[
-                      "absolute inset-x-0 bottom-0 truncate bg-white/85 px-1 py-0.5 text-center text-[10px] font-medium tracking-tight backdrop-blur-sm dark:bg-zinc-900/85",
-                      active ? "text-zinc-900 dark:text-zinc-100" : "text-zinc-600 dark:text-zinc-400",
+                      "absolute inset-x-0 bottom-0 truncate bg-black/[0.035] px-1 py-0.5 text-center text-[10px] font-medium tracking-tight",
+                      active ? "font-semibold" : "opacity-75",
                     ].join(" ")}
                   >
                     {p.name}
