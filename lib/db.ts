@@ -1,6 +1,7 @@
 import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs";
+import { ensureRewriteSessionsTable } from "./rewrite/sessions";
 
 let db: Database.Database | null = null;
 
@@ -57,6 +58,7 @@ export function initDb() {
 
     CREATE INDEX IF NOT EXISTS idx_resumes_user_id ON resumes(user_id);
   `);
+  ensureRewriteSessionsTable(database);
 
   // Migration: add photo column to existing databases
   try {

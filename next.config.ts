@@ -8,6 +8,8 @@ const nextConfig: NextConfig = {
     "https-proxy-agent",
     "agent-base",
     "openid-client",
+    "@earendil-works/pi-agent-core",
+    "@earendil-works/pi-ai",
   ],
 };
 

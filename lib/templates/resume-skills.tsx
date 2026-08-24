@@ -24,9 +24,14 @@ export function ResumeSkills({
         <div className="resume-skill-group" key={group.label || group.items.join("-") || index}>
           {group.label && <span className="resume-skill-group-label">{group.label}</span>}
           <span className="resume-skill-group-items">
-            {group.items.map((item) => (
-              <span className="resume-skill-tag" key={`${group.label || "group"}-${item}`}>
-                {item}
+            {group.items.map((item, itemIndex) => (
+              <span key={`${group.label || "group"}-${item}`}>
+                {itemIndex > 0 && (
+                  <span className="resume-skill-sep" aria-hidden>
+                    {" / "}
+                  </span>
+                )}
+                <span className="resume-skill-tag">{item}</span>
               </span>
             ))}
           </span>

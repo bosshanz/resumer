@@ -241,6 +241,14 @@
   line-height: 1.35;
 }
 
+.resume-skill-sep {
+  display: inline;
+  color: var(--resume-muted, #666);
+  font-size: 0.82em;
+  line-height: 1.35;
+  white-space: pre;
+}
+
 /* ============================================================
    Shared body extensions: subhead, meta line, dividers
    Defined per theme so styling matches each aesthetic.

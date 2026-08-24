@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { getDatabase, initDb } from "@/lib/db";
+import { deleteRewriteSessionsForResume } from "@/lib/rewrite/sessions";
 import { normalizeResume } from "@/lib/resumes";
 import { themeVariablesSchema } from "@/lib/types";
 import { NextResponse } from "next/server";
@@ -122,6 +123,10 @@ export async function DELETE(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  db.prepare(`DELETE FROM resumes WHERE id = ?`).run(id);
+  const remove = db.transaction(() => {
+    deleteRewriteSessionsForResume(db, id);
+    db.prepare(`DELETE FROM resumes WHERE id = ?`).run(id);
+  });
+  remove();
   return NextResponse.json({ success: true });
 }

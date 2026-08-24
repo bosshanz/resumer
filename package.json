@@ -1,6 +1,6 @@
 {
   "name": "resumer",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -10,6 +10,8 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@earendil-works/pi-agent-core": "^0.84.3",
+    "@earendil-works/pi-ai": "^0.84.3",
     "better-sqlite3": "^12.11.1",
     "clsx": "^2.1.1",
     "https-proxy-agent": "^9.1.0",

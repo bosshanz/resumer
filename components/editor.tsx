@@ -7,7 +7,9 @@ import { Preview } from "./preview";
 import { ThemePanel } from "./theme-panel";
 import { ResumeSelector, ResumeListItem } from "./resume-selector";
 import { ConfirmDialog } from "./confirm-dialog";
+import { RewritePanel, RewritePreviewState } from "./rewrite-panel";
 import { Resume, ThemeVariables } from "@/lib/types";
+import { EditorDrawer, editorDrawerClassName, toggleEditorDrawer } from "@/lib/editor-drawer";
 import { getDefaultTheme } from "@/lib/templates";
 import {
   Download,
@@ -24,6 +26,7 @@ import {
   MoreHorizontal,
   ImagePlus,
   AlertCircle,
+  Target,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -53,7 +56,10 @@ export function Editor({ initialResume }: EditorProps) {
   );
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
   const [isExporting, setIsExporting] = useState(false);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawer, setDrawer] = useState<EditorDrawer>(null);
+  const drawerOpen = drawer === "design";
+  const rewriteOpen = drawer === "rewrite";
+  const [rewritePreview, setRewritePreview] = useState<RewritePreviewState | null>(null);
   const [focusMode, setFocusMode] = useState<FocusMode>("split");
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [fileMenuOpen, setFileMenuOpen] = useState(false);
@@ -427,6 +433,10 @@ export function Editor({ initialResume }: EditorProps) {
 
   const showEditor = focusMode === "split" || focusMode === "edit";
   const showPreview = focusMode === "split" || focusMode === "preview";
+  const previewContent =
+    rewriteOpen && rewritePreview?.ready && rewritePreview.draftContent
+      ? rewritePreview.draftContent
+      : content;
 
   // Narrow screens use a single workspace pane. Split mode remains available
   // when the viewport grows again, but never forces two unusably small columns.
@@ -454,7 +464,7 @@ export function Editor({ initialResume }: EditorProps) {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        setDrawerOpen(false);
+        setDrawer(null);
         return;
       }
       if (event.key !== "Tab" || !drawer) return;
@@ -654,7 +664,7 @@ export function Editor({ initialResume }: EditorProps) {
         <button
           ref={drawerTriggerRef}
           type="button"
-          onClick={() => setDrawerOpen((v) => !v)}
+          onClick={() => setDrawer((current) => toggleEditorDrawer(current, "design"))}
           aria-haspopup="dialog"
           aria-expanded={drawerOpen}
           aria-controls="design-drawer"
@@ -667,6 +677,23 @@ export function Editor({ initialResume }: EditorProps) {
         >
           <Palette className="h-4 w-4" />
           设计
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setDrawer((current) => toggleEditorDrawer(current, "rewrite"))}
+          aria-haspopup="dialog"
+          aria-expanded={rewriteOpen}
+          aria-controls="rewrite-drawer"
+          className={[
+            "flex min-h-9 items-center gap-1.5 rounded-md px-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500",
+            rewriteOpen
+              ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+              : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800",
+          ].join(" ")}
+        >
+          <Target className="h-4 w-4" />
+          改写
         </button>
 
           <input
@@ -768,10 +795,26 @@ export function Editor({ initialResume }: EditorProps) {
         )}
 
         {showPreview && (
-          <div className={`min-w-0 flex-col ${showEditor ? "w-1/2 md:flex" : "flex w-full"} ${showEditor && focusMode === "split" ? "max-md:hidden" : ""}`}>
-            <div className="flex-1 overflow-auto bg-zinc-200/60 px-3 py-4 dark:bg-zinc-900 sm:px-6 sm:py-8">
+          <div className={`relative min-w-0 flex-col ${showEditor ? "w-1/2 md:flex" : "flex w-full"} ${showEditor && focusMode === "split" ? "max-md:hidden" : ""}`}>
+            {rewriteOpen && rewritePreview?.ready ? (
+              <div
+                role="status"
+                className="flex shrink-0 items-center justify-between border-b border-zinc-800 bg-zinc-900 px-3 py-2 text-[11px] font-medium tracking-wide text-white"
+              >
+                <span>建议稿 · 尚未另存</span>
+                <span className="font-normal text-zinc-400">左侧是底稿</span>
+              </div>
+            ) : null}
+            <div className="relative flex-1 overflow-auto bg-zinc-200/60 px-3 py-4 dark:bg-zinc-900 sm:px-6 sm:py-8">
+              {rewriteOpen && rewritePreview?.generating ? (
+                <div className="absolute inset-0 z-10 flex items-center justify-center bg-zinc-950/30">
+                  <p className="rounded-full bg-white px-3 py-1.5 text-sm text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-zinc-100">
+                    正在改写…
+                  </p>
+                </div>
+              ) : null}
               <Preview
-                content={content}
+                content={previewContent}
                 templateId={templateId}
                 themeVariables={themeVariables}
                 photo={photo}
@@ -781,11 +824,11 @@ export function Editor({ initialResume }: EditorProps) {
           </div>
         )}
 
-        {drawerOpen && (
+        {(drawerOpen || rewriteOpen) && (
           <button
             type="button"
-            aria-label="关闭设计面板"
-            onClick={() => setDrawerOpen(false)}
+            aria-label={rewriteOpen ? "关闭改写面板" : "关闭设计面板"}
+            onClick={() => setDrawer(null)}
             className="absolute inset-0 z-10 cursor-default bg-zinc-950/15 backdrop-blur-[1px]"
           />
         )}
@@ -797,10 +840,7 @@ export function Editor({ initialResume }: EditorProps) {
           role="dialog"
           aria-modal="true"
           aria-labelledby="design-panel-title"
-          className={[
-            "absolute right-0 top-0 z-20 flex h-full w-full flex-col border-l border-zinc-200 bg-white shadow-2xl transition-transform duration-200 motion-reduce:transition-none dark:border-zinc-800 dark:bg-zinc-900 sm:w-[360px]",
-            drawerOpen ? "translate-x-0" : "translate-x-full",
-          ].join(" ")}
+          className={editorDrawerClassName(drawerOpen, "sm:w-[360px]")}
           inert={!drawerOpen}
         >
           <ThemePanel
@@ -813,13 +853,27 @@ export function Editor({ initialResume }: EditorProps) {
           <button
             ref={drawerCloseRef}
             type="button"
-            onClick={() => setDrawerOpen(false)}
+            onClick={() => setDrawer(null)}
             className="absolute right-2 top-2.5 flex h-8 w-8 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 dark:hover:bg-zinc-800"
             aria-label="关闭设计面板"
           >
             <X className="h-4 w-4" />
           </button>
         </aside>
+
+        <RewritePanel
+          open={rewriteOpen}
+          resumeId={currentResumeId}
+          onClose={() => setDrawer(null)}
+          onBeforeGenerate={flushCurrentResume}
+          onPreviewState={setRewritePreview}
+          onApplied={async (resume) => {
+            await loadResumes();
+            applyResume(resume);
+            router.replace(`/?resumeId=${resume.id}`);
+            setDrawer(null);
+          }}
+        />
       </main>
 
       <ConfirmDialog

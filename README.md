@@ -16,6 +16,7 @@
 - 导入和导出 Markdown。
 - 上传头像或照片；图片以 base64 数据 URL 保存在 SQLite 中，单张最大 2 MB。
 - 使用 Puppeteer 和本地 Chrome/Chromium 导出 A4 PDF。
+- 改写 V2：贴岗位 JD 或写一句方向，建议稿显示在右侧预览，核对后再另存为新简历。底稿保持不变。需要配置 `DEEPSEEK_API_KEY`。主导等强主张不能比底稿增加。
 
 ## 工作流
 
@@ -85,6 +86,8 @@ openssl rand -base64 32
 | `GITHUB_ID` / `GITHUB_SECRET` | 可选；配置后使用 GitHub OAuth，否则启用开发登录 |
 | `DATABASE_URL` | SQLite 文件路径，默认 `./data/resumer.db` |
 | `PUPPETEER_EXECUTABLE_PATH` | Chrome/Chromium 可执行文件路径 |
+| `DEEPSEEK_API_KEY` | 可选；配置后可使用「改写」 |
+| `DEEPSEEK_MODEL` | 可选；默认 `deepseek-v4-flash` |
 
 macOS 的 Chrome 默认路径是：
 

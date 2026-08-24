@@ -70,7 +70,7 @@ skills:
 | `skills` | string[] 或 `{ 分类: string[] }` | 技能。数组每一项是一组；对象的 key 是分类名 |
 
 - 所有 contact 字段都是可选的，未填写则不会显示。
-- `skills` 支持两种写法，都会按组渲染：
+- `skills` 支持两种写法，都会按组渲染，词与词之间用 `/` 分隔：
   - 列表：`- Agent / RAG / Memory`（`/` `·` `,` 会拆成词）
   - 分类对象：`AI: [Agent, RAG, Memory]`
 

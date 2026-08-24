@@ -21,3 +21,21 @@ CREATE TABLE IF NOT EXISTS resumes (
 );
 
 CREATE INDEX IF NOT EXISTS idx_resumes_user_id ON resumes(user_id);
+
+CREATE TABLE IF NOT EXISTS rewrite_sessions (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  source_resume_id TEXT NOT NULL,
+  result_resume_id TEXT,
+  job_description TEXT NOT NULL DEFAULT '',
+  draft_content TEXT NOT NULL DEFAULT '',
+  change_notes TEXT NOT NULL DEFAULT '[]',
+  pending_items TEXT NOT NULL DEFAULT '[]',
+  status TEXT NOT NULL DEFAULT 'generating',
+  error_message TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_rewrite_sessions_user_id ON rewrite_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_rewrite_sessions_source ON rewrite_sessions(source_resume_id);
