@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { resumeSkillsSchema } from "./skills";
 
 export const contactSchema = z.object({
   phone: z.coerce.string().optional(),
@@ -14,7 +15,7 @@ export const resumeFrontmatterSchema = z.object({
   title: z.string().optional(),
   summary: z.string().optional(),
   contact: contactSchema.optional(),
-  skills: z.array(z.string()).optional(),
+  skills: resumeSkillsSchema,
 });
 
 export type ResumeFrontmatter = z.infer<typeof resumeFrontmatterSchema>;

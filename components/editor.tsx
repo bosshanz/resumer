@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Preview } from "./preview";
-import { TemplateSelector } from "./template-selector";
 import { ThemePanel } from "./theme-panel";
 import { ResumeSelector, ResumeListItem } from "./resume-selector";
 import { ConfirmDialog } from "./confirm-dialog";
@@ -21,8 +20,10 @@ import {
   Columns,
   X,
   Loader2,
-  UserCircle,
   Trash2,
+  MoreHorizontal,
+  ImagePlus,
+  AlertCircle,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -55,6 +56,7 @@ export function Editor({ initialResume }: EditorProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [focusMode, setFocusMode] = useState<FocusMode>("split");
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [fileMenuOpen, setFileMenuOpen] = useState(false);
   const [photo, setPhotoState] = useState<string | undefined>(initialResume.photo);
   const [resumes, setResumes] = useState<ResumeListItem[]>([]);
   const [isSwitching, setIsSwitching] = useState(false);
@@ -62,6 +64,13 @@ export function Editor({ initialResume }: EditorProps) {
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const drawerRef = useRef<HTMLElement>(null);
+  const drawerTriggerRef = useRef<HTMLButtonElement>(null);
+  const drawerCloseRef = useRef<HTMLButtonElement>(null);
+  const fileMenuRef = useRef<HTMLDivElement>(null);
+  const fileMenuButtonRef = useRef<HTMLButtonElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  const userMenuButtonRef = useRef<HTMLButtonElement>(null);
   // 最近一次已持久化的快照，自动保存只提交与它的差异（避免每次全量重发照片等大字段）
   const lastSavedRef = useRef<SavePayload>({
     title: initialResume.title,
@@ -419,6 +428,89 @@ export function Editor({ initialResume }: EditorProps) {
   const showEditor = focusMode === "split" || focusMode === "edit";
   const showPreview = focusMode === "split" || focusMode === "preview";
 
+  // Narrow screens use a single workspace pane. Split mode remains available
+  // when the viewport grows again, but never forces two unusably small columns.
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 767px)");
+    const syncMode = () => {
+      if (media.matches) {
+        setFocusMode((mode) => (mode === "split" ? "edit" : mode));
+      }
+    };
+    syncMode();
+    media.addEventListener("change", syncMode);
+    return () => media.removeEventListener("change", syncMode);
+  }, []);
+
+  useEffect(() => {
+    if (!drawerOpen) return;
+
+    const previousFocus = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : drawerTriggerRef.current;
+    const drawer = drawerRef.current;
+    requestAnimationFrame(() => drawerCloseRef.current?.focus());
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setDrawerOpen(false);
+        return;
+      }
+      if (event.key !== "Tab" || !drawer) return;
+
+      const focusable = Array.from(
+        drawer.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((element) => !element.hasAttribute("inert"));
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      previousFocus?.focus();
+    };
+  }, [drawerOpen]);
+
+  useEffect(() => {
+    if (!fileMenuOpen && !userMenuOpen) return;
+
+    const closeMenus = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (fileMenuOpen && !fileMenuRef.current?.contains(target)) setFileMenuOpen(false);
+      if (userMenuOpen && !userMenuRef.current?.contains(target)) setUserMenuOpen(false);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      if (fileMenuOpen) {
+        setFileMenuOpen(false);
+        fileMenuButtonRef.current?.focus();
+      }
+      if (userMenuOpen) {
+        setUserMenuOpen(false);
+        userMenuButtonRef.current?.focus();
+      }
+    };
+
+    document.addEventListener("pointerdown", closeMenus);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", closeMenus);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [fileMenuOpen, userMenuOpen]);
+
   // Keyboard shortcut: Cmd/Ctrl + S to force save
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -436,37 +528,57 @@ export function Editor({ initialResume }: EditorProps) {
     return () => window.removeEventListener("keydown", onKey);
   }, [diffPayload, saveResume]);
 
-  const saveDot = useMemo(() => {
+  const saveIndicator = useMemo(() => {
     switch (saveStatus) {
       case "saved":
-        return { color: "bg-emerald-500", label: "已保存" };
+        return { color: "bg-emerald-500", label: "已保存", tone: "text-emerald-700 dark:text-emerald-300" };
       case "saving":
-        return { color: "bg-amber-400 animate-pulse", label: "保存中" };
+        return { color: "bg-amber-400 animate-pulse", label: "保存中", tone: "text-amber-700 dark:text-amber-300" };
       case "unsaved":
-        return { color: "bg-zinc-400", label: "待保存" };
+        return { color: "bg-zinc-400", label: "待保存", tone: "text-zinc-600 dark:text-zinc-300" };
       case "error":
-        return { color: "bg-red-500", label: "保存失败" };
+        return { color: "bg-red-500", label: "保存失败", tone: "text-red-700 dark:text-red-300" };
     }
   }, [saveStatus]);
 
   return (
     <div className="flex h-screen flex-col bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
-      <header className="relative z-50 flex flex-shrink-0 items-center gap-3 border-b border-zinc-200 bg-white/80 px-4 py-2 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-900/80">
-        <div className="flex min-w-0 items-center gap-2">
+      <header className="relative z-50 flex flex-shrink-0 flex-wrap items-center gap-x-3 border-b border-zinc-200 bg-white/90 px-3 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-900/90 sm:px-4">
+        <div className="order-1 flex min-w-0 flex-1 items-center gap-2 py-2">
           <span className="select-none text-base font-semibold tracking-tight">Resumer</span>
-          <span
-            className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${saveDot.color}`}
-            title={saveDot.label}
-            aria-label={saveDot.label}
-          />
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="未命名简历"
-            className="min-w-0 max-w-[14ch] truncate border-0 bg-transparent px-1 py-0.5 text-sm text-zinc-700 outline-none placeholder:text-zinc-400 hover:bg-zinc-100/70 focus:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800/60 dark:focus:bg-zinc-800"
-          />
+          <div role="status" aria-live="polite" className="flex-shrink-0">
+            {saveStatus === "error" ? (
+              <button
+                type="button"
+                onClick={() => {
+                  const diff = diffPayload();
+                  if (diff) saveResume(diff);
+                }}
+                title="点击重试保存"
+                className={`flex min-h-7 items-center gap-1 rounded-full bg-red-50 px-2 text-[11px] font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:bg-red-950/50 ${saveIndicator.tone}`}
+              >
+                <AlertCircle className="h-3 w-3" />
+                {saveIndicator.label}
+              </button>
+            ) : (
+              <span className={`flex min-h-7 items-center gap-1.5 rounded-full bg-zinc-100 px-2 text-[11px] font-medium dark:bg-zinc-800 ${saveIndicator.tone}`}>
+                <span className={`h-1.5 w-1.5 rounded-full ${saveIndicator.color}`} aria-hidden />
+                {saveIndicator.label}
+              </span>
+            )}
+          </div>
+          <label className="min-w-0 flex-1 sm:flex-none">
+            <span className="sr-only">简历标题</span>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="未命名简历"
+              className="min-h-8 w-full min-w-0 max-w-[18ch] truncate rounded-md border-0 bg-transparent px-2 text-sm text-zinc-700 outline-none placeholder:text-zinc-400 hover:bg-zinc-100/70 focus-visible:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-zinc-500 dark:text-zinc-300 dark:hover:bg-zinc-800/60 dark:focus-visible:bg-zinc-800"
+            />
+          </label>
           <ResumeSelector
+            compact
             resumes={resumes}
             currentId={currentResumeId}
             disabled={isSwitching}
@@ -475,99 +587,18 @@ export function Editor({ initialResume }: EditorProps) {
             onDuplicate={handleDuplicateResume}
             onDelete={(id) => setDeleteTarget(resumes.find((r) => r.id === id) || null)}
           />
-        </div>
-
-        <div className="hidden items-center gap-1.5 sm:flex">
-          <input
-            ref={photoInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handlePhotoChange}
-            className="hidden"
-          />
-          {photo ? (
-            <div className="group relative">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={photo}
-                alt=""
-                className="h-7 w-7 rounded object-cover ring-1 ring-zinc-200 dark:ring-zinc-700"
-              />
-              <button
-                type="button"
-                onClick={clearPhoto}
-                title="删除照片"
-                className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-zinc-800 text-white opacity-0 transition-opacity hover:bg-red-600 group-hover:opacity-100 dark:bg-zinc-700"
-              >
-                <Trash2 className="h-2.5 w-2.5" />
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => photoInputRef.current?.click()}
-              title="上传照片"
-              className="flex h-7 w-7 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-            >
-              <UserCircle className="h-5 w-5" />
-            </button>
-          )}
-        </div>
-
-        <div className="hidden md:block">
-          <TemplateSelector value={templateId} onChange={setTemplateId} />
-        </div>
-
-        <div className="flex-1" />
-
-        <FocusToggle value={focusMode} onChange={setFocusMode} />
-
-        <div className="mx-1 h-6 w-px bg-zinc-200 dark:bg-zinc-800" aria-hidden />
-
-        <button
-          type="button"
-          onClick={() => setDrawerOpen((v) => !v)}
-          aria-pressed={drawerOpen}
-          className={[
-            "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors",
-            drawerOpen
-              ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-              : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800",
-          ].join(" ")}
-        >
-          <Palette className="h-4 w-4" />
-          样式
-        </button>
-
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".md,.markdown,text/markdown"
-          onChange={handleImportMarkdown}
-          className="hidden"
-        />
-        <IconButton title="导入 Markdown" onClick={() => fileInputRef.current?.click()}>
-          <FileUp className="h-4 w-4" />
-        </IconButton>
-        <IconButton title="导出 Markdown" onClick={handleExportMarkdown}>
-          <FileDown className="h-4 w-4" />
-        </IconButton>
-
-        <button
-          onClick={handleExportPdf}
-          disabled={isExporting}
-          className="flex items-center gap-1.5 rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
-        >
-          {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-          导出 PDF
-        </button>
 
         {session?.user ? (
-          <div className="relative">
+          <div ref={userMenuRef} className="relative flex-shrink-0">
             <button
+              ref={userMenuButtonRef}
+              type="button"
               onClick={() => setUserMenuOpen((v) => !v)}
-              className="flex items-center gap-1.5 rounded-full p-0.5 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-              title={session.user.name || ""}
+              aria-label="账户菜单"
+              aria-haspopup="menu"
+              aria-expanded={userMenuOpen}
+              className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 dark:hover:bg-zinc-800"
+              title={session.user.name || "账户菜单"}
             >
               {session.user.image ? (
                 <Image
@@ -585,7 +616,7 @@ export function Editor({ initialResume }: EditorProps) {
               )}
             </button>
             {userMenuOpen && (
-              <div className="absolute right-0 top-full z-30 mt-1 min-w-[160px] rounded-md border border-zinc-200 bg-white py-1 shadow-md dark:border-zinc-800 dark:bg-zinc-900">
+              <div role="menu" className="absolute right-0 top-full z-30 mt-1 min-w-[180px] rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
                 <div className="border-b border-zinc-200 px-3 py-2 dark:border-zinc-800">
                   <div className="truncate text-sm font-medium">{session.user.name}</div>
                   {session.user.email && (
@@ -593,11 +624,13 @@ export function Editor({ initialResume }: EditorProps) {
                   )}
                 </div>
                 <button
+                  type="button"
+                  role="menuitem"
                   onClick={() => {
                     setUserMenuOpen(false);
                     signOut();
                   }}
-                  className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  className="flex min-h-9 w-full items-center gap-2 px-3 text-left text-sm hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-500 dark:hover:bg-zinc-800"
                 >
                   <LogOut className="h-3.5 w-3.5" /> 退出登录
                 </button>
@@ -606,35 +639,137 @@ export function Editor({ initialResume }: EditorProps) {
           </div>
         ) : (
           <button
+            type="button"
             onClick={() => signIn("github")}
-            className="flex items-center gap-1.5 rounded-md border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+            className="min-h-8 rounded-md border border-zinc-300 px-3 text-sm hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 dark:border-zinc-700 dark:hover:bg-zinc-800"
           >
             登录
           </button>
         )}
+        </div>
+
+        <div className="order-3 flex w-full items-center justify-end gap-1.5 border-t border-zinc-200 py-2 dark:border-zinc-800 lg:order-2 lg:w-auto lg:border-0">
+          <FocusToggle value={focusMode} onChange={setFocusMode} />
+
+        <button
+          ref={drawerTriggerRef}
+          type="button"
+          onClick={() => setDrawerOpen((v) => !v)}
+          aria-haspopup="dialog"
+          aria-expanded={drawerOpen}
+          aria-controls="design-drawer"
+          className={[
+            "flex min-h-9 items-center gap-1.5 rounded-md px-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500",
+            drawerOpen
+              ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+              : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800",
+          ].join(" ")}
+        >
+          <Palette className="h-4 w-4" />
+          设计
+        </button>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".md,.markdown,text/markdown"
+            onChange={handleImportMarkdown}
+            className="hidden"
+          />
+          <input
+            ref={photoInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handlePhotoChange}
+            className="hidden"
+          />
+          <div ref={fileMenuRef} className="relative">
+            <IconButton
+              buttonRef={fileMenuButtonRef}
+              title="更多操作"
+              ariaExpanded={fileMenuOpen}
+              onClick={() => setFileMenuOpen((v) => !v)}
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </IconButton>
+            {fileMenuOpen && (
+              <div role="menu" className="absolute right-0 top-full z-30 mt-1 min-w-[190px] rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
+                <MenuButton
+                  icon={<FileUp className="h-4 w-4" />}
+                  label="导入 Markdown"
+                  onClick={() => {
+                    setFileMenuOpen(false);
+                    fileInputRef.current?.click();
+                  }}
+                />
+                <MenuButton
+                  icon={<FileDown className="h-4 w-4" />}
+                  label="导出 Markdown"
+                  onClick={() => {
+                    setFileMenuOpen(false);
+                    handleExportMarkdown();
+                  }}
+                />
+                <div className="my-1 border-t border-zinc-200 dark:border-zinc-800" />
+                <MenuButton
+                  icon={<ImagePlus className="h-4 w-4" />}
+                  label={photo ? "更换照片" : "上传照片"}
+                  onClick={() => {
+                    setFileMenuOpen(false);
+                    photoInputRef.current?.click();
+                  }}
+                />
+                {photo && (
+                  <MenuButton
+                    icon={<Trash2 className="h-4 w-4" />}
+                    label="删除照片"
+                    danger
+                    onClick={() => {
+                      setFileMenuOpen(false);
+                      clearPhoto();
+                    }}
+                  />
+                )}
+              </div>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={handleExportPdf}
+            disabled={isExporting}
+            className="flex min-h-9 items-center gap-1.5 whitespace-nowrap rounded-md bg-zinc-900 px-3 text-sm font-medium text-white shadow-sm hover:bg-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 focus-visible:ring-offset-2 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300 dark:focus-visible:ring-offset-zinc-900"
+          >
+            {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            导出 PDF
+          </button>
+        </div>
       </header>
 
-      <main className="relative flex flex-1 overflow-hidden">
+      <main className="relative flex min-h-0 flex-1 overflow-hidden">
         {showEditor && (
           <div
             className={[
-              "flex flex-col border-r border-zinc-200 dark:border-zinc-800",
-              showPreview ? "w-1/2" : "w-full",
+              "min-w-0 flex-col border-r border-zinc-200 dark:border-zinc-800",
+              showPreview ? "w-1/2 md:flex" : "flex w-full",
+              showPreview && focusMode === "split" ? "flex max-md:w-full" : "",
             ].join(" ")}
           >
+            <label htmlFor="resume-markdown" className="sr-only">Markdown 简历内容</label>
             <textarea
+              id="resume-markdown"
               value={content}
               onChange={(e) => setContent(e.target.value)}
               spellCheck={false}
-              className="flex-1 resize-none bg-white px-6 py-5 font-mono text-[13.5px] leading-[1.65] text-zinc-800 outline-none placeholder:text-zinc-400 dark:bg-zinc-950 dark:text-zinc-200"
+              className="flex-1 resize-none bg-white px-4 py-4 font-mono text-[13.5px] leading-[1.65] text-zinc-800 outline-none placeholder:text-zinc-400 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-500 dark:bg-zinc-950 dark:text-zinc-200 sm:px-6 sm:py-5"
               placeholder={"---\nname: 你的名字\n---\n\n## 工作经历\n..."}
             />
           </div>
         )}
 
         {showPreview && (
-          <div className={`flex flex-col ${showEditor ? "w-1/2" : "w-full"}`}>
-            <div className="flex-1 overflow-auto bg-zinc-200/60 px-6 py-8 dark:bg-zinc-900">
+          <div className={`min-w-0 flex-col ${showEditor ? "w-1/2 md:flex" : "flex w-full"} ${showEditor && focusMode === "split" ? "max-md:hidden" : ""}`}>
+            <div className="flex-1 overflow-auto bg-zinc-200/60 px-3 py-4 dark:bg-zinc-900 sm:px-6 sm:py-8">
               <Preview
                 content={content}
                 templateId={templateId}
@@ -646,20 +781,41 @@ export function Editor({ initialResume }: EditorProps) {
           </div>
         )}
 
-        {/* Style drawer */}
+        {drawerOpen && (
+          <button
+            type="button"
+            aria-label="关闭设计面板"
+            onClick={() => setDrawerOpen(false)}
+            className="absolute inset-0 z-10 cursor-default bg-zinc-950/15 backdrop-blur-[1px]"
+          />
+        )}
+
+        {/* Design drawer */}
         <aside
+          ref={drawerRef}
+          id="design-drawer"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="design-panel-title"
           className={[
-            "absolute right-0 top-0 z-20 flex h-full w-[320px] flex-col border-l border-zinc-200 bg-white shadow-xl transition-transform duration-200 dark:border-zinc-800 dark:bg-zinc-900",
+            "absolute right-0 top-0 z-20 flex h-full w-full flex-col border-l border-zinc-200 bg-white shadow-2xl transition-transform duration-200 motion-reduce:transition-none dark:border-zinc-800 dark:bg-zinc-900 sm:w-[360px]",
             drawerOpen ? "translate-x-0" : "translate-x-full",
           ].join(" ")}
           inert={!drawerOpen}
         >
-          <ThemePanel value={themeVariables} onChange={setThemeVariables} onReset={resetTheme} />
+          <ThemePanel
+            value={themeVariables}
+            templateId={templateId}
+            onTemplateChange={setTemplateId}
+            onChange={setThemeVariables}
+            onReset={resetTheme}
+          />
           <button
+            ref={drawerCloseRef}
             type="button"
             onClick={() => setDrawerOpen(false)}
-            className="absolute right-2 top-2.5 rounded-md p-1 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            aria-label="关闭"
+            className="absolute right-2 top-2.5 flex h-8 w-8 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 dark:hover:bg-zinc-800"
+            aria-label="关闭设计面板"
           >
             <X className="h-4 w-4" />
           </button>
@@ -686,23 +842,59 @@ export function Editor({ initialResume }: EditorProps) {
 }
 
 function IconButton({
+  buttonRef,
   title,
   onClick,
   children,
+  ariaExpanded,
 }: {
+  buttonRef?: React.RefObject<HTMLButtonElement | null>;
   title: string;
   onClick: () => void;
   children: React.ReactNode;
+  ariaExpanded?: boolean;
 }) {
   return (
     <button
+      ref={buttonRef}
       type="button"
       onClick={onClick}
       title={title}
       aria-label={title}
-      className="flex h-8 w-8 items-center justify-center rounded-md text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+      aria-haspopup={ariaExpanded === undefined ? undefined : "menu"}
+      aria-expanded={ariaExpanded}
+      className="flex h-9 w-9 items-center justify-center rounded-md text-zinc-700 hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 dark:text-zinc-300 dark:hover:bg-zinc-800"
     >
       {children}
+    </button>
+  );
+}
+
+function MenuButton({
+  icon,
+  label,
+  onClick,
+  danger = false,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  danger?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      onClick={onClick}
+      className={[
+        "flex min-h-9 w-full items-center gap-2 px-3 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-500",
+        danger
+          ? "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
+          : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800",
+      ].join(" ")}
+    >
+      {icon}
+      {label}
     </button>
   );
 }
@@ -720,7 +912,7 @@ function FocusToggle({
     { id: "preview", icon: <Eye className="h-3.5 w-3.5" />, title: "仅预览" },
   ];
   return (
-    <div className="flex items-center gap-0.5 rounded-md bg-zinc-100 p-0.5 dark:bg-zinc-800">
+    <div role="group" aria-label="工作区视图" className="flex items-center gap-0.5 rounded-md bg-zinc-100 p-0.5 dark:bg-zinc-800">
       {opts.map((o) => (
         <button
           key={o.id}
@@ -729,7 +921,8 @@ function FocusToggle({
           aria-pressed={value === o.id}
           title={o.title}
           className={[
-            "flex h-7 w-7 items-center justify-center rounded transition-colors",
+            "h-8 w-8 items-center justify-center rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500",
+            o.id === "split" ? "hidden md:flex" : "flex",
             value === o.id
               ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-100"
               : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100",

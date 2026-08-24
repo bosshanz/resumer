@@ -1,10 +1,9 @@
 import React from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { ModernHeader } from "@/components/modern-header";
 import { MailIcon, PhoneIcon, GlobeIcon, MapPinIcon, GithubMark, LinkedinMark } from "./icons";
 import { TemplateProps, TemplateBase, mergeThemeVariables } from "./base";
-import { themedMarkdownComponents } from "./markdown";
+import { ResumeMarkdown } from "./resume-markdown";
+import { hasSkills, ResumeSkills } from "./resume-skills";
 import { ThemeVariables } from "../types";
 
 export const developerDefaultTheme: ThemeVariables = {
@@ -88,20 +87,14 @@ export function DeveloperTemplate({ frontmatter, body, themeVariables, photo }: 
         <section className="resume-summary resume-section">{frontmatter.summary}</section>
       )}
 
-      {frontmatter.skills && frontmatter.skills.length > 0 && (
+      {hasSkills(frontmatter.skills) && (
         <section className="resume-skills resume-section" aria-label="skills">
-          {frontmatter.skills.map((s, i) => (
-            <span key={i} className="resume-skill resume-skill-primary">
-              {s}
-            </span>
-          ))}
+          <ResumeSkills skills={frontmatter.skills} />
         </section>
       )}
 
       <section className="resume-body">
-        <ReactMarkdown remarkPlugins={[remarkGfm]} components={themedMarkdownComponents}>
-          {body}
-        </ReactMarkdown>
+        <ResumeMarkdown>{body}</ResumeMarkdown>
       </section>
     </TemplateBase>
   );

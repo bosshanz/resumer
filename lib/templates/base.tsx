@@ -25,6 +25,7 @@ export function buildPageStyle(vars: ThemeVariables): React.CSSProperties {
     paddingRight: vars.marginRight || "20mm",
   };
   if (vars.fontFamily) style.fontFamily = vars.fontFamily;
+  if (vars.headingFontFamily) style["--resume-heading-font"] = vars.headingFontFamily;
   if (vars.textColor) style.color = vars.textColor;
   if (vars.backgroundColor) style.backgroundColor = vars.backgroundColor;
   // Expose theme as CSS custom properties so per-theme CSS can read them.
@@ -32,6 +33,10 @@ export function buildPageStyle(vars: ThemeVariables): React.CSSProperties {
   if (vars.secondaryColor) style["--resume-muted"] = vars.secondaryColor;
   if (vars.textColor) style["--resume-fg"] = vars.textColor;
   if (vars.backgroundColor) style["--resume-bg"] = vars.backgroundColor;
+  style["--resume-pad-top"] = vars.marginTop || "16mm";
+  style["--resume-pad-bottom"] = vars.marginBottom || "16mm";
+  style["--resume-pad-left"] = vars.marginLeft || "20mm";
+  style["--resume-pad-right"] = vars.marginRight || "20mm";
   return style;
 }
 

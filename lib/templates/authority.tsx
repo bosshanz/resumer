@@ -1,8 +1,7 @@
 import React from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { TemplateProps, TemplateBase, mergeThemeVariables } from "./base";
-import { themedMarkdownComponents } from "./markdown";
+import { ResumeMarkdown } from "./resume-markdown";
+import { hasSkills, ResumeSkills } from "./resume-skills";
 import { splitResumeSections } from "./sections";
 import { ThemeVariables } from "../types";
 
@@ -59,10 +58,10 @@ export function AuthorityTemplate({ frontmatter, body, themeVariables, photo }: 
         </section>
       )}
 
-      {frontmatter.skills && frontmatter.skills.length > 0 && (
+      {hasSkills(frontmatter.skills) && (
         <section className="resume-authority-lead resume-section">
           <h2>Skills</h2>
-          <p>{frontmatter.skills.join("  /  ")}</p>
+          <ResumeSkills skills={frontmatter.skills} />
         </section>
       )}
 
@@ -71,9 +70,7 @@ export function AuthorityTemplate({ frontmatter, body, themeVariables, photo }: 
           <section className="resume-authority-section" key={`${section.title}-${index}`}>
             <h2>{section.title}</h2>
             <div className="resume-body resume-authority-section-content">
-              <ReactMarkdown remarkPlugins={[remarkGfm]} components={themedMarkdownComponents}>
-                {section.body}
-              </ReactMarkdown>
+              <ResumeMarkdown>{section.body}</ResumeMarkdown>
             </div>
           </section>
         ))}

@@ -55,15 +55,32 @@ export default async function Home({
   if (!session?.user?.id) {
     return (
       <Providers>
-        <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 px-4 dark:bg-zinc-950">
-          <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm dark:bg-zinc-900">
-            <h1 className="mb-2 text-2xl font-bold">Resumer</h1>
-            <p className="mb-6 text-zinc-600 dark:text-zinc-400">
-              面向程序员的 Markdown 简历生成器。登录后开始编写你的简历。
+        <main className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-zinc-50 px-4 py-10 dark:bg-zinc-950">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(161,161,170,0.16),_transparent_42%)]" aria-hidden />
+          <div className="relative w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-7 shadow-[0_24px_70px_-42px_rgba(24,24,27,0.45)] dark:border-zinc-800 dark:bg-zinc-900 sm:p-8">
+            <div className="mb-6 flex items-center justify-between">
+              <h1 className="text-2xl font-bold tracking-tight">Resumer</h1>
+              <span className="rounded-full border border-zinc-200 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+                Markdown → PDF
+              </span>
+            </div>
+            <p className="text-lg font-medium leading-7 text-zinc-900 dark:text-zinc-100">
+              写内容，设计简历，导出即用。
             </p>
+            <p className="mb-5 mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+              面向程序员的 Markdown 简历工作台。实时预览、多套版式与稳定 PDF 导出都在一个界面里完成。
+            </p>
+            <div className="mb-6 flex flex-wrap gap-2" aria-label="产品能力">
+              {['实时预览', '版式与配色', 'PDF 导出'].map((feature) => (
+                <span key={feature} className="rounded-md bg-zinc-100 px-2.5 py-1.5 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                  {feature}
+                </span>
+              ))}
+            </div>
             <LoginButton githubEnabled={isGithubAuthConfigured()} />
           </div>
-        </div>
+          <p className="relative mt-4 text-xs text-zinc-500 dark:text-zinc-500">你的简历内容会保存在账户中。</p>
+        </main>
       </Providers>
     );
   }

@@ -5,8 +5,8 @@
 
 .theme-grid {
   font-family: var(--font-geist-sans), -apple-system, sans-serif;
-  color: #0a0a0a;
-  background: #ffffff;
+  color: var(--resume-fg, #0a0a0a);
+  background: var(--resume-bg, #ffffff);
   font-feature-settings: "ss01", "cv11";
 }
 
@@ -18,14 +18,14 @@
   grid-template-columns: auto 1fr;
   gap: 1.8em;
   align-items: start;
-  border-bottom: 2px solid #000;
+  border-bottom: 2px solid var(--resume-accent, #000);
   padding-bottom: 1.1em;
   margin-bottom: 1.5em;
 }
 .theme-grid .resume-grid-header .resume-photo {
   width: 30mm;
   height: 30mm;
-  border: 1px solid #000;
+  border: 1px solid var(--resume-accent, #000);
   filter: contrast(1.04);
 }
 .theme-grid .resume-grid-header-text {
@@ -48,7 +48,7 @@
   letter-spacing: -0.04em;
   line-height: 0.95;
   margin: 0 0 0.5em 0;
-  color: #000;
+  color: var(--resume-fg, #000);
 }
 
 .theme-grid .resume-contact-grid {
@@ -66,7 +66,7 @@
 }
 .theme-grid .resume-contact-grid dd {
   margin: 0;
-  color: #0a0a0a;
+  color: var(--resume-fg, #0a0a0a);
 }
 
 .theme-grid .resume-summary {
@@ -75,7 +75,7 @@
   font-weight: 500;
   max-width: 56ch;
   margin: 0 0 1.6em 0;
-  color: #000;
+  color: var(--resume-fg, #000);
 }
 
 .theme-grid .resume-skills {
@@ -106,7 +106,7 @@
   margin-top: 1.8em;
   margin-bottom: 0.7em;
   padding-bottom: 0.3em;
-  border-bottom: 1px solid #000;
+  border-bottom: 1px solid var(--resume-accent, #000);
   position: relative;
 }
 .theme-grid .resume-body h2::before {
@@ -115,7 +115,7 @@
   position: absolute;
   right: 0;
   bottom: 0.3em;
-  color: #0a0a0a;
+  color: var(--resume-fg, #0a0a0a);
   font-size: 1em;
 }
 .theme-grid .resume-body {
@@ -131,7 +131,7 @@
   padding-left: 0.6em;
   letter-spacing: -0.005em;
   line-height: 1.35;
-  color: #000;
+  color: var(--resume-fg, #000);
   position: relative;
 }
 .theme-grid .resume-body h3::before {
@@ -155,7 +155,7 @@
   font-weight: 400;
   margin-top: 0.15em;
   margin-bottom: 0.6em;
-  color: #0a0a0a;
+  color: var(--resume-fg, #0a0a0a);
   opacity: 0.7;
   letter-spacing: 0.02em;
 }
@@ -197,7 +197,7 @@
 
 .theme-grid .resume-body hr {
   border: 0;
-  border-top: 2px solid #000;
+  border-top: 2px solid var(--resume-accent, #000);
   opacity: 1;
   margin: 2em 0 1em;
 }

@@ -13,9 +13,27 @@
   background: white;
   box-sizing: border-box;
   position: relative;
+  /* Repeat padding/background on every printed page fragment. */
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
   /* Bleed-safe rendering for Puppeteer */
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
+  /* Keep browser preview and headless PDF on the same locally available
+     font stack, so glyph widths and pagination do not drift at export. */
+  --font-geist-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-geist-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --font-fraunces: "Iowan Old Style", Georgia, serif;
+  --font-plex-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-plex-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --font-inter-tight: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.resume-page h1,
+.resume-page .resume-body h2,
+.resume-page .resume-body h3,
+.resume-page .resume-body h4 {
+  font-family: var(--resume-heading-font) !important;
 }
 
 @media print {
@@ -61,6 +79,13 @@
   break-after: avoid;
 }
 
+.resume-body h2 + *,
+.resume-body h3 + *,
+.resume-body h4 + * {
+  break-before: avoid;
+  page-break-before: avoid;
+}
+
 .resume-body h2 {
   margin-top: 1.4em;
 }
@@ -70,25 +95,31 @@
 .resume-body h4 {
   margin-top: 0.7em;
 }
-.resume-body h2:first-child,
-.resume-body h3:first-child,
-.resume-body h4:first-child {
+.resume-body > h2:first-child,
+.resume-body > h3:first-child,
+.resume-body > h4:first-child,
+.resume-body > .resume-entry:first-child > h3:first-child {
   margin-top: 0;
 }
 
 .resume-body p {
   margin: 0;
+  orphans: 2;
+  widows: 2;
 }
 .resume-body p + p {
   margin-top: 0.5em;
 }
 
+/* Lists may split between items. Keeping the whole ul unbreakable
+   either jumps a long block to the next page or is ignored, and
+   both read as a torn document. */
 .resume-body ul,
 .resume-body ol {
   margin: 0.4em 0 0 0;
   padding-left: 1.2em;
-  page-break-inside: avoid;
-  break-inside: avoid;
+  break-inside: auto;
+  page-break-inside: auto;
 }
 
 .resume-body ul {
@@ -100,6 +131,37 @@
 
 .resume-body li {
   margin: 0.15em 0;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.resume-entry {
+  display: block;
+}
+
+.resume-body .resume-entry > * + * {
+  margin-top: 0.7em;
+}
+
+.resume-continue {
+  break-after: avoid;
+  page-break-after: avoid;
+  break-inside: avoid;
+  page-break-inside: avoid;
+  margin: 0.85em 0 0.25em;
+  font-weight: 650;
+  font-size: 1.02em;
+}
+
+.resume-body li.resume-continue {
+  list-style: none;
+  padding-left: 0;
+  margin-left: 0;
+}
+
+.resume-body li.resume-continue::before {
+  content: none !important;
+  display: none !important;
 }
 
 .resume-body a {
@@ -135,10 +197,48 @@
   opacity: 0.85;
 }
 
-/* Avoid orphaned headings + first list item splits */
+/* Small front-matter blocks (summary / skills) stay together.
+   The main markdown body is allowed to paginate. */
 .resume-section {
   page-break-inside: avoid;
   break-inside: avoid;
+}
+
+.resume-skill-groups {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.32em;
+}
+
+.resume-skill-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.28em 0.45em;
+}
+
+.resume-skill-group-label {
+  flex: 0 0 auto;
+  min-width: 6.2em;
+  color: var(--resume-muted, #666);
+  font-size: 0.72em;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.resume-skill-group-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.28em 0.35em;
+  min-width: 0;
+}
+
+.resume-skill-tag {
+  display: inline-block;
+  font-size: 0.82em;
+  line-height: 1.35;
 }
 
 /* ============================================================
@@ -154,6 +254,8 @@
   page-break-after: avoid;
   break-after: avoid;
 }
+
+
 .resume-body .resume-subhead strong {
   font-weight: inherit;
 }
@@ -165,6 +267,10 @@
   font-size: 0.82em;
   margin-top: 0.15em;
   opacity: 0.72;
+  break-inside: avoid;
+  page-break-inside: avoid;
+  break-after: avoid;
+  page-break-after: avoid;
 }
 .resume-body h3 + p a {
   text-decoration: none;

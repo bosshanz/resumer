@@ -4,8 +4,8 @@
 
 .theme-editorial {
   font-family: var(--font-fraunces), "Iowan Old Style", Georgia, serif;
-  background: #faf6ed;
-  color: #2a1c10;
+  background: var(--resume-bg, #faf6ed);
+  color: var(--resume-fg, #2a1c10);
   font-feature-settings: "ss01", "ss02";
 }
 
@@ -73,7 +73,7 @@
   letter-spacing: -0.025em;
   font-variation-settings: "opsz" 144, "SOFT" 80;
   margin: 0;
-  color: #1a0e05;
+  color: color-mix(in srgb, var(--resume-fg, #2a1c10) 88%, var(--resume-accent, #3a2415) 12%);
 }
 
 .theme-editorial .resume-photo-figure--editorial {
@@ -102,7 +102,7 @@
   height: 70mm;
   border-radius: 0;
   border: 0;
-  filter: grayscale(1) contrast(1.12) brightness(0.96);
+  filter: contrast(1.12) brightness(0.96);
   display: block;
 }
 .theme-editorial .resume-photo-figure--editorial .resume-photo-caption {
@@ -121,7 +121,7 @@
   font-size: 0.78em;
   text-align: center;
   margin-top: 1em;
-  color: #6a4f30;
+  color: var(--resume-muted, #6a4f30);
   letter-spacing: 0.04em;
 }
 
@@ -159,7 +159,7 @@
   display: flex;
   align-items: center;
   gap: 0.8em;
-  color: #2a1c10;
+  color: var(--resume-fg, #2a1c10);
   font-variation-settings: "opsz" 72, "SOFT" 60;
 }
 .theme-editorial .resume-rule-h2::before,
@@ -173,10 +173,14 @@
   opacity: 0.32;
 }
 
-.theme-editorial .resume-skills p {
+.theme-editorial .resume-skills p,
+.theme-editorial .resume-skills .resume-skill-groups {
   text-align: center;
   margin: 0;
   font-size: 0.95em;
+}
+.theme-editorial .resume-skill-group {
+  justify-content: center;
 }
 
 .theme-editorial .resume-body h3 {

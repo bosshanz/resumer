@@ -1,9 +1,8 @@
 import React from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { ModernHeader } from "@/components/modern-header";
 import { TemplateProps, TemplateBase, mergeThemeVariables } from "./base";
-import { themedMarkdownComponents } from "./markdown";
+import { ResumeMarkdown } from "./resume-markdown";
+import { hasSkills, ResumeSkills } from "./resume-skills";
 import { ThemeVariables } from "../types";
 
 export const editorialDefaultTheme: ThemeVariables = {
@@ -74,17 +73,15 @@ export function EditorialTemplate({ frontmatter, body, themeVariables, photo }: 
         </section>
       )}
 
-      {frontmatter.skills && frontmatter.skills.length > 0 && (
+      {hasSkills(frontmatter.skills) && (
         <section className="resume-skills resume-section">
           <h2 className="resume-rule-h2">Practice</h2>
-          <p>{frontmatter.skills.join(" · ")}</p>
+          <ResumeSkills skills={frontmatter.skills} />
         </section>
       )}
 
       <section className="resume-body">
-        <ReactMarkdown remarkPlugins={[remarkGfm]} components={themedMarkdownComponents}>
-          {body}
-        </ReactMarkdown>
+        <ResumeMarkdown>{body}</ResumeMarkdown>
       </section>
     </TemplateBase>
   );

@@ -1,10 +1,9 @@
 import React from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { ModernHeader } from "@/components/modern-header";
 import { MailIcon, PhoneIcon, GlobeIcon, MapPinIcon, GithubMark, LinkedinMark } from "./icons";
 import { TemplateProps, TemplateBase, mergeThemeVariables } from "./base";
-import { themedMarkdownComponents } from "./markdown";
+import { ResumeMarkdown } from "./resume-markdown";
+import { hasSkills, ResumeSkills } from "./resume-skills";
 import { ThemeVariables } from "../types";
 
 export const techDefaultTheme: ThemeVariables = {
@@ -27,14 +26,11 @@ export function TechTemplate({ frontmatter, body, themeVariables, photo }: Templ
   const c = frontmatter.contact;
   const useModernHeader = vars.photoLayout === "floating-monolith";
 
-  const skillsStrip = frontmatter.skills && frontmatter.skills.length > 0 && (
-    <div className={`resume-skills-strip${useModernHeader ? " resume-skills-strip--modern" : ""}`} aria-label="skills">
-      {frontmatter.skills.map((s, i) => (
-        <span key={i} className="resume-skill-tag">
-          {s}
-        </span>
-      ))}
-    </div>
+  const skillsStrip = hasSkills(frontmatter.skills) && (
+    <ResumeSkills
+      skills={frontmatter.skills}
+      className={`resume-skills-strip${useModernHeader ? " resume-skills-strip--modern" : ""}`}
+    />
   );
 
   return (
@@ -105,9 +101,7 @@ export function TechTemplate({ frontmatter, body, themeVariables, photo }: Templ
       )}
 
       <section className="resume-body">
-        <ReactMarkdown remarkPlugins={[remarkGfm]} components={themedMarkdownComponents}>
-          {body}
-        </ReactMarkdown>
+        <ResumeMarkdown>{body}</ResumeMarkdown>
       </section>
     </TemplateBase>
   );

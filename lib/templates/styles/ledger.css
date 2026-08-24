@@ -68,7 +68,7 @@
 .theme-ledger .resume-ledger-photo .resume-photo {
   width: 100%;
   height: 100%;
-  filter: grayscale(1) contrast(1.03);
+  filter: contrast(1.03);
 }
 
 .theme-ledger .resume-ledger-summary {
@@ -96,7 +96,8 @@
   letter-spacing: 0.1em;
 }
 
-.theme-ledger .resume-ledger-skills p {
+.theme-ledger .resume-ledger-skills p,
+.theme-ledger .resume-ledger-skills .resume-skill-tag {
   margin: 0;
   font-family: var(--font-plex-mono), monospace;
   font-size: 0.84em;

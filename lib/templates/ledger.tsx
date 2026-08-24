@@ -1,8 +1,7 @@
 import React from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { TemplateProps, TemplateBase, mergeThemeVariables } from "./base";
-import { themedMarkdownComponents } from "./markdown";
+import { ResumeMarkdown } from "./resume-markdown";
+import { hasSkills, ResumeSkills } from "./resume-skills";
 import { splitResumeSections } from "./sections";
 import { ThemeVariables } from "../types";
 
@@ -65,10 +64,10 @@ export function LedgerTemplate({ frontmatter, body, themeVariables, photo }: Tem
 
       {frontmatter.summary && <p className="resume-ledger-summary">{frontmatter.summary}</p>}
 
-      {frontmatter.skills && frontmatter.skills.length > 0 && (
+      {hasSkills(frontmatter.skills) && (
         <section className="resume-ledger-skills resume-section" aria-label="skills">
           <span>SKILLS</span>
-          <p>{frontmatter.skills.join(" / ")}</p>
+          <ResumeSkills skills={frontmatter.skills} />
         </section>
       )}
 
@@ -80,9 +79,7 @@ export function LedgerTemplate({ frontmatter, body, themeVariables, photo }: Tem
               <h2>{section.title}</h2>
             </div>
             <div className="resume-body resume-ledger-section-content">
-              <ReactMarkdown remarkPlugins={[remarkGfm]} components={themedMarkdownComponents}>
-                {section.body}
-              </ReactMarkdown>
+              <ResumeMarkdown>{section.body}</ResumeMarkdown>
             </div>
           </section>
         ))}

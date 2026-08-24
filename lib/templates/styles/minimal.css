@@ -5,7 +5,7 @@
 .theme-minimal {
   font-family: var(--font-fraunces), "Iowan Old Style", Georgia, serif;
   font-feature-settings: "ss01", "ss02";
-  color: #111;
+  color: var(--resume-fg, #111);
 }
 
 .theme-minimal .resume-h1 {
@@ -46,7 +46,7 @@
   letter-spacing: -0.01em;
   margin-top: 1.6em;
   padding-bottom: 0.3em;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.18);
+  border-bottom: 1px solid color-mix(in srgb, var(--resume-fg, #111) 18%, transparent);
 }
 
 .theme-minimal .resume-body h3 {
@@ -110,7 +110,7 @@
 .theme-minimal .resume-photo-figure--minimal .resume-photo {
   width: 32mm;
   height: 44mm;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid color-mix(in srgb, var(--resume-fg, #111) 10%, transparent);
   filter: sepia(0.08) contrast(1.02);
   border-radius: 1mm;
 }

@@ -19,9 +19,11 @@ contact:
   linkedin: linkedin.com/in/username
   location: 城市
 skills:
-  - 技能 1
-  - 技能 2
-  - 技能 3
+  AI:
+    - Agent
+    - RAG
+    - Memory
+  Backend: [Java, Kotlin, Go]
 ---
 
 ## 工作经历
@@ -65,10 +67,12 @@ skills:
 | `contact.website` | string | 个人网站 |
 | `contact.linkedin` | string | LinkedIn 地址 |
 | `contact.location` | string | 所在城市 |
-| `skills` | string[] | 技能标签列表 |
+| `skills` | string[] 或 `{ 分类: string[] }` | 技能。数组每一项是一组；对象的 key 是分类名 |
 
 - 所有 contact 字段都是可选的，未填写则不会显示。
-- `skills` 会按模板样式渲染为标签或行内列表。
+- `skills` 支持两种写法，都会按组渲染：
+  - 列表：`- Agent / RAG / Memory`（`/` `·` `,` 会拆成词）
+  - 分类对象：`AI: [Agent, RAG, Memory]`
 
 ---
 

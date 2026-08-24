@@ -1,9 +1,8 @@
 import React from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { MailIcon, PhoneIcon, GlobeIcon, MapPinIcon, GithubMark, LinkedinMark } from "./icons";
 import { TemplateProps, TemplateBase, mergeThemeVariables } from "./base";
-import { themedMarkdownComponents } from "./markdown";
+import { ResumeMarkdown } from "./resume-markdown";
+import { hasSkills, ResumeSkills } from "./resume-skills";
 import { splitResumeSections } from "./sections";
 import { ThemeVariables } from "../types";
 
@@ -78,14 +77,10 @@ export function BlueprintTemplate({ frontmatter, body, themeVariables, photo }: 
               <p>{frontmatter.summary}</p>
             </section>
           )}
-          {frontmatter.skills && frontmatter.skills.length > 0 && (
+          {hasSkills(frontmatter.skills) && (
             <section className="resume-blueprint-panel resume-section">
               <h2>Core Stack</h2>
-              <ul>
-                {frontmatter.skills.map((skill) => (
-                  <li key={skill}>{skill}</li>
-                ))}
-              </ul>
+              <ResumeSkills skills={frontmatter.skills} />
             </section>
           )}
           <section className="resume-blueprint-panel resume-blueprint-meta resume-section">
@@ -109,9 +104,7 @@ export function BlueprintTemplate({ frontmatter, body, themeVariables, photo }: 
                 <span>C.{String(index + 1).padStart(2, "0")}</span>
               </div>
               <div className="resume-body resume-blueprint-section-content">
-                <ReactMarkdown remarkPlugins={[remarkGfm]} components={themedMarkdownComponents}>
-                  {section.body}
-                </ReactMarkdown>
+                <ResumeMarkdown>{section.body}</ResumeMarkdown>
               </div>
             </section>
           ))}

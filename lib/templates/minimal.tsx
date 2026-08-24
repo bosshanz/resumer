@@ -1,9 +1,8 @@
 import React from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { ModernHeader } from "@/components/modern-header";
 import { TemplateProps, TemplateBase, mergeThemeVariables } from "./base";
-import { themedMarkdownComponents } from "./markdown";
+import { ResumeMarkdown } from "./resume-markdown";
+import { hasSkills, ResumeSkills } from "./resume-skills";
 import { ThemeVariables } from "../types";
 
 export const minimalDefaultTheme: ThemeVariables = {
@@ -85,21 +84,17 @@ export function MinimalTemplate({ frontmatter, body, themeVariables, photo }: Te
         </section>
       )}
 
-      {frontmatter.skills && frontmatter.skills.length > 0 && (
+      {hasSkills(frontmatter.skills) && (
         <section className="resume-section" style={{ marginBottom: "1.8em" }}>
           <div className="resume-eyebrow" style={{ marginBottom: "0.4em" }}>
             Skills
           </div>
-          <p style={{ margin: 0, fontSize: "0.96em", lineHeight: 1.55 }}>
-            {frontmatter.skills.join(" · ")}
-          </p>
+          <ResumeSkills skills={frontmatter.skills} />
         </section>
       )}
 
       <section className="resume-body">
-        <ReactMarkdown remarkPlugins={[remarkGfm]} components={themedMarkdownComponents}>
-          {body}
-        </ReactMarkdown>
+        <ResumeMarkdown>{body}</ResumeMarkdown>
       </section>
     </TemplateBase>
   );
