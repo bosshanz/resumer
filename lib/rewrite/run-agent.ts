@@ -5,7 +5,7 @@ import { createModels } from "@earendil-works/pi-ai";
 import { deepseekProvider } from "@earendil-works/pi-ai/providers/deepseek";
 import { AGENT_TIMEOUT_MS, MAX_AGENT_TURNS } from "./limits";
 import { REWRITE_SKILL } from "./skill";
-import { createRewriteTools, RewriteToolContext } from "./tools";
+import { createRewriteTools, createToolContext, ToolTraceEntry } from "./tools";
 import { RewriteAgentResult } from "./types";
 
 export class RewriteConfigError extends Error {
@@ -60,12 +60,11 @@ export async function runRewriteAgent(input: {
     throw new RewriteConfigError(`未知 DeepSeek 模型：${resolveModelId()}`);
   }
 
-  const ctx: RewriteToolContext = {
+  const ctx = createToolContext({
     sourceContent: input.sourceContent,
     currentDraft: input.currentDraft || "",
     markdownRules: input.markdownRules || readMarkdownRules(),
-    submitted: { draft: null },
-  };
+  });
 
   let turns = 0;
   const agent = new Agent({
@@ -101,6 +100,23 @@ export async function runRewriteAgent(input: {
     return { draft: ctx.submitted.draft, turns };
   }
 
-  const errorMessage = agent.state.errorMessage;
-  throw new RewriteAgentError(errorMessage || "模型没有提交建议稿，请重试。");
+  throw new RewriteAgentError(buildFailureMessage(ctx, agent.state.errorMessage));
+}
+
+function summarizeTrace(trace: ToolTraceEntry[]): string {
+  if (trace.length === 0) return "没有任何工具调用";
+  const counts = new Map<string, number>();
+  for (const entry of trace) counts.set(entry.tool, (counts.get(entry.tool) || 0) + 1);
+  return [...counts].map(([tool, count]) => `${tool}×${count}`).join("、");
+}
+
+function buildFailureMessage(ctx: ReturnType<typeof createToolContext>, errorMessage?: string): string {
+  if (ctx.submitAttempts > 0) {
+    const errors = ctx.lastSubmitErrors.slice(0, 3).join("；") || "未知错误";
+    return `模型连续 ${ctx.submitAttempts} 次提交建议稿都未通过校验，最后一次错误：${errors}。请调整改写要求后重试。`;
+  }
+  if (errorMessage) {
+    return `模型请求失败：${errorMessage}`;
+  }
+  return `模型在 ${MAX_AGENT_TURNS} 轮内没有提交建议稿（${summarizeTrace(ctx.trace)}），请重试。`;
 }
