@@ -5,10 +5,12 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Preview } from "./preview";
 import { ThemePanel } from "./theme-panel";
-import { ResumeSelector, ResumeListItem } from "./resume-selector";
+import { ResumeSelector } from "./resume-selector";
+import type { ResumeListItem } from "@/lib/resumes";
 import { ConfirmDialog } from "./confirm-dialog";
 import { RewritePanel, RewritePreviewState } from "./rewrite-panel";
 import { Resume, ThemeVariables } from "@/lib/types";
+import { PageFit } from "@/lib/page-fit";
 import { EditorDrawer, editorDrawerClassName, toggleEditorDrawer } from "@/lib/editor-drawer";
 import { getDefaultTheme } from "@/lib/templates";
 import {
@@ -60,6 +62,7 @@ export function Editor({ initialResume }: EditorProps) {
   const drawerOpen = drawer === "design";
   const rewriteOpen = drawer === "rewrite";
   const [rewritePreview, setRewritePreview] = useState<RewritePreviewState | null>(null);
+  const [pageFit, setPageFit] = useState<PageFit | null>(null);
   const [focusMode, setFocusMode] = useState<FocusMode>("split");
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [fileMenuOpen, setFileMenuOpen] = useState(false);
@@ -819,7 +822,21 @@ export function Editor({ initialResume }: EditorProps) {
                 themeVariables={themeVariables}
                 photo={photo}
                 scale={showEditor ? 0.82 : 1}
+                onPageFit={setPageFit}
               />
+              {pageFit && (
+                <span
+                  className={[
+                    "pointer-events-none absolute bottom-3 right-3 z-20 rounded-full border px-2.5 py-1 text-[11px] font-medium shadow-sm",
+                    pageFit.status === "slight-overflow"
+                      ? "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950/70 dark:text-amber-300"
+                      : "border-zinc-200 bg-white/90 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800/90 dark:text-zinc-300",
+                  ].join(" ")}
+                  title="按当前主题字号与行高估算的页数和剩余空间"
+                >
+                  {pageFit.label}
+                </span>
+              )}
             </div>
           </div>
         )}
@@ -879,7 +896,12 @@ export function Editor({ initialResume }: EditorProps) {
       <ConfirmDialog
         open={!!deleteTarget}
         title="删除简历"
-        message={`确定要删除「${deleteTarget?.title?.trim() || "未命名简历"}」吗？此操作无法撤销。`}
+        message={
+          `确定要删除「${deleteTarget?.title?.trim() || "未命名简历"}」吗？此操作无法撤销。` +
+          (deleteTarget && resumes.some((r) => r.parentId === deleteTarget.id)
+            ? "其下的改写/副本变体会保留为独立简历。"
+            : "")
+        }
         confirmLabel="删除"
         cancelLabel="取消"
         confirmVariant="danger"

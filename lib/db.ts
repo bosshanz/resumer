@@ -52,6 +52,8 @@ export function initDb() {
       template_id TEXT NOT NULL DEFAULT 'minimal',
       theme_variables TEXT NOT NULL DEFAULT '{}',
       photo TEXT,
+      parent_id TEXT,
+      origin_note TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
@@ -66,6 +68,20 @@ export function initDb() {
   } catch {
     // Column already exists
   }
+
+  // Migration: variant lineage (改写另存/手动复制 → 母本)
+  // 索引必须在列存在之后创建：老库先走 ALTER，新库建表时已带列
+  try {
+    database.exec(`ALTER TABLE resumes ADD COLUMN parent_id TEXT`);
+  } catch {
+    // Column already exists
+  }
+  try {
+    database.exec(`ALTER TABLE resumes ADD COLUMN origin_note TEXT`);
+  } catch {
+    // Column already exists
+  }
+  database.exec(`CREATE INDEX IF NOT EXISTS idx_resumes_parent_id ON resumes(parent_id)`);
 }
 
 export { db as _db };

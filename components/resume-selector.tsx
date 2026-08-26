@@ -1,13 +1,10 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
-import { ChevronDown, Plus, Copy, Trash2, FileText, Loader2 } from "lucide-react";
+import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { ChevronDown, Plus, Copy, Trash2, FileText, GitBranch, Loader2 } from "lucide-react";
+import { groupResumesByRoot, ResumeListItem } from "@/lib/resumes";
 
-export interface ResumeListItem {
-  id: string;
-  title: string;
-  updatedAt: string;
-}
+export type { ResumeListItem };
 
 interface ResumeSelectorProps {
   resumes: ResumeListItem[];
@@ -39,9 +36,13 @@ export function ResumeSelector({
   const triggerId = useId();
   const pendingFocusRef = useRef<"first" | "last" | null>(null);
 
-  const current = resumes.find((r) => r.id === currentId);
+  // 变体缩进挂在母本之下；键盘导航仍走一份平铺列表
+  const groups = useMemo(() => groupResumesByRoot(resumes), [resumes]);
+  const flat = useMemo(() => groups.flatMap((group) => [group.root, ...group.variants]), [groups]);
+
+  const current = flat.find((r) => r.id === currentId);
   const displayTitle = current?.title?.trim() || "未命名简历";
-  const currentIndex = resumes.findIndex((resume) => resume.id === currentId);
+  const currentIndex = flat.findIndex((resume) => resume.id === currentId);
 
   function getNavigationItems() {
     return Array.from(
@@ -158,6 +159,65 @@ export function ResumeSelector({
     }
   }
 
+  function renderRow(resume: ResumeListItem, index: number, isVariant: boolean) {
+    const active = resume.id === currentId;
+    const title = resume.title?.trim() || "未命名简历";
+    const tooltip = isVariant && resume.originNote
+      ? `${title}（来自：${resume.originNote}）`
+      : title;
+    return (
+      <div
+        key={resume.id}
+        role="presentation"
+        className={[
+          "group flex items-center justify-between gap-2 rounded-md px-2.5 py-2 text-sm",
+          isVariant ? "ml-5" : "",
+          active
+            ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
+            : "text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800/60",
+        ].join(" ")}
+      >
+        <button
+          type="button"
+          role="menuitemradio"
+          aria-checked={active}
+          data-menu-navigation-item="true"
+          data-testid="resume-item"
+          tabIndex={activeIndex === index ? 0 : -1}
+          onClick={() => {
+            closeMenu(true);
+            onSelect(resume.id);
+          }}
+          onFocus={() => setActiveIndex(index)}
+          title={tooltip}
+          className="flex min-w-0 flex-1 items-center gap-2 text-left"
+        >
+          {isVariant ? (
+            <GitBranch className="h-3 w-3 flex-shrink-0 text-zinc-400 dark:text-zinc-500" />
+          ) : (
+            <FileText className="h-3.5 w-3.5 flex-shrink-0 text-zinc-400 dark:text-zinc-500" />
+          )}
+          <span className="truncate">{title}</span>
+        </button>
+
+        <button
+          type="button"
+          role="menuitem"
+          aria-label={`删除 ${title}`}
+          title={`删除 ${title}`}
+          data-testid="delete-resume-button"
+          onClick={() => {
+            closeMenu(true);
+            onDelete(resume.id);
+          }}
+          className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded text-zinc-400 opacity-0 transition-opacity hover:bg-red-50 hover:text-red-600 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/60 group-hover:opacity-100 dark:text-zinc-500 dark:hover:bg-red-950/30 dark:hover:text-red-400"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div ref={containerRef} className="relative">
       <button
@@ -204,60 +264,19 @@ export function ResumeSelector({
           className="absolute right-0 top-full z-40 mt-1.5 w-[min(280px,calc(100vw-24px))] rounded-lg border border-zinc-200 bg-white py-1.5 shadow-lg dark:border-zinc-800 dark:bg-zinc-900"
         >
           <div role="presentation" className="max-h-[320px] overflow-y-auto px-1.5">
-            {resumes.length === 0 ? (
+            {flat.length === 0 ? (
               <div className="px-3 py-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
                 暂无简历
               </div>
             ) : (
-              resumes.map((resume, resumeIndex) => {
-                const active = resume.id === currentId;
-                const title = resume.title?.trim() || "未命名简历";
-                return (
-                  <div
-                    key={resume.id}
-                    role="presentation"
-                    className={[
-                      "group flex items-center justify-between gap-2 rounded-md px-2.5 py-2 text-sm",
-                      active
-                        ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
-                        : "text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800/60",
-                    ].join(" ")}
-                  >
-                    <button
-                      type="button"
-                      role="menuitemradio"
-                      aria-checked={active}
-                      data-menu-navigation-item="true"
-                      data-testid="resume-item"
-                      tabIndex={activeIndex === resumeIndex ? 0 : -1}
-                      onClick={() => {
-                        closeMenu(true);
-                        onSelect(resume.id);
-                      }}
-                      onFocus={() => setActiveIndex(resumeIndex)}
-                      className="flex min-w-0 flex-1 items-center gap-2 text-left"
-                    >
-                      <FileText className="h-3.5 w-3.5 flex-shrink-0 text-zinc-400 dark:text-zinc-500" />
-                      <span className="truncate">{title}</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      role="menuitem"
-                      aria-label={`删除 ${title}`}
-                      title={`删除 ${title}`}
-                      data-testid="delete-resume-button"
-                      onClick={() => {
-                        closeMenu(true);
-                        onDelete(resume.id);
-                      }}
-                      className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded text-zinc-400 opacity-0 transition-opacity hover:bg-red-50 hover:text-red-600 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/60 group-hover:opacity-100 dark:text-zinc-500 dark:hover:bg-red-950/30 dark:hover:text-red-400"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                );
-              })
+              groups.map((group) => (
+                <div key={group.root.id} role="presentation">
+                  {renderRow(group.root, flat.findIndex((r) => r.id === group.root.id), false)}
+                  {group.variants.map((variant) =>
+                    renderRow(variant, flat.findIndex((r) => r.id === variant.id), true)
+                  )}
+                </div>
+              ))
             )}
           </div>
 
@@ -269,13 +288,13 @@ export function ResumeSelector({
               type="button"
               role="menuitem"
               data-menu-navigation-item="true"
-              tabIndex={activeIndex === resumes.length ? 0 : -1}
+              tabIndex={activeIndex === flat.length ? 0 : -1}
               data-testid="create-resume-button"
               onClick={() => {
                 closeMenu(true);
                 onCreate();
               }}
-              onFocus={() => setActiveIndex(resumes.length)}
+              onFocus={() => setActiveIndex(flat.length)}
               className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800/60"
             >
               <Plus className="h-3.5 w-3.5" />
@@ -285,13 +304,13 @@ export function ResumeSelector({
               type="button"
               role="menuitem"
               data-menu-navigation-item="true"
-              tabIndex={activeIndex === resumes.length + 1 ? 0 : -1}
+              tabIndex={activeIndex === flat.length + 1 ? 0 : -1}
               data-testid="duplicate-resume-button"
               onClick={() => {
                 closeMenu(true);
                 onDuplicate();
               }}
-              onFocus={() => setActiveIndex(resumes.length + 1)}
+              onFocus={() => setActiveIndex(flat.length + 1)}
               className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800/60"
             >
               <Copy className="h-3.5 w-3.5" />

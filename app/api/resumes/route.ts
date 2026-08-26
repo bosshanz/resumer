@@ -24,9 +24,11 @@ export async function GET() {
 
   const resumes = db
     .prepare(
-      `SELECT id, title, template_id as templateId, updated_at as updatedAt FROM resumes WHERE user_id = ? ORDER BY updated_at DESC`
+      `SELECT id, title, template_id as templateId, updated_at as updatedAt,
+              parent_id as parentId, origin_note as originNote
+       FROM resumes WHERE user_id = ? ORDER BY updated_at DESC`
     )
-    .all(session.user.id) as { id: string; title: string; templateId: string; updatedAt: string }[];
+    .all(session.user.id) as { id: string; title: string; templateId: string; updatedAt: string; parentId?: string; originNote?: string }[];
 
   return NextResponse.json({ resumes });
 }
@@ -54,6 +56,7 @@ export async function POST(request: Request) {
   let templateId = "minimal";
   let themeVariables = JSON.stringify({});
   let photo: string | null = null;
+  let parentId: string | null = null;
 
   if (parsed.data.sourceResumeId) {
     const source = db
@@ -70,12 +73,14 @@ export async function POST(request: Request) {
     templateId = String(source.template_id);
     themeVariables = String(source.theme_variables);
     photo = source.photo ? String(source.photo) : null;
+    // 复制视为手动分叉：与被复制简历（及其母本下的所有变体）归到同一组
+    parentId = source.parent_id ? String(source.parent_id) : String(parsed.data.sourceResumeId);
   }
 
   const id = crypto.randomUUID();
   db.prepare(
-    `INSERT INTO resumes (id, user_id, title, content, template_id, theme_variables, photo) VALUES (?, ?, ?, ?, ?, ?, ?)`
-  ).run(id, session.user.id, title, content, templateId, themeVariables, photo);
+    `INSERT INTO resumes (id, user_id, title, content, template_id, theme_variables, photo, parent_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(id, session.user.id, title, content, templateId, themeVariables, photo, parentId);
 
   const resume = db
     .prepare(`SELECT * FROM resumes WHERE id = ?`)

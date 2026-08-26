@@ -62,6 +62,10 @@ export interface Resume {
   templateId: string;
   themeVariables: ThemeVariables;
   photo?: string;
+  /** 变体溯源：指向最初的母本；母本本身为空 */
+  parentId?: string;
+  /** 变体的来源说明，例如改写时的 JD 首行摘要 */
+  originNote?: string;
   createdAt: string;
   updatedAt: string;
 }

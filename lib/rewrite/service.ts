@@ -1,6 +1,6 @@
 import type Database from "better-sqlite3";
 import crypto from "crypto";
-import { normalizeResume } from "../resumes";
+import { normalizeResume, briefVariantLabel } from "../resumes";
 import { Resume } from "../types";
 import { briefError } from "./brief";
 import {
@@ -179,13 +179,19 @@ export function applyRewrite(
 
   const source = requireOwnedResume(db, session.sourceResumeId, input.userId);
   const sourceTitle = String(source.title || "未命名简历");
-  const title = `${sourceTitle} · 改写`.slice(0, 200);
+  // 变体统一锚到最初的母本而不是直接底稿，保证多次改写/复制都归在同一组
+  const parentId = source.parent_id ? String(source.parent_id) : String(source.id);
+  const label = briefVariantLabel(session.brief);
+  const title = label
+    ? `${sourceTitle} · 改写 · ${label}`.slice(0, 200)
+    : `${sourceTitle} · 改写`.slice(0, 200);
+  const originNote = briefVariantLabel(session.brief, 40) || session.brief.slice(0, 40).trim();
   const id = crypto.randomUUID();
 
   const apply = db.transaction(() => {
     db.prepare(
-      `INSERT INTO resumes (id, user_id, title, content, template_id, theme_variables, photo)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO resumes (id, user_id, title, content, template_id, theme_variables, photo, parent_id, origin_note)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(
       id,
       input.userId,
@@ -193,7 +199,9 @@ export function applyRewrite(
       session.draftContent,
       String(source.template_id),
       String(source.theme_variables),
-      source.photo ? String(source.photo) : null
+      source.photo ? String(source.photo) : null,
+      parentId,
+      originNote || null
     );
     updateRewriteSession(db, session.id, input.userId, {
       status: "applied",

@@ -15,6 +15,8 @@ function setup() {
       template_id TEXT NOT NULL,
       theme_variables TEXT NOT NULL,
       photo TEXT,
+      parent_id TEXT,
+      origin_note TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
@@ -49,11 +51,41 @@ describe("rewrite service apply/discard", () => {
     };
 
     expect(result.resume.id).not.toBe("resume-1");
-    expect(result.resume.title).toBe("底稿 · 改写");
+    expect(result.resume.title).toBe("底稿 · 改写 · 招聘前端工程师，要求 React…");
     expect(result.resume.content).toContain("前端工程师");
     expect(result.session.status).toBe("applied");
     expect(source.title).toBe("底稿");
     expect(source.content).toBe("---\nname: 张三\n---\n");
+  });
+
+  it("另存的变体锚定到最初的母本并记录来源摘要", () => {
+    const db = setup();
+    const session = createRewriteSession(db, {
+      userId: "user-1",
+      sourceResumeId: "resume-1",
+      brief: "## 字节 · 高级前端\n负责交易中台。",
+    });
+    updateRewriteSession(db, session.id, "user-1", {
+      status: "ready",
+      draftContent: "---\nname: 张三\n---\n",
+    });
+
+    const first = applyRewrite(db, { userId: "user-1", sessionId: session.id });
+    expect(first.resume.parentId).toBe("resume-1");
+    expect(first.resume.originNote).toBe("字节 · 高级前端");
+
+    // 再对变体本身做一次改写：仍应归到同一母本，而不是挂在变体下面
+    const secondSession = createRewriteSession(db, {
+      userId: "user-1",
+      sourceResumeId: first.resume.id,
+      brief: "微信 · 小程序方向",
+    });
+    updateRewriteSession(db, secondSession.id, "user-1", {
+      status: "ready",
+      draftContent: "---\nname: 张三\n---\n",
+    });
+    const second = applyRewrite(db, { userId: "user-1", sessionId: secondSession.id });
+    expect(second.resume.parentId).toBe("resume-1");
   });
 
   it("拒绝把别人的会话另存下来", () => {

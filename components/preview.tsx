@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { parseResumeContent } from "@/lib/parser";
 import { getTemplate } from "@/lib/templates";
 import { ThemeVariables } from "@/lib/types";
@@ -9,6 +9,7 @@ import {
   getPageGeometry,
   seamOffsetsMm,
 } from "@/lib/pagination";
+import { describePageFit, estimateLineHeightMm, PageFit } from "@/lib/page-fit";
 import { fitPreviewScale } from "@/lib/preview-scale";
 
 interface PreviewProps {
@@ -17,6 +18,7 @@ interface PreviewProps {
   themeVariables: ThemeVariables;
   photo?: string;
   scale?: number;
+  onPageFit?: (fit: PageFit | null) => void;
 }
 
 function PageSeams({
@@ -43,7 +45,7 @@ function PageSeams({
   );
 }
 
-export function Preview({ content, templateId, themeVariables, photo, scale = 1 }: PreviewProps) {
+export function Preview({ content, templateId, themeVariables, photo, scale = 1, onPageFit }: PreviewProps) {
   const { frontmatter, body, frontmatterError } = parseResumeContent(content);
   const template = getTemplate(templateId) || getTemplate("minimal")!;
   const mergedTheme = { ...template.defaultTheme, ...themeVariables };
@@ -54,6 +56,11 @@ export function Preview({ content, templateId, themeVariables, photo, scale = 1 
   const [pageWidth, setPageWidth] = useState(0);
   const [renderScale, setRenderScale] = useState(scale);
   const [scaledSize, setScaledSize] = useState({ width: 0, height: 0 });
+  // 上报回调走 ref：编辑器传入的 setState 是稳定的，但避免它出现在测量 effect 的依赖里
+  const onPageFitRef = useRef(onPageFit);
+  useEffect(() => {
+    onPageFitRef.current = onPageFit;
+  }, [onPageFit]);
 
   useLayoutEffect(() => {
     const viewport = viewportRef.current;
@@ -61,6 +68,7 @@ export function Preview({ content, templateId, themeVariables, photo, scale = 1 
     const page = wrap?.querySelector(".resume-page");
     if (!viewport || !wrap || !(page instanceof HTMLElement)) {
       setSeams([]);
+      onPageFitRef.current?.(null);
       return;
     }
 
@@ -89,6 +97,13 @@ export function Preview({ content, templateId, themeVariables, photo, scale = 1 
           page: index + 2,
         }))
       );
+      onPageFitRef.current?.(
+        describePageFit({
+          flowHeightMm,
+          lineMm: estimateLineHeightMm({ ...template.defaultTheme, ...themeVariables }),
+          geometry,
+        })
+      );
     };
 
     measure();
@@ -98,6 +113,7 @@ export function Preview({ content, templateId, themeVariables, photo, scale = 1 
 
     return () => {
       observer.disconnect();
+      onPageFitRef.current?.(null);
     };
   }, [content, template.id, themeKey, themeVariables, photo, scale, template.defaultTheme]);
 
