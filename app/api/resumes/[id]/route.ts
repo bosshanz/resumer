@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { getDatabase, initDb } from "@/lib/db";
 import { deleteRewriteSessionsForResume } from "@/lib/rewrite/sessions";
 import { normalizeResume } from "@/lib/resumes";
+import { deleteResumeVersionsForResume, snapshotIfDue } from "@/lib/resume-versions";
 import { themeVariablesSchema } from "@/lib/types";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -18,6 +19,8 @@ const updateSchema = z.object({
   templateId: z.string().min(1).optional(),
   themeVariables: themeVariablesSchema.optional(),
   photo: z.string().optional(),
+  // 手动保存（Cmd/Ctrl+S）传 true：跳过快照间隔限制，立即留档
+  snapshot: z.boolean().optional(),
 });
 
 async function getResumeForUser(resumeId: string, userId: string) {
@@ -105,6 +108,16 @@ export async function PATCH(
   db.prepare(`UPDATE resumes SET ${updates.join(", ")} WHERE id = ?`).run(...values);
 
   const resume = db.prepare(`SELECT * FROM resumes WHERE id = ?`).get(id) as Record<string, unknown>;
+  snapshotIfDue(db, {
+    resumeId: id,
+    userId: session.user.id,
+    manual: parsed.data.snapshot === true,
+    title: String(resume.title ?? ""),
+    content: String(resume.content ?? ""),
+    templateId: String(resume.template_id ?? "minimal"),
+    themeVariables: String(resume.theme_variables ?? "{}"),
+    photo: resume.photo ? String(resume.photo) : null,
+  });
   return NextResponse.json({ resume: normalizeResume(resume) });
 }
 
@@ -125,6 +138,7 @@ export async function DELETE(
 
   const remove = db.transaction(() => {
     deleteRewriteSessionsForResume(db, id);
+    deleteResumeVersionsForResume(db, id);
     db.prepare(`DELETE FROM resumes WHERE id = ?`).run(id);
   });
   remove();

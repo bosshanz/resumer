@@ -8,6 +8,7 @@ import { ThemePanel } from "./theme-panel";
 import { ResumeSelector } from "./resume-selector";
 import type { ResumeListItem } from "@/lib/resumes";
 import { ConfirmDialog } from "./confirm-dialog";
+import { HistoryDialog } from "./history-dialog";
 import { RewritePanel, RewritePreviewState } from "./rewrite-panel";
 import { Resume, ThemeVariables } from "@/lib/types";
 import { PageFit } from "@/lib/page-fit";
@@ -28,6 +29,7 @@ import {
   MoreHorizontal,
   ImagePlus,
   AlertCircle,
+  History,
   Target,
 } from "lucide-react";
 import Image from "next/image";
@@ -70,6 +72,7 @@ export function Editor({ initialResume }: EditorProps) {
   const [resumes, setResumes] = useState<ResumeListItem[]>([]);
   const [isSwitching, setIsSwitching] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<ResumeListItem | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -104,7 +107,7 @@ export function Editor({ initialResume }: EditorProps) {
   const setPhoto = useCallback((v: string | undefined) => { setPhotoState(v); markUnsaved(); }, [markUnsaved]);
 
   const saveResume = useCallback(
-    async (data: Partial<SavePayload>): Promise<boolean> => {
+    async (data: Partial<SavePayload>, options?: { snapshot?: boolean }): Promise<boolean> => {
       setSaveStatus("saving");
       const resumeId = currentResumeId;
       const run = saveChainRef.current.then(async () => {
@@ -112,7 +115,7 @@ export function Editor({ initialResume }: EditorProps) {
           const res = await fetch(`/api/resumes/${resumeId}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data),
+            body: JSON.stringify(options?.snapshot ? { ...data, snapshot: true } : data),
           });
           if (!res.ok) throw new Error("Save failed");
           // 保存期间可能已切换简历，此时不要把旧简历的数据混入新快照
@@ -531,7 +534,8 @@ export function Editor({ initialResume }: EditorProps) {
         e.preventDefault();
         const diff = diffPayload();
         if (diff) {
-          saveResume(diff);
+          // 手动保存是有意的锚点：服务端立即留一份历史版本
+          saveResume(diff, { snapshot: true });
         } else {
           setSaveStatus((s) => (s === "unsaved" ? "saved" : s));
         }
@@ -565,7 +569,7 @@ export function Editor({ initialResume }: EditorProps) {
                 type="button"
                 onClick={() => {
                   const diff = diffPayload();
-                  if (diff) saveResume(diff);
+                  if (diff) saveResume(diff, { snapshot: true });
                 }}
                 title="点击重试保存"
                 className={`flex min-h-7 items-center gap-1 rounded-full bg-red-50 px-2 text-[11px] font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:bg-red-950/50 ${saveIndicator.tone}`}
@@ -740,6 +744,14 @@ export function Editor({ initialResume }: EditorProps) {
                     handleExportMarkdown();
                   }}
                 />
+                <MenuButton
+                  icon={<History className="h-4 w-4" />}
+                  label="历史版本…"
+                  onClick={() => {
+                    setFileMenuOpen(false);
+                    setHistoryOpen(true);
+                  }}
+                />
                 <div className="my-1 border-t border-zinc-200 dark:border-zinc-800" />
                 <MenuButton
                   icon={<ImagePlus className="h-4 w-4" />}
@@ -892,6 +904,20 @@ export function Editor({ initialResume }: EditorProps) {
           }}
         />
       </main>
+
+      {historyOpen && (
+        <HistoryDialog
+          resumeId={currentResumeId}
+          onClose={() => setHistoryOpen(false)}
+          onRestore={(resume) => {
+            applyResume(resume);
+            setResumes((prev) =>
+              prev.map((r) => (r.id === resume.id ? { ...r, title: resume.title } : r))
+            );
+            setHistoryOpen(false);
+          }}
+        />
+      )}
 
       <ConfirmDialog
         open={!!deleteTarget}
