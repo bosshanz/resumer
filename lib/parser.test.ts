@@ -9,8 +9,17 @@ describe("parseResumeContent", () => {
     expect(frontmatterError).toBeUndefined();
     expect(frontmatter.name).toBe("张三");
     expect(frontmatter.contact?.email).toBe("zhangsan@example.com");
+    expect(frontmatter.basics).toEqual({ 性别: "男", 学历: "本科" });
     expect(frontmatter.skills).toContain("React / Next.js");
     expect(body.startsWith("## 工作经历")).toBe(true);
+  });
+
+  it("解析 basics 键值，数字值会被转成字符串", () => {
+    const raw = "---\nname: 李四\nbasics:\n  性别: 女\n  学历: 硕士\n  工作年限: 5\n---\n\n正文";
+    const { frontmatter, frontmatterError } = parseResumeContent(raw);
+
+    expect(frontmatterError).toBeUndefined();
+    expect(frontmatter.basics).toEqual({ 性别: "女", 学历: "硕士", 工作年限: "5" });
   });
 
   it("没有 frontmatter 时按纯 Markdown 处理", () => {

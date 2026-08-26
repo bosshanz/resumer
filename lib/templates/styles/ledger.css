@@ -3,7 +3,7 @@
    ============================================================ */
 
 .theme-ledger {
-  font-family: var(--font-plex-sans), -apple-system, sans-serif;
+  font-family: var(--font-plex-sans), -apple-system, var(--resume-cjk-sans);
   color: var(--resume-fg, #111214);
   background: var(--resume-bg, #ffffff);
   font-feature-settings: "tnum" 1, "ss01" 1;
@@ -21,7 +21,7 @@
 .theme-ledger .resume-ledger-role {
   margin: 0 0 4mm;
   color: var(--resume-accent, #d42c24);
-  font-family: var(--font-plex-mono), monospace;
+  font-family: var(--font-plex-mono), var(--resume-cjk-mono);
   font-size: 0.78em;
   font-weight: 600;
   letter-spacing: 0.12em;
@@ -30,7 +30,7 @@
 
 .theme-ledger .resume-ledger-identity h1 {
   margin: 0;
-  font-family: var(--font-inter-tight), -apple-system, sans-serif;
+  font-family: var(--font-inter-tight), -apple-system, var(--resume-cjk-sans);
   font-size: 4.7em;
   font-weight: 700;
   letter-spacing: -0.075em;
@@ -42,7 +42,7 @@
   grid-template-columns: auto 1fr;
   gap: 2.2mm 5mm;
   margin: 8mm 0 0;
-  font-family: var(--font-plex-mono), monospace;
+  font-family: var(--font-plex-mono), var(--resume-cjk-mono);
   font-size: 0.77em;
 }
 
@@ -90,7 +90,7 @@
 
 .theme-ledger .resume-ledger-skills > span {
   color: var(--resume-accent, #d42c24);
-  font-family: var(--font-plex-mono), monospace;
+  font-family: var(--font-plex-mono), var(--resume-cjk-mono);
   font-size: 0.78em;
   font-weight: 600;
   letter-spacing: 0.1em;
@@ -99,7 +99,7 @@
 .theme-ledger .resume-ledger-skills p,
 .theme-ledger .resume-ledger-skills .resume-skill-tag {
   margin: 0;
-  font-family: var(--font-plex-mono), monospace;
+  font-family: var(--font-plex-mono), var(--resume-cjk-mono);
   font-size: 0.84em;
 }
 
@@ -138,7 +138,7 @@
 .theme-ledger .resume-ledger-section-label strong {
   display: block;
   color: var(--resume-accent, #d42c24);
-  font-family: var(--font-inter-tight), sans-serif;
+  font-family: var(--font-inter-tight), var(--resume-cjk-sans);
   font-size: 2.3em;
   line-height: 1;
   letter-spacing: -0.04em;

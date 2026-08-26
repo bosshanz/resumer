@@ -19,14 +19,20 @@
   /* Bleed-safe rendering for Puppeteer */
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
-  /* Keep browser preview and headless PDF on the same locally available
-     font stack, so glyph widths and pagination do not drift at export. */
-  --font-geist-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-geist-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  --font-fraunces: "Iowan Old Style", Georgia, serif;
-  --font-plex-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-plex-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  --font-inter-tight: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  /* 字体族与 next/font（app/layout.tsx）注入的 @font-face 一致：
+     浏览器预览直接命中页面字体；PDF 导出由 lib/pdf-fonts.ts 内嵌同一批
+     woff2，保证两条链路所见即所得。字体不可用时由各模板栈回落到本地字体。 */
+  --font-geist-sans: "Geist", "Geist Fallback";
+  --font-geist-mono: "Geist Mono", "Geist Mono Fallback";
+  --font-fraunces: "Fraunces", "Fraunces Fallback";
+  --font-plex-sans: "IBM Plex Sans", "IBM Plex Sans Fallback";
+  --font-plex-mono: "IBM Plex Mono", "IBM Plex Mono Fallback";
+  --font-inter-tight: "Inter Tight", "Inter Tight Fallback";
+  /* 中文字形在西文字体中缺失，需显式指定中文轴，否则按平台默认字体随机回落：
+     衬线模板用宋体轴，黑体模板用苹方/雅黑轴，等宽标注的中文配黑体。 */
+  --resume-cjk-serif: "Songti SC", "STSong", "SimSun", "Noto Serif CJK SC", serif;
+  --resume-cjk-sans: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  --resume-cjk-mono: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", monospace;
 }
 
 .resume-page h1,
@@ -176,7 +182,7 @@
 }
 
 .resume-body code {
-  font-family: var(--font-geist-mono), "JetBrains Mono", monospace;
+  font-family: var(--font-geist-mono), "JetBrains Mono", var(--resume-cjk-mono);
   font-size: 0.92em;
   padding: 0.1em 0.35em;
   border-radius: 3px;

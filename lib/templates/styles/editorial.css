@@ -3,7 +3,7 @@
    ============================================================ */
 
 .theme-editorial {
-  font-family: var(--font-fraunces), "Iowan Old Style", Georgia, serif;
+  font-family: var(--font-fraunces), "Iowan Old Style", Georgia, var(--resume-cjk-serif);
   background: var(--resume-bg, #faf6ed);
   color: var(--resume-fg, #2a1c10);
   font-feature-settings: "ss01", "ss02";
@@ -37,7 +37,7 @@
 }
 
 .theme-editorial .resume-eyebrow {
-  font-family: var(--font-inter-tight), sans-serif;
+  font-family: var(--font-inter-tight), var(--resume-cjk-sans);
   font-weight: 500;
   font-size: 0.62em;
   text-transform: uppercase;
@@ -47,7 +47,7 @@
 }
 
 .theme-editorial .resume-overline {
-  font-family: var(--font-inter-tight), sans-serif;
+  font-family: var(--font-inter-tight), var(--resume-cjk-sans);
   font-style: normal;
   font-weight: 400;
   font-size: 0.78em;
@@ -65,7 +65,7 @@
 }
 
 .theme-editorial .resume-h1 {
-  font-family: var(--font-fraunces), serif;
+  font-family: var(--font-fraunces), var(--resume-cjk-serif);
   font-style: italic;
   font-weight: 400;
   font-size: 4.2em;
@@ -106,7 +106,7 @@
   display: block;
 }
 .theme-editorial .resume-photo-figure--editorial .resume-photo-caption {
-  font-family: var(--font-fraunces), serif;
+  font-family: var(--font-fraunces), var(--resume-cjk-serif);
   font-style: italic;
   font-size: 0.62em;
   letter-spacing: 0.06em;
@@ -117,7 +117,7 @@
 }
 
 .theme-editorial .resume-meta {
-  font-family: var(--font-inter-tight), sans-serif;
+  font-family: var(--font-inter-tight), var(--resume-cjk-sans);
   font-size: 0.78em;
   text-align: center;
   margin-top: 1em;
@@ -135,7 +135,7 @@
   margin: 0;
 }
 .theme-editorial .resume-dropcap::first-letter {
-  font-family: var(--font-fraunces), serif;
+  font-family: var(--font-fraunces), var(--resume-cjk-serif);
   font-style: italic;
   font-weight: 500;
   font-size: 3.6em;
@@ -148,7 +148,7 @@
 
 .theme-editorial .resume-rule-h2,
 .theme-editorial .resume-body h2 {
-  font-family: var(--font-fraunces), serif;
+  font-family: var(--font-fraunces), var(--resume-cjk-serif);
   font-style: italic;
   font-weight: 500;
   font-size: 1.05em;
@@ -184,7 +184,7 @@
 }
 
 .theme-editorial .resume-body h3 {
-  font-family: var(--font-fraunces), serif;
+  font-family: var(--font-fraunces), var(--resume-cjk-serif);
   font-style: normal;
   font-weight: 600;
   font-size: 1.05em;
@@ -194,7 +194,7 @@
 }
 
 .theme-editorial .resume-body h3 + p {
-  font-family: var(--font-inter-tight), sans-serif;
+  font-family: var(--font-inter-tight), var(--resume-cjk-sans);
   font-size: 0.78em;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -211,7 +211,7 @@
 }
 
 .theme-editorial .resume-body .resume-subhead {
-  font-family: var(--font-fraunces), serif;
+  font-family: var(--font-fraunces), var(--resume-cjk-serif);
   font-style: italic;
   font-size: 1em;
   font-weight: 500;
@@ -260,7 +260,7 @@
 }
 .theme-editorial .resume-body hr::after {
   content: "❧";
-  font-family: var(--font-fraunces), serif;
+  font-family: var(--font-fraunces), var(--resume-cjk-serif);
   font-size: 0.95em;
   color: var(--resume-muted, #a87b3f);
   opacity: 0.7;

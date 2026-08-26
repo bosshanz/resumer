@@ -3,10 +3,16 @@
    ============================================================ */
 
 .theme-blueprint {
-  font-family: var(--font-plex-sans), -apple-system, sans-serif;
+  font-family: var(--font-plex-sans), -apple-system, var(--resume-cjk-sans);
   color: var(--resume-fg, #111a2d);
   background: var(--resume-bg, #ffffff);
-  border: 1px solid var(--resume-accent, #1452c2);
+  /* 工程图纸底纹：5mm 淡钴蓝网格，落在纸色之下 */
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--resume-accent, #1452c2) 5%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--resume-accent, #1452c2) 5%, transparent) 1px, transparent 1px);
+  background-size: 5mm 5mm;
+  /* 线宽分级：外框 1.25 < 主标题块底 1.5，次级规则降到 0.75 */
+  border: 1.25px solid var(--resume-accent, #1452c2);
   font-feature-settings: "tnum" 1;
 }
 
@@ -16,7 +22,7 @@
   padding: 2.4mm 4mm;
   border-bottom: 1px solid var(--resume-accent, #1452c2);
   color: var(--resume-accent, #1452c2);
-  font-family: var(--font-plex-mono), monospace;
+  font-family: var(--font-plex-mono), var(--resume-cjk-mono);
   font-size: 0.7em;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -28,7 +34,7 @@
   grid-template-columns: 1fr;
   gap: 7mm;
   padding: 5mm;
-  border-bottom: 1px solid var(--resume-accent, #1452c2);
+  border-bottom: 1.5px solid var(--resume-accent, #1452c2);
 }
 
 .theme-blueprint .resume-blueprint-header.has-photo {
@@ -60,7 +66,7 @@
   margin: 0;
   padding-right: 7mm;
   border-right: 1px solid color-mix(in srgb, var(--resume-accent, #1452c2) 42%, transparent);
-  font-family: var(--font-inter-tight), -apple-system, sans-serif;
+  font-family: var(--font-inter-tight), -apple-system, var(--resume-cjk-sans);
   font-size: 3.7em;
   font-weight: 700;
   letter-spacing: -0.065em;
@@ -69,7 +75,7 @@
 
 .theme-blueprint .resume-blueprint-role {
   margin: 0;
-  color: var(--resume-accent, #1452c2);
+  color: var(--resume-fg, #111a2d);
   font-size: 1.18em;
   font-weight: 650;
 }
@@ -127,7 +133,7 @@
 .theme-blueprint .resume-blueprint-section-heading h2 {
   margin: 0 0 3mm;
   color: var(--resume-accent, #1452c2);
-  font-family: var(--font-plex-mono), monospace;
+  font-family: var(--font-plex-mono), var(--resume-cjk-mono);
   font-size: 0.78em;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -148,7 +154,7 @@
 .theme-blueprint .resume-blueprint-panel li {
   padding: 1.5mm 0;
   border-bottom: 1px dotted color-mix(in srgb, var(--resume-accent, #1452c2) 28%, transparent);
-  font-family: var(--font-plex-mono), monospace;
+  font-family: var(--font-plex-mono), var(--resume-cjk-mono);
   font-size: 0.78em;
 }
 
@@ -162,7 +168,7 @@
 
 .theme-blueprint .resume-blueprint-meta dt {
   color: var(--resume-accent, #1452c2);
-  font-family: var(--font-plex-mono), monospace;
+  font-family: var(--font-plex-mono), var(--resume-cjk-mono);
 }
 
 .theme-blueprint .resume-blueprint-meta dd {
@@ -171,7 +177,7 @@
 
 .theme-blueprint .resume-blueprint-section {
   padding: 4mm 5mm;
-  border-bottom: 1px solid color-mix(in srgb, var(--resume-accent, #1452c2) 55%, transparent);
+  border-bottom: 0.75px solid color-mix(in srgb, var(--resume-accent, #1452c2) 55%, transparent);
 }
 
 .theme-blueprint .resume-blueprint-section-heading {
@@ -179,7 +185,7 @@
   justify-content: space-between;
   gap: 5mm;
   margin-bottom: 3mm;
-  border-bottom: 1px solid color-mix(in srgb, var(--resume-accent, #1452c2) 68%, transparent);
+  border-bottom: 0.75px solid color-mix(in srgb, var(--resume-accent, #1452c2) 68%, transparent);
 }
 
 .theme-blueprint .resume-blueprint-section-heading h2 {
@@ -187,8 +193,8 @@
 }
 
 .theme-blueprint .resume-blueprint-section-heading span {
-  color: var(--resume-accent, #1452c2);
-  font-family: var(--font-plex-mono), monospace;
+  color: color-mix(in srgb, var(--resume-fg, #111a2d) 55%, transparent);
+  font-family: var(--font-plex-mono), var(--resume-cjk-mono);
   font-size: 0.68em;
 }
 
@@ -221,7 +227,7 @@
 }
 
 .theme-blueprint .resume-body li::marker {
-  color: var(--resume-accent, #1452c2);
+  color: color-mix(in srgb, var(--resume-fg, #111a2d) 55%, transparent);
 }
 
 .theme-blueprint .resume-body .resume-subhead {

@@ -3,7 +3,7 @@
    ============================================================ */
 
 .theme-authority {
-  font-family: var(--font-inter-tight), -apple-system, sans-serif;
+  font-family: var(--font-inter-tight), -apple-system, var(--resume-cjk-sans);
   color: var(--resume-fg, #202725);
   background: var(--resume-bg, #fbf8f1);
   font-feature-settings: "tnum" 1;
@@ -31,7 +31,7 @@
 .theme-authority .resume-authority-identity h1 {
   margin: 0;
   color: var(--resume-accent, #213b36);
-  font-family: var(--font-fraunces), Georgia, serif;
+  font-family: var(--font-fraunces), Georgia, var(--resume-cjk-serif);
   font-size: 5em;
   font-weight: 450;
   letter-spacing: -0.07em;
@@ -41,7 +41,7 @@
 .theme-authority .resume-authority-identity > p {
   margin: 4mm 0 0;
   color: var(--resume-muted, #a97828);
-  font-family: var(--font-fraunces), Georgia, serif;
+  font-family: var(--font-fraunces), Georgia, var(--resume-cjk-serif);
   font-size: 1.45em;
   letter-spacing: 0.04em;
 }
@@ -80,7 +80,7 @@
 .theme-authority .resume-authority-section > h2 {
   margin: 0;
   color: var(--resume-muted, #a97828);
-  font-family: var(--font-fraunces), Georgia, serif;
+  font-family: var(--font-fraunces), Georgia, var(--resume-cjk-serif);
   font-size: 0.92em;
   font-weight: 500;
   letter-spacing: 0.1em;
@@ -107,7 +107,7 @@
   margin: 0.9em 0 0;
   padding-top: 0.8em;
   border-top: 1px dashed color-mix(in srgb, var(--resume-fg, #202725) 18%, transparent);
-  font-family: var(--font-fraunces), Georgia, serif;
+  font-family: var(--font-fraunces), Georgia, var(--resume-cjk-serif);
   font-size: 1.03em;
   font-weight: 560;
   line-height: 1.32;
@@ -140,7 +140,7 @@
 
 .theme-authority .resume-body .resume-subhead {
   margin-top: 0.85em;
-  font-family: var(--font-fraunces), Georgia, serif;
+  font-family: var(--font-fraunces), Georgia, var(--resume-cjk-serif);
   font-size: 1em;
   font-weight: 560;
 }

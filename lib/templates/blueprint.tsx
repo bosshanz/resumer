@@ -11,8 +11,8 @@ export const blueprintDefaultTheme: ThemeVariables = {
   secondaryColor: "#52647d",
   backgroundColor: "#ffffff",
   textColor: "#111a2d",
-  fontFamily: "var(--font-plex-sans), -apple-system, sans-serif",
-  headingFontFamily: "var(--font-inter-tight), -apple-system, sans-serif",
+  fontFamily: "var(--font-plex-sans), -apple-system, var(--resume-cjk-sans)",
+  headingFontFamily: "var(--font-inter-tight), -apple-system, var(--resume-cjk-sans)",
   baseFontSize: "9.4pt",
   lineHeight: 1.46,
   marginTop: "10mm",
@@ -86,12 +86,22 @@ export function BlueprintTemplate({ frontmatter, body, themeVariables, photo }: 
           <section className="resume-blueprint-panel resume-blueprint-meta resume-section">
             <h2>Meta</h2>
             <dl>
-              <dt>LANGUAGE</dt>
-              <dd>中文 / English</dd>
-              <dt>FOCUS</dt>
-              <dd>Design & Build</dd>
-              <dt>FORMAT</dt>
-              <dd>Markdown / PDF</dd>
+              {Object.entries(frontmatter.basics ?? {}).map(([key, value]) => (
+                <React.Fragment key={key}>
+                  <dt>{key}</dt>
+                  <dd>{value}</dd>
+                </React.Fragment>
+              ))}
+              {Object.keys(frontmatter.basics ?? {}).length === 0 && (
+                <>
+                  <dt>LANGUAGE</dt>
+                  <dd>中文 / English</dd>
+                  <dt>FOCUS</dt>
+                  <dd>Design & Build</dd>
+                  <dt>FORMAT</dt>
+                  <dd>Markdown / PDF</dd>
+                </>
+              )}
             </dl>
           </section>
         </aside>

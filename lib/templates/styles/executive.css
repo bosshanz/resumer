@@ -3,7 +3,7 @@
    ============================================================ */
 
 .theme-executive {
-  font-family: var(--font-inter-tight), -apple-system, sans-serif;
+  font-family: var(--font-inter-tight), -apple-system, var(--resume-cjk-sans);
   color: var(--resume-fg, #182421);
   background: var(--resume-bg, #fcfcfa);
   font-feature-settings: "cv11", "ss01";
@@ -33,7 +33,7 @@
 }
 
 .theme-executive .resume-h1 {
-  font-family: var(--font-fraunces), Georgia, serif;
+  font-family: var(--font-fraunces), Georgia, var(--resume-cjk-serif);
   font-size: 2.65em;
   font-weight: 500;
   line-height: 1;
@@ -118,7 +118,7 @@
 }
 
 .theme-executive .resume-body h2 {
-  font-family: var(--font-inter-tight), sans-serif;
+  font-family: var(--font-inter-tight), var(--resume-cjk-sans);
   font-size: 0.82em;
   font-weight: 700;
   text-transform: uppercase;
@@ -132,7 +132,7 @@
 }
 
 .theme-executive .resume-body h3 {
-  font-family: var(--font-inter-tight), sans-serif;
+  font-family: var(--font-inter-tight), var(--resume-cjk-sans);
   font-size: 1em;
   font-weight: 700;
   line-height: 1.25;
@@ -168,7 +168,7 @@
 }
 
 .theme-executive .resume-body .resume-subhead {
-  font-family: var(--font-inter-tight), sans-serif;
+  font-family: var(--font-inter-tight), var(--resume-cjk-sans);
   font-size: 0.92em;
   color: var(--resume-accent, #173b35);
 }

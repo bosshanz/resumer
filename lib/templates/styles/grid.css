@@ -4,7 +4,7 @@
    ============================================================ */
 
 .theme-grid {
-  font-family: var(--font-geist-sans), -apple-system, sans-serif;
+  font-family: var(--font-geist-sans), -apple-system, var(--resume-cjk-sans);
   color: var(--resume-fg, #0a0a0a);
   background: var(--resume-bg, #ffffff);
   font-feature-settings: "ss01", "cv11";
@@ -15,12 +15,12 @@
 }
 .theme-grid .resume-grid-header {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: 1fr auto;
   gap: 1.8em;
-  align-items: start;
-  border-bottom: 2px solid var(--resume-accent, #000);
+  align-items: end;
+  border-bottom: 2.5px solid var(--resume-accent, #000);
   padding-bottom: 1.1em;
-  margin-bottom: 1.5em;
+  margin-bottom: 1.8em;
 }
 .theme-grid .resume-grid-header .resume-photo {
   width: 30mm;
@@ -33,7 +33,7 @@
 }
 
 .theme-grid .resume-eyebrow {
-  font-family: var(--font-plex-mono), monospace;
+  font-family: var(--font-plex-mono), var(--resume-cjk-mono);
   font-size: 0.7em;
   text-transform: uppercase;
   letter-spacing: 0.22em;
@@ -42,7 +42,7 @@
 }
 
 .theme-grid .resume-h1 {
-  font-family: var(--font-geist-sans), sans-serif;
+  font-family: var(--font-geist-sans), var(--resume-cjk-sans);
   font-size: 3em;
   font-weight: 700;
   letter-spacing: -0.04em;
@@ -53,11 +53,11 @@
 
 .theme-grid .resume-contact-grid {
   display: grid;
-  grid-template-columns: max-content 1fr max-content 1fr;
-  gap: 0.25em 1em;
+  grid-template-columns: max-content 1fr;
+  gap: 0.3em 1.2em;
   margin: 0;
-  font-size: 0.8em;
-  font-family: var(--font-plex-mono), monospace;
+  font-size: 0.76em;
+  font-family: var(--font-plex-mono), var(--resume-cjk-mono);
 }
 .theme-grid .resume-contact-grid dt {
   color: var(--resume-muted, #dc2626);
@@ -82,7 +82,7 @@
   margin-bottom: 1.8em;
 }
 .theme-grid .resume-skills h2 {
-  font-family: var(--font-plex-mono), monospace;
+  font-family: var(--font-plex-mono), var(--resume-cjk-mono);
   font-size: 0.7em;
   font-weight: 500;
   letter-spacing: 0.22em;
@@ -97,7 +97,7 @@
 }
 
 .theme-grid .resume-body h2 {
-  font-family: var(--font-plex-mono), monospace;
+  font-family: var(--font-plex-mono), var(--resume-cjk-mono);
   font-size: 0.72em;
   font-weight: 500;
   letter-spacing: 0.22em;
@@ -123,7 +123,7 @@
 }
 
 .theme-grid .resume-body h3 {
-  font-family: var(--font-geist-sans), sans-serif;
+  font-family: var(--font-geist-sans), var(--resume-cjk-sans);
   font-weight: 600;
   font-size: 1em;
   margin-top: 1.2em;
@@ -150,7 +150,7 @@
 /* Meta line (date / location / link) sits inline under h3 in the right
    column — no float, no negative margin. Keeps layout stable in PDF. */
 .theme-grid .resume-body h3 + p {
-  font-family: var(--font-plex-mono), monospace;
+  font-family: var(--font-plex-mono), var(--resume-cjk-mono);
   font-size: 0.76em;
   font-weight: 400;
   margin-top: 0.15em;
@@ -168,7 +168,7 @@
 
 /* Body subhead — vermillion eyebrow */
 .theme-grid .resume-body .resume-subhead {
-  font-family: var(--font-plex-mono), monospace;
+  font-family: var(--font-plex-mono), var(--resume-cjk-mono);
   font-size: 0.74em;
   font-weight: 500;
   text-transform: uppercase;
@@ -200,4 +200,89 @@
   border-top: 2px solid var(--resume-accent, #000);
   opacity: 1;
   margin: 2em 0 1em;
+}
+
+/* ============================================================
+   Two-column Swiss grid: quiet mono rail (facts) + numbered
+   narrative main column. The vertical hairline carries the
+   grid; the thick header rule anchors it.
+   ============================================================ */
+
+.theme-grid .resume-grid-layout {
+  display: grid;
+  grid-template-columns: 40mm 1fr;
+  column-gap: 7mm;
+  align-items: stretch;
+}
+
+.theme-grid .resume-grid-layout--single {
+  grid-template-columns: 1fr;
+}
+
+.theme-grid .resume-grid-rail {
+  border-right: 1px solid color-mix(in srgb, var(--resume-fg, #0a0a0a) 22%, transparent);
+  padding-right: 5mm;
+  font-size: 0.92em;
+}
+
+.theme-grid .resume-grid-rail .resume-summary {
+  font-size: 0.92em;
+  font-weight: 400;
+  max-width: none;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.theme-grid .resume-grid-block + .resume-grid-block {
+  margin-top: 1.7em;
+}
+
+.theme-grid .resume-grid-block h2 {
+  font-family: var(--font-plex-mono), var(--resume-cjk-mono);
+  font-size: 0.66em;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--resume-muted, #dc2626);
+  margin: 0 0 0.55em;
+}
+
+.theme-grid .resume-grid-block-body {
+  line-height: 1.5;
+}
+
+.theme-grid .resume-grid-block-body ul {
+  margin-top: 0.2em;
+}
+
+.theme-grid .resume-grid-main > section + section {
+  margin-top: 2em;
+}
+
+.theme-grid .resume-grid-main {
+  counter-reset: resume-section;
+  min-width: 0;
+}
+
+.theme-grid .resume-grid-main > section > h2 {
+  font-family: var(--font-plex-mono), var(--resume-cjk-mono);
+  font-size: 0.72em;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--resume-muted, #dc2626);
+  margin: 0 0 0.7em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--resume-accent, #000);
+  position: relative;
+}
+
+.theme-grid .resume-grid-main > section > h2::before {
+  content: counter(resume-section, decimal-leading-zero);
+  counter-increment: resume-section;
+  position: absolute;
+  right: 0;
+  bottom: 0.3em;
+  color: var(--resume-fg, #0a0a0a);
+  font-size: 1em;
 }

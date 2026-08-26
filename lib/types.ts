@@ -15,6 +15,8 @@ export const resumeFrontmatterSchema = z.object({
   title: z.string().optional(),
   summary: z.string().optional(),
   contact: contactSchema.optional(),
+  // 基本信息：自由键值（性别/学历/出生年月等），键名即展示标签
+  basics: z.record(z.string(), z.coerce.string()).optional(),
   skills: resumeSkillsSchema,
 });
 
@@ -79,6 +81,9 @@ contact:
   email: zhangsan@example.com
   github: github.com/zhangsan
   website: zhangsan.dev
+basics:
+  性别: 男
+  学历: 本科
 skills:
   - React / Next.js
   - TypeScript

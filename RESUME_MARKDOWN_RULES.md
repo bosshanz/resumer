@@ -18,6 +18,9 @@ contact:
   website: username.dev
   linkedin: linkedin.com/in/username
   location: 城市
+basics:
+  性别: 男
+  学历: 本科
 skills:
   AI:
     - Agent
@@ -67,9 +70,11 @@ skills:
 | `contact.website` | string | 个人网站 |
 | `contact.linkedin` | string | LinkedIn 地址 |
 | `contact.location` | string | 所在城市 |
+| `basics` | `{ 标签: 值 }` | 基本信息键值对（性别/学历/出生年月等），键名即展示标签，可自由增删；数字会自动转成字符串 |
 | `skills` | string[] 或 `{ 分类: string[] }` | 技能。数组每一项是一组；对象的 key 是分类名 |
 
 - 所有 contact 字段都是可选的，未填写则不会显示。
+- `basics` 也是可选的：网格（grid）模板渲染在左轨 Contact 区最上方，蓝图（blueprint）模板渲染在侧栏 Meta 面板；其余模板暂不展示，写了不会报错。
 - `skills` 支持两种写法，都会按组渲染，词与词之间用 `/` 分隔：
   - 列表：`- Agent / RAG / Memory`（`/` `·` `,` 会拆成词）
   - 分类对象：`AI: [Agent, RAG, Memory]`
@@ -182,6 +187,9 @@ contact:
   phone: 138****8888
   email: zhangsan@example.com
   github: github.com/zhangsan
+basics:
+  性别: 男
+  学历: 本科
 skills:
   - React / Next.js
   - TypeScript

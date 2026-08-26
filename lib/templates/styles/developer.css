@@ -3,7 +3,7 @@
    ============================================================ */
 
 .theme-developer {
-  font-family: var(--font-inter-tight), -apple-system, sans-serif;
+  font-family: var(--font-inter-tight), -apple-system, var(--resume-cjk-sans);
   color: var(--resume-fg, #18221c);
   background: var(--resume-bg, #fbfaf7);
   font-feature-settings: "cv11", "ss01";
@@ -29,7 +29,7 @@
 }
 
 .theme-developer .resume-h1 {
-  font-family: var(--font-inter-tight), sans-serif;
+  font-family: var(--font-inter-tight), var(--resume-cjk-sans);
   font-weight: 700;
   font-size: 2.1em;
   letter-spacing: -0.025em;
@@ -40,7 +40,7 @@
 
 .theme-developer .resume-title-tag {
   display: inline-block;
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-geist-mono), var(--resume-cjk-mono);
   font-size: 0.7em;
   font-weight: 500;
   letter-spacing: 0.05em;
@@ -55,7 +55,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.25em 1.1em;
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-geist-mono), var(--resume-cjk-mono);
   font-size: 0.75em;
   color: var(--resume-muted, #4a5550);
   margin-top: 0.7em;
@@ -86,7 +86,7 @@
 }
 .theme-developer .resume-skill,
 .theme-developer .resume-skill-tag {
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-geist-mono), var(--resume-cjk-mono);
   font-size: 0.72em;
   padding: 0.25em 0.55em;
   border: 1px solid color-mix(in srgb, var(--resume-fg, #18221c) 18%, var(--resume-bg, #fbfaf7));
@@ -102,19 +102,15 @@
 
 .theme-developer .resume-developer-photo-shell {
   padding: 1.2mm;
-  background: color-mix(in srgb, var(--resume-fg, #18221c) 5%, var(--resume-bg, #fbfaf7));
-  border: 0.5px solid color-mix(in srgb, var(--resume-fg, #18221c) 8%, transparent);
-  border-radius: 2.6mm;
-  box-shadow:
-    0 1px 0 color-mix(in srgb, var(--resume-bg, #fbfaf7) 20%, transparent) inset,
-    0 4mm 12mm -3mm color-mix(in srgb, var(--resume-fg, #18221c) 10%, transparent);
+  background: var(--resume-bg, #fbfaf7);
+  border: 0.5px solid color-mix(in srgb, var(--resume-fg, #18221c) 12%, transparent);
+  border-radius: 1.5mm;
+  box-shadow: 0 2mm 6mm -3mm color-mix(in srgb, var(--resume-fg, #18221c) 8%, transparent);
   flex-shrink: 0;
 }
 .theme-developer .resume-developer-photo-core {
-  border-radius: calc(2.6mm - 1.2mm);
+  border-radius: calc(1.5mm - 1.2mm);
   overflow: hidden;
-  border-left: 2.5px solid var(--resume-accent, #2d5a3d);
-  box-shadow: inset 0 1px 1px color-mix(in srgb, var(--resume-bg, #fbfaf7) 16%, transparent);
 }
 .theme-developer .resume-developer-photo-core .resume-photo {
   width: 44mm;
@@ -126,7 +122,7 @@
 }
 
 .theme-developer .resume-body h2 {
-  font-family: var(--font-inter-tight), sans-serif;
+  font-family: var(--font-inter-tight), var(--resume-cjk-sans);
   font-weight: 600;
   font-size: 0.78em;
   text-transform: uppercase;
@@ -147,7 +143,7 @@
 }
 
 .theme-developer .resume-body h3 {
-  font-family: var(--font-inter-tight), sans-serif;
+  font-family: var(--font-inter-tight), var(--resume-cjk-sans);
   font-weight: 600;
   font-size: 1.05em;
   margin-top: 1em;
@@ -184,7 +180,7 @@
 }
 
 .theme-developer .resume-body .resume-subhead {
-  font-family: var(--font-inter-tight), sans-serif;
+  font-family: var(--font-inter-tight), var(--resume-cjk-sans);
   font-size: 0.92em;
   font-weight: 600;
   color: var(--resume-accent, #2d5a3d);
@@ -198,7 +194,7 @@
   opacity: 0.7;
 }
 .theme-developer .resume-body h3 + p {
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-geist-mono), var(--resume-cjk-mono);
   font-size: 0.78em;
   margin-left: 0.7em;
   color: var(--resume-muted, #6a7570);

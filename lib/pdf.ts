@@ -6,17 +6,7 @@ import { getTemplate } from "./templates";
 import { readResumeTemplateCss } from "./templates/css";
 import { ThemeVariables } from "./types";
 import { buildPdfChrome, buildPdfPageCss } from "./pdf-chrome";
-
-const pdfFontVariablesCss = `
-  :root {
-    --font-geist-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    --font-geist-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-    --font-fraunces: "Iowan Old Style", Georgia, serif;
-    --font-plex-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    --font-plex-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-    --font-inter-tight: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  }
-`;
+import { loadEmbeddedFontCss } from "./pdf-fonts";
 
 function getExecutablePath(): string {
   if (process.env.PUPPETEER_EXECUTABLE_PATH) {
@@ -111,13 +101,17 @@ export async function renderResumeHtml(
   // margin would leave a white frame around the resume.
   const pageCss = buildPdfPageCss(mergedTheme);
 
+  // next/font 字体（woff2 内联）。放在模板样式之后，以便覆盖 .next 中
+  // 实际生成的字体族名；找不到构建产物时为空，回落到系统字体栈。
+  const fontCss = loadEmbeddedFontCss() ?? "";
+
   return `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
-  <style>${pdfFontVariablesCss}</style>
   <style>${css}</style>
   <style>${pageCss}</style>
+  <style>${fontCss}</style>
 </head>
 <body>
   ${bodyHtml}
@@ -149,6 +143,9 @@ export async function generateResumePdf(
   try {
     await page.setViewport({ width: 794, height: 1123, deviceScaleFactor: 1 });
     await page.setContent(html, { waitUntil: "load" });
+    // 内嵌的 data: 字体是同步资源，但字体应用仍需等 fonts.ready，
+    // 否则首帧分页可能按回退字体计算。
+    await page.evaluate(() => document.fonts.ready);
     await page.emulateMediaType("print");
 
     const pdf = await page.pdf({
