@@ -78,6 +78,14 @@
   overflow-wrap: anywhere;
 }
 
+/* 基本信息（性别/学历等）：值并入联系条下方，作为一行弱化文本 */
+.theme-executive .resume-executive-basics {
+  grid-column: 1 / -1;
+  margin: 0.26em 0 0;
+  font-size: 0.78em;
+  color: color-mix(in srgb, var(--resume-fg, #182421) 70%, transparent);
+}
+
 .theme-executive .resume-executive-summary {
   display: grid;
   grid-template-columns: 24mm 1fr;

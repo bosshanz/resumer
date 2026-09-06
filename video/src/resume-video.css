@@ -1,0 +1,36 @@
+/* The real product templates, enlarged for a readable video close-up. */
+.video-resume .resume-page {
+  width: 100%;
+  min-height: 0;
+  margin: 0;
+}
+.video-resume .folio-editorial .folio-columns {
+  grid-template-columns: minmax(0, 1fr) 260px;
+}
+.video-resume .folio-blueprint .folio-columns {
+  grid-template-columns: 260px minmax(0, 1fr);
+}
+.video-resume .folio-ledger .folio-section,
+.video-resume .folio-ledger .folio-profile,
+.video-resume .folio-ledger .folio-skills {
+  grid-template-columns: 145px minmax(0, 1fr);
+}
+.video-resume .folio-minimal .folio-header.folio-with-photo {
+  --portrait-width: 40mm;
+  --portrait-height: 50mm;
+}
+.video-resume .folio-minimal .folio-header.folio-with-photo h1 {
+  font-size: 3.1em;
+}
+
+.video-resume-focus .folio-header,
+.video-resume-focus .folio-profile,
+.video-resume-focus .folio-skills {
+  display: none;
+}
+/* Keep labels and the complete sidebar readable at the enlarged video size. */
+.video-resume .folio-ledger .folio-header > .folio-contact { flex-basis: 340px; }
+.video-resume .folio-ledger .folio-contact-label { width: 90px; white-space: nowrap; }
+.video-resume .folio-blueprint .folio-rail .folio-contact { padding-bottom: 3mm; margin-bottom: 3mm; }
+.video-resume .folio-blueprint .folio-rail .folio-profile { margin-bottom: 3mm; }
+.video-resume .folio-blueprint .resume-skill-group-items { flex-direction: row; flex-wrap: wrap; gap: 8px; }

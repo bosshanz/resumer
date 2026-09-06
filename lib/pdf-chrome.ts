@@ -33,6 +33,8 @@ export function buildPdfPageCss(theme: ThemeVariables): string {
     }
     @media print {
       .resume-page {
+        /* The footer occupies @page space, outside the content box. */
+        min-height: calc(297mm - ${footerBand});
         padding-bottom: 0 !important;
       }
     }

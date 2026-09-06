@@ -39,6 +39,23 @@ describe("parseResumeContent", () => {
     expect(body).toContain("## 下段");
   });
 
+  it("frontmatter 内的长划线 ----- 不会被误认为结束分隔符", () => {
+    const raw = "---\nname: 张三\nnote: |\n  -----\n  分隔内容\n---\n\n## 工作经历";
+    const { frontmatter, body, frontmatterError } = parseResumeContent(raw);
+
+    expect(frontmatterError).toBeUndefined();
+    expect(frontmatter.name).toBe("张三");
+    expect(body).toContain("## 工作经历");
+  });
+
+  it("起始行是 ----- 时不按 frontmatter 解析", () => {
+    const { frontmatter, body, frontmatterError } = parseResumeContent("-----\nname: 张三\n---");
+
+    expect(frontmatter).toEqual({});
+    expect(frontmatterError).toBeUndefined();
+    expect(body).toContain("name: 张三");
+  });
+
   it("YAML 语法错误时返回错误信息且正文保留", () => {
     const raw = "---\nname: [未闭合\n---\n\n## 工作经历\n\n- 内容";
     const { frontmatter, body, frontmatterError } = parseResumeContent(raw);

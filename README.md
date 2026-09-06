@@ -1,31 +1,50 @@
 # Resumer
 
-个人使用的本地 Markdown 简历构建工具。通过 YAML Frontmatter + Markdown 维护简历内容，在浏览器中实时预览不同排版，并导出 A4 PDF。
+个人使用的本地简历工作台。默认通过简历目录、成品画布和区块编辑面板整理内容，实时预览不同排版并导出 A4 PDF；保留 Markdown 专业模式。
 
 项目以本地使用为主要场景：数据保存在 SQLite，未配置 GitHub OAuth 时可直接使用开发模式登录。
 
+## 48 秒了解 Resumer
+
+[![Resumer 项目介绍：可视化工作台、五套主题、照片排版与 PDF 导出](docs/media/resumer-intro.jpg)](docs/media/resumer-intro.mp4)
+
+▶ [观看带配乐的项目介绍](docs/media/resumer-intro.mp4) · 48 秒 / 1080p / 原创轻电子配乐。展示公开示例内容，照片人物为虚构示例。
+
+[Remotion 源码与重新生成说明](video/README.md)
+
 ## 功能
 
-- 使用 YAML Frontmatter 管理姓名、职位、简介、联系方式和技能，`basics` 可附加性别/学历等自定义键值信息，使用 Markdown 编写经历正文。
+- 使用 YAML Frontmatter 管理姓名、职位、简介、联系方式和技能，`basics` 可附加性别/学历等自定义键值信息（值会并入联系方式区，全部模板均会展示），使用 Markdown 编写经历正文。
 - 新建、切换、复制和删除多份简历。
 - 输入停止 1 秒后自动保存，也可使用 `Cmd/Ctrl + S` 手动保存。
-- 编辑、分屏、预览三种工作模式。
+- 默认可视化编辑：基本信息表单、技能分类、经历字段与轻量富文本；点击画布中的唯一标题可定位对应区块。
+- 区块支持添加、上下移动、隐藏和删除；结构操作提供即时撤销。
+- Markdown 专业模式保留编辑、分屏、预览三种视图。
 - 浏览器实时预览与 PDF 导出共用同一套 React 模板组件。
-- 10 套模板：极简、科技、开发者、网格、编辑、商务、紧凑、账本、沉静、蓝图。
+- 5 套重新设计的成品主题：留白、纸刊、序列、沉静、构筑。
 - 内置 8 套经过搭配的配色方案，并可自定义配色、字体、字号、行高、页边距和照片排版。
 - 导入和导出 Markdown。
 - 预览角落显示页数与一页适配提示：单页时给出剩余行数，第 2 页只有几行时高亮提醒可收进一页。
 - 上传头像或照片；图片以 base64 数据 URL 保存在 SQLite 中，单张最大 2 MB。
+- 五套主题各自适配照片构图；支持标准照片、强化肖像、填满裁切、完整显示和垂直取景调节，无照片时自动使用完整的文字版式。
 - 使用 Puppeteer 和本地 Chrome/Chromium 导出 A4 PDF。
 - 改写 V2：贴岗位 JD 或写一句方向，建议稿显示在右侧预览，核对后再另存为新简历。底稿保持不变。需要配置 `DEEPSEEK_API_KEY`。主导等强主张不能比底稿增加。
 - 变体溯源：改写另存与手动复制的简历自动挂到同一母本下，简历列表按母本分组展示变体并附带来源摘要。
 - 历史版本：手动保存（Cmd/Ctrl + S）立即留档，平时编辑每 5 分钟自动留档，每份简历保留最近 20 份；恢复前会先把当前内容留档，可反复退回。
 
+## 可视化编辑与兼容
+
+现有简历无需迁移。可视化编辑在原内容之上操作，未编辑的区块保留原始 Markdown，修改基本信息时保留未知 YAML 字段。表格、代码、图片等复杂内容使用区块内的原格式编辑器，不自动降级成富文本。
+
+隐藏的经历或区块以 `resumer-hidden-2` / `resumer-hidden-3` HTML 注释保存在 Markdown 中，恢复显示时解码还原；预览和 PDF 解析会移除这些注释。它是可逆的显示设置，不是删除或保密措施，导出的 Markdown 仍包含隐藏内容。相同标题无法唯一定位时，请从左侧目录选择。AI 改写继续采用整份建议稿、另存变体的流程。
+
 ## 工作流
 
 ```mermaid
 flowchart LR
-  A["YAML Frontmatter + Markdown"] --> B["解析简历内容"]
+  V["表单与区块富文本"] --> A["兼容 Markdown 内容"]
+  M["Markdown 专业模式"] --> A
+  A --> B["解析可见内容"]
   B --> C["共享 React 模板"]
   C --> D["浏览器实时预览"]
   C --> E["Puppeteer 导出 A4 PDF"]
@@ -36,16 +55,13 @@ flowchart LR
 
 | ID | 名称 | 适用方向 |
 |---|---|---|
-| `minimal` | 极简 | 留白克制的衬线编辑风 |
-| `tech` | 科技 | 深色 Banner 与等宽字体，适合工程师 |
-| `developer` | 开发者 | 高信息密度、项目卡片化 |
-| `grid` | 网格 | 瑞士网格排版，适合设计和产品方向 |
-| `editorial` | 编辑 | 杂志感衬线排版，适合文字和创意方向 |
-| `executive` | 商务 | 稳重留白与金色细节，适合管理和咨询方向 |
-| `compact` | 紧凑 | 小页边距高密度，适合内容较多的一页简历 |
-| `ledger` | 账本 | 瑞士精密排版和编号侧栏，适合高级工程师 |
-| `authority` | 沉静 | 象牙纸、森林墨与黄铜细节，适合资深和管理方向 |
-| `blueprint` | 蓝图 | 技术文档式网格和钴蓝标注，适合系统型工程师 |
+| `minimal` | 留白 | 舒展单栏，衬线姓名与清晰的专业信息 |
+| `editorial` | 纸刊 | 暖白杂志分栏，右侧资料栏与左侧经历主栏 |
+| `ledger` | 序列 | 瑞士编号索引，严谨对齐与陶红细节 |
+| `authority` | 沉静 | 居中名帖，松墨色、轻底色简介与舒展正文 |
+| `blueprint` | 构筑 | 墨蓝页首，左侧资料栏与精简的技术档案排版 |
+
+旧主题自动对应：`tech` / `developer` → `blueprint`，`grid` → `ledger`，`executive` → `authority`，`compact` → `minimal`。预览、编辑器和 PDF 共用同一解析规则。旧默认外观会升级，实际调整过的配色、字号和页边距会保留；保存后用 `collectionVersion: 2` 标记，避免重复迁移。旧模板源文件保留作历史兼容参考，不再进入主题选择与样式加载。
 
 ## 技术栈
 
@@ -55,8 +71,13 @@ flowchart LR
 - NextAuth.js v4 + GitHub OAuth / Credentials 开发登录
 - better-sqlite3
 - Puppeteer Core
-- yaml + react-markdown + remark-gfm
+- Tiptap + Markdown 扩展
+- yaml + unified + remark-parse + react-markdown + remark-gfm
 - Zod
+
+> NextAuth.js 固定在 v4（其 peerDependencies 已声明支持 Next 16 与 React 19）。继任者 Auth.js v5
+> 目前仍为 beta，待正式发布后升级：`getServerSession(authOptions)` 将替换为 `auth()`，
+> `lib/auth.ts` 与各路由的会话获取是唯一需要改动的位置。
 
 ## 本地开发
 
@@ -130,7 +151,7 @@ skills:
 - 职责与成果
 ```
 
-完整字段、正文结构和模板差异见 [RESUME_MARKDOWN_RULES.md](./RESUME_MARKDOWN_RULES.md)。
+完整字段、正文结构、五套主题与照片适配、AI 改写保护见 [内容生成与成品适配规范](./RESUME_MARKDOWN_RULES.md)。AI 改写会读取这份规范；隐藏区块标记的丢失、篡改、复制或重排会被提交校验拒绝。
 
 ## 项目结构
 
@@ -176,6 +197,5 @@ docker compose up --build
 
 ## 后续候选
 
-- 简历版本历史
 - 自定义 CSS
 - 本地备份与恢复

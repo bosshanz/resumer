@@ -1,5 +1,6 @@
 import React from "react";
 import { ResumeFrontmatter } from "@/lib/types";
+import { basicsValues } from "@/lib/templates/sections";
 
 interface ModernHeaderProps {
   frontmatter: ResumeFrontmatter;
@@ -20,6 +21,7 @@ function joinContact(c?: ResumeFrontmatter["contact"]): string[] {
 
 export function ModernHeader({ frontmatter, photo }: ModernHeaderProps) {
   const contactParts = joinContact(frontmatter.contact);
+  const metaParts = [...contactParts, ...basicsValues(frontmatter.basics)];
 
   return (
     <header className="resume-modern-header">
@@ -38,8 +40,8 @@ export function ModernHeader({ frontmatter, photo }: ModernHeaderProps) {
           <span className="resume-modern-eyebrow">{frontmatter.title}</span>
         )}
         {frontmatter.name && <h1 className="resume-modern-h1">{frontmatter.name}</h1>}
-        {contactParts.length > 0 && (
-          <p className="resume-modern-contact">{contactParts.join(" · ")}</p>
+        {metaParts.length > 0 && (
+          <p className="resume-modern-contact">{metaParts.join(" · ")}</p>
         )}
       </div>
     </header>

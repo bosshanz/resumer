@@ -1,15 +1,13 @@
-import { MinimalTemplate, minimalDefaultTheme } from "./minimal";
-import { TechTemplate, techDefaultTheme } from "./tech";
-import { DeveloperTemplate, developerDefaultTheme } from "./developer";
-import { GridTemplate, gridDefaultTheme } from "./grid";
-import { EditorialTemplate, editorialDefaultTheme } from "./editorial";
-import { ExecutiveTemplate, executiveDefaultTheme } from "./executive";
-import { CompactTemplate, compactDefaultTheme } from "./compact";
-import { LedgerTemplate, ledgerDefaultTheme } from "./ledger";
-import { AuthorityTemplate, authorityDefaultTheme } from "./authority";
-import { BlueprintTemplate, blueprintDefaultTheme } from "./blueprint";
-import { TemplateProps } from "./base";
-import { ThemeVariables } from "../types";
+import { MinimalTemplate } from "./minimal";
+import { EditorialTemplate } from "./editorial";
+import { LedgerTemplate } from "./ledger";
+import { AuthorityTemplate } from "./authority";
+import { BlueprintTemplate } from "./blueprint";
+import type { TemplateProps } from "./base";
+import type { ThemeVariables } from "../types";
+import { collectionThemes, type CollectionId } from "./collection";
+import { legacyDefaults } from "./legacy-defaults";
+import { transitionTheme } from "../theme-transition";
 
 export interface TemplateDefinition {
   id: string;
@@ -22,157 +20,108 @@ export interface TemplateDefinition {
     accent: string;
     bg: string;
     fg: string;
-    flavor: "serif" | "sans" | "mono-accent" | "grid" | "italic" | "executive" | "compact";
+    flavor:
+      | "serif"
+      | "sans"
+      | "mono-accent"
+      | "grid"
+      | "italic"
+      | "executive"
+      | "compact";
   };
 }
-
-export const templates: TemplateDefinition[] = [
-  {
-    id: "minimal",
-    name: "极简",
-    description: "衬线编辑风，留白克制，适合非技术与综合岗位",
-    component: MinimalTemplate,
-    defaultTheme: minimalDefaultTheme,
-    preview: {
-      fontFamily: "var(--font-fraunces), serif",
-      accent: "#111111",
-      bg: "#ffffff",
-      fg: "#111111",
-      flavor: "serif",
-    },
-  },
-  {
-    id: "tech",
-    name: "科技",
-    description: "深色 banner 加 Plex Mono 标签，工程师骨架",
-    component: TechTemplate,
-    defaultTheme: techDefaultTheme,
-    preview: {
-      fontFamily: "var(--font-plex-sans), sans-serif",
-      accent: "#ff7a45",
-      bg: "#0a3a5c",
-      fg: "#fbfaf6",
-      flavor: "mono-accent",
-    },
-  },
-  {
-    id: "developer",
-    name: "开发者",
-    description: "项目卡片化，森林绿主色，密度高、信息层级强",
-    component: DeveloperTemplate,
-    defaultTheme: developerDefaultTheme,
-    preview: {
-      fontFamily: "var(--font-inter-tight), sans-serif",
-      accent: "#2d5a3d",
-      bg: "#fbfaf7",
-      fg: "#0d2818",
-      flavor: "sans",
-    },
-  },
-  {
-    id: "grid",
-    name: "网格",
-    description: "瑞士排版，左侧时间轴 + 朱砂红，强结构，设计师/产品取向",
-    component: GridTemplate,
-    defaultTheme: gridDefaultTheme,
-    preview: {
-      fontFamily: "var(--font-geist-sans), sans-serif",
-      accent: "#dc2626",
-      bg: "#ffffff",
-      fg: "#000000",
-      flavor: "grid",
-    },
-  },
-  {
-    id: "editorial",
-    name: "编辑",
-    description: "杂志风，巨幅斜体衬线 + drop cap + 装饰花饰，文字/创意取向",
-    component: EditorialTemplate,
-    defaultTheme: editorialDefaultTheme,
-    preview: {
-      fontFamily: "var(--font-fraunces), serif",
-      accent: "#a87b3f",
-      bg: "#faf6ed",
-      fg: "#3a2415",
-      flavor: "italic",
-    },
-  },
-  {
-    id: "executive",
-    name: "商务",
-    description: "董事会式留白、联系人条和金色细节，适合管理/咨询/高级岗位",
-    component: ExecutiveTemplate,
-    defaultTheme: executiveDefaultTheme,
-    preview: {
-      fontFamily: "var(--font-inter-tight), sans-serif",
-      accent: "#b68b2d",
-      bg: "#fcfcfa",
-      fg: "#173b35",
-      flavor: "executive",
-    },
-  },
-  {
-    id: "compact",
-    name: "紧凑",
-    description: "低页边距、高密度信息结构，适合内容较多的一页技术简历",
-    component: CompactTemplate,
-    defaultTheme: compactDefaultTheme,
-    preview: {
-      fontFamily: "var(--font-geist-sans), sans-serif",
-      accent: "#2563eb",
-      bg: "#ffffff",
-      fg: "#111827",
-      flavor: "compact",
-    },
-  },
-  {
-    id: "ledger",
-    name: "账本",
-    description: "瑞士精密排版，编号侧栏与严格时间轴，适合高级工程师",
-    component: LedgerTemplate,
-    defaultTheme: ledgerDefaultTheme,
-    preview: {
-      fontFamily: "var(--font-inter-tight), sans-serif",
-      accent: "#d42c24",
-      bg: "#ffffff",
-      fg: "#111214",
-      flavor: "grid",
-    },
-  },
-  {
-    id: "authority",
-    name: "沉静",
-    description: "象牙纸、森林墨与黄铜细节，稳重的高级编辑风",
-    component: AuthorityTemplate,
-    defaultTheme: authorityDefaultTheme,
-    preview: {
-      fontFamily: "var(--font-fraunces), serif",
-      accent: "#a97828",
-      bg: "#fbf8f1",
-      fg: "#213b36",
-      flavor: "executive",
-    },
-  },
-  {
-    id: "blueprint",
-    name: "蓝图",
-    description: "技术文档式网格与钴蓝标注，适合系统型工程师",
-    component: BlueprintTemplate,
-    defaultTheme: blueprintDefaultTheme,
-    preview: {
-      fontFamily: "var(--font-plex-sans), sans-serif",
-      accent: "#1452c2",
-      bg: "#ffffff",
-      fg: "#111a2d",
-      flavor: "mono-accent",
-    },
-  },
+const definitions: [
+  CollectionId,
+  string,
+  string,
+  React.FC<TemplateProps>,
+  TemplateDefinition["preview"]["flavor"],
+][] = [
+  [
+    "minimal",
+    "留白",
+    "舒展单栏 · 衬线姓名与轻盈留白，适合通用与专业岗位",
+    MinimalTemplate,
+    "serif",
+  ],
+  [
+    "editorial",
+    "纸刊",
+    "杂志分栏 · 经历主栏与右侧资料栏，适合设计、内容与创意",
+    EditorialTemplate,
+    "italic",
+  ],
+  [
+    "ledger",
+    "序列",
+    "瑞士编号 · 清晰的章节索引与精密层级，适合产品与资深技术",
+    LedgerTemplate,
+    "grid",
+  ],
+  [
+    "authority",
+    "沉静",
+    "居中名帖 · 松墨色与舒展正文，适合管理、咨询与商务",
+    AuthorityTemplate,
+    "executive",
+  ],
+  [
+    "blueprint",
+    "构筑",
+    "技术档案 · 墨蓝页首与左侧资料栏，适合工程与系统岗位",
+    BlueprintTemplate,
+    "mono-accent",
+  ],
 ];
-
+export const templates: TemplateDefinition[] = definitions.map(
+  ([id, name, description, component, flavor]) => ({
+    id,
+    name,
+    description,
+    component,
+    defaultTheme: collectionThemes[id],
+    preview: {
+      fontFamily: String(collectionThemes[id].headingFontFamily),
+      accent: String(collectionThemes[id].primaryColor),
+      bg: String(collectionThemes[id].backgroundColor),
+      fg: String(collectionThemes[id].textColor),
+      flavor,
+    },
+  }),
+);
+export const retiredTemplateIds: Record<string, CollectionId> = {
+  tech: "blueprint",
+  developer: "blueprint",
+  grid: "ledger",
+  executive: "authority",
+  compact: "minimal",
+};
 export function getTemplate(id: string): TemplateDefinition | undefined {
-  return templates.find((t) => t.id === id);
+  return templates.find((t) => t.id === (retiredTemplateIds[id] ?? id));
 }
-
 export function getDefaultTheme(id: string): ThemeVariables {
   return getTemplate(id)?.defaultTheme || templates[0].defaultTheme;
+}
+/** One resolver for editor, preview and PDF; old IDs remain readable without a DB migration. */
+export function resolveTemplateSettings(
+  id: string,
+  saved: ThemeVariables = {},
+) {
+  const template = getTemplate(id) ?? templates[0];
+  const themeVariables =
+    saved.collectionVersion === 2
+      ? { ...template.defaultTheme, ...saved }
+      : transitionTheme(
+          saved,
+          legacyDefaults[id] ?? {},
+          template.defaultTheme,
+          true,
+        );
+  return {
+    template,
+    themeVariables: {
+      ...themeVariables,
+      collectionVersion: 2,
+    } as ThemeVariables,
+  };
 }

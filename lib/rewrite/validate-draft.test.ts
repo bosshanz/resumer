@@ -5,6 +5,32 @@ import { validateDraftAgainstSource } from "./validate-draft";
 const source = defaultResumeContent;
 
 describe("validateDraftAgainstSource", () => {
+  const hidden = (text: string) => `<!-- resumer-hidden-2:${Buffer.from(text).toString("base64")} -->`;
+  const first = hidden("## 隐藏项目\n\n### 内部工具\n\n- 参与维护。\n");
+  const second = hidden("## 补充经历\n\n### 旧项目\n\n- 负责开发。\n");
+  const withHidden = `${source}\n${first}\n${second}\n`;
+
+  it("接受可见内容改写并原样保留隐藏区块", () => {
+    const result = validateDraftAgainstSource(withHidden, withHidden.replace("title: 高级前端工程师", "title: 前端工程师"));
+    expect(result.ok).toBe(true);
+    expect(result.pendingItems).toEqual([]);
+  });
+
+  it.each([
+    withHidden.replace(first, ""),
+    withHidden.replace(first, hidden("## 已改写的隐藏内容\n")),
+    `${withHidden}\n${first}`,
+    `${source}\n${second}\n${first}\n`,
+  ])("拒绝隐藏区块丢失、篡改、复制或重排", (draft) => {
+    const result = validateDraftAgainstSource(withHidden, draft);
+    expect(result.ok).toBe(false);
+    expect(result.errors.some(error => error.includes("隐藏区块"))).toBe(true);
+  });
+
+  it("拒绝在没有隐藏内容的底稿中新增隐藏标记", () => {
+    expect(validateDraftAgainstSource(source, `${source}\n${first}`).ok).toBe(false);
+  });
+
   it("接受只改 summary、title、skills 顺序和 bullet 的稿件", () => {
     const draft = source
       .replace("title: 高级前端工程师", "title: 前端架构师")

@@ -2,7 +2,7 @@ import React from "react";
 import puppeteer from "puppeteer-core";
 import type { Browser, Page } from "puppeteer-core";
 import { parseResumeContent } from "./parser";
-import { getTemplate } from "./templates";
+import { resolveTemplateSettings } from "./templates";
 import { readResumeTemplateCss } from "./templates/css";
 import { ThemeVariables } from "./types";
 import { buildPdfChrome, buildPdfPageCss } from "./pdf-chrome";
@@ -80,8 +80,7 @@ export async function renderResumeHtml(
   const { renderToString } = await import("react-dom/server");
 
   const { frontmatter, body } = parseResumeContent(content);
-  const template = getTemplate(templateId) || getTemplate("minimal")!;
-  const mergedTheme = { ...template.defaultTheme, ...themeVariables };
+  const { template, themeVariables: mergedTheme } = resolveTemplateSettings(templateId, themeVariables);
 
   const Component = template.component;
   const element = React.createElement(Component, {
@@ -95,10 +94,8 @@ export async function renderResumeHtml(
 
   const css = readResumeTemplateCss();
 
-  // Zero @page margin so the paper color and first-page bleeds fill the A4
-  // sheet. Inset comes from .resume-page padding (same as the on-screen
-  // preview). Chrome clips overflow into @page margins, so a non-zero
-  // margin would leave a white frame around the resume.
+  // The bottom @page margin reserves the footer; the print content height
+  // excludes that band. Other insets come from the template's page padding.
   const pageCss = buildPdfPageCss(mergedTheme);
 
   // next/font 字体（woff2 内联）。放在模板样式之后，以便覆盖 .next 中
@@ -127,8 +124,7 @@ export async function generateResumePdf(
 ): Promise<Buffer> {
   const html = await renderResumeHtml(content, templateId, themeVariables, photo);
   const { frontmatter } = parseResumeContent(content);
-  const template = getTemplate(templateId) || getTemplate("minimal")!;
-  const mergedTheme = { ...template.defaultTheme, ...themeVariables };
+  const { themeVariables: mergedTheme } = resolveTemplateSettings(templateId, themeVariables);
   const chrome = buildPdfChrome(frontmatter, mergedTheme);
 
   let page: Page;

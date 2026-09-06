@@ -1,29 +1,35 @@
 import YAML from "yaml";
+import { stripHiddenBlocks } from "./resume-builder";
 import { ParsedResume, ResumeFrontmatter, resumeFrontmatterSchema } from "./types";
 
 const FRONTMATTER_DELIMITER = "---";
 
 export function parseResumeContent(raw: string): ParsedResume {
   const trimmed = raw.trim();
+  const lines = trimmed.split("\n");
 
-  if (!trimmed.startsWith(FRONTMATTER_DELIMITER)) {
+  // 起始和闭合分隔符都必须是整行恰为 ---（允许行尾空白）；
+  // 用 indexOf("\n---") 匹配会把正文里的 ----- 或 YAML 多行字符串中的 --- 误当闭合
+  if ((lines[0] ?? "").trim() !== FRONTMATTER_DELIMITER) {
     return {
       frontmatter: {},
-      body: trimmed,
+      body: stripHiddenBlocks(trimmed),
     };
   }
 
-  const endIndex = trimmed.indexOf("\n" + FRONTMATTER_DELIMITER);
-  if (endIndex === -1) {
+  const closeIndex = lines.findIndex(
+    (line, index) => index > 0 && line.trim() === FRONTMATTER_DELIMITER
+  );
+  if (closeIndex === -1) {
     return {
       frontmatter: {},
-      body: trimmed,
+      body: stripHiddenBlocks(trimmed),
       frontmatterError: "Frontmatter 缺少结束分隔符 ---",
     };
   }
 
-  const frontmatterRaw = trimmed.slice(FRONTMATTER_DELIMITER.length, endIndex).trim();
-  const body = trimmed.slice(endIndex + FRONTMATTER_DELIMITER.length + 1).trim();
+  const frontmatterRaw = lines.slice(1, closeIndex).join("\n").trim();
+  const body = lines.slice(closeIndex + 1).join("\n").trim();
 
   let frontmatter: ResumeFrontmatter = {};
   let frontmatterError: string | undefined;
@@ -44,7 +50,7 @@ export function parseResumeContent(raw: string): ParsedResume {
 
   return {
     frontmatter,
-    body,
+    body: stripHiddenBlocks(body),
     frontmatterError,
   };
 }

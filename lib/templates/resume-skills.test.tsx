@@ -24,6 +24,13 @@ describe("ResumeSkills", () => {
     expect(html.match(/resume-skill-sep/g)?.length).toBe(3);
   });
 
+  it("flows unlabelled skills together without dropping tokens", () => {
+    const html = renderToStaticMarkup(<ResumeSkills skills={["React / Next.js", "TypeScript", "Docker"]} />);
+    expect(html.match(/class="resume-skill-group"/g)).toHaveLength(1);
+    expect(html.match(/class="resume-skill-tag"/g)).toHaveLength(4);
+    expect(html).toContain("TypeScript");
+  });
+
   it("renders nothing when skills are empty", () => {
     expect(renderToStaticMarkup(<ResumeSkills skills={{}} />)).toBe("");
   });

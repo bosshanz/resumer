@@ -299,3 +299,48 @@
   opacity: 0.14;
   margin: 1.6em 0 0.6em;
 }
+
+/* Shared entry hierarchy; extra specificity preserves each theme's h3 frame. */
+.resume-page .resume-body h3.resume-entry-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 1em;
+  row-gap: 0.2em;
+  font-style: normal;
+  line-height: 1.5;
+}
+.resume-entry-identity {
+  flex: 1 1 15em;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.resume-entry-role {
+  font-weight: 400;
+  font-size: 0.92em;
+}
+.resume-entry-date {
+  margin-left: auto;
+  font-size: 0.82em;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Avoid synthetic italic CJK glyphs while retaining English editorial styles. */
+.resume-page:lang(zh-CN) h1,
+.resume-page:lang(zh-CN) .resume-summary,
+.resume-page:lang(zh-CN) .resume-meta,
+.resume-page:lang(zh-CN) .resume-rule-h2,
+.resume-page:lang(zh-CN) .resume-body h2,
+.resume-page:lang(zh-CN) .resume-body h3,
+.resume-page:lang(zh-CN) .resume-body .resume-subhead,
+.resume-page:lang(zh-CN) .resume-body h3 + p {
+  font-style: normal;
+}
+.resume-page:lang(zh-CN) .resume-summary p {
+  font-style: normal;
+}
+.resume-page .resume-skill-group-items > span {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}

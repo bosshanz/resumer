@@ -1,9 +1,10 @@
+import { getResumeLanguage } from "./language";
 import React from "react";
 import { ModernHeader } from "@/components/modern-header";
 import { TemplateProps, TemplateBase, mergeThemeVariables } from "./base";
 import { ResumeMarkdown } from "./resume-markdown";
 import { hasSkills, ResumeSkills } from "./resume-skills";
-import { splitResumeSections } from "./sections";
+import { basicsValues, splitResumeSections } from "./sections";
 import { ThemeVariables } from "../types";
 
 export const gridDefaultTheme: ThemeVariables = {
@@ -26,6 +27,7 @@ const railSectionPattern = /教育|学历|校园|证书|认证|语言|获奖|荣
 
 export function GridTemplate({ frontmatter, body, themeVariables, photo }: TemplateProps) {
   const vars = mergeThemeVariables(gridDefaultTheme, themeVariables);
+  const language = getResumeLanguage(frontmatter, body);
   const c = frontmatter.contact;
   const useModernHeader = vars.photoLayout === "floating-monolith";
   const contactList: { label: string; value: string }[] = [];
@@ -41,17 +43,17 @@ export function GridTemplate({ frontmatter, body, themeVariables, photo }: Templ
   const mainSections = useModernHeader
     ? sections
     : sections.filter((s) => !railSectionPattern.test(s.title));
-  const basicEntries = Object.entries(frontmatter.basics ?? {});
+  const basicValues = basicsValues(frontmatter.basics);
   const hasRail =
     !useModernHeader &&
     (contactList.length > 0 ||
-      basicEntries.length > 0 ||
+      basicValues.length > 0 ||
       Boolean(frontmatter.summary) ||
       hasSkills(frontmatter.skills) ||
       railSections.length > 0);
 
   return (
-    <TemplateBase themeId="grid" vars={vars}>
+    <TemplateBase themeId="grid" vars={vars} language={language}>
       {useModernHeader && photo ? (
         <ModernHeader frontmatter={frontmatter} photo={photo} />
       ) : (
@@ -84,34 +86,33 @@ export function GridTemplate({ frontmatter, body, themeVariables, photo }: Templ
         <div className={`resume-grid-layout${hasRail ? "" : " resume-grid-layout--single"}`}>
           {hasRail && (
             <aside className="resume-grid-rail">
-              {(basicEntries.length > 0 || contactList.length > 0) && (
+              {(basicValues.length > 0 || contactList.length > 0) && (
                 <section className="resume-grid-block resume-section">
-                  <h2>Contact</h2>
-                  <dl className="resume-contact-grid">
-                    {basicEntries.map(([label, value]) => (
-                      <React.Fragment key={label}>
-                        <dt>{label}</dt>
-                        <dd>{value}</dd>
-                      </React.Fragment>
-                    ))}
-                    {contactList.map((item) => (
-                      <React.Fragment key={item.label}>
-                        <dt>{item.label}</dt>
-                        <dd>{item.value}</dd>
-                      </React.Fragment>
-                    ))}
-                  </dl>
+                  <h2>{language === "zh-CN" ? "联系方式" : "Contact"}</h2>
+                  {contactList.length > 0 && (
+                    <dl className="resume-contact-grid">
+                      {contactList.map((item) => (
+                        <React.Fragment key={item.label}>
+                          <dt>{item.label}</dt>
+                          <dd>{item.value}</dd>
+                        </React.Fragment>
+                      ))}
+                    </dl>
+                  )}
+                  {basicValues.length > 0 && (
+                    <p className="resume-grid-basics">{basicValues.join(" · ")}</p>
+                  )}
                 </section>
               )}
               {frontmatter.summary && (
                 <section className="resume-grid-block resume-section">
-                  <h2>Profile</h2>
+                  <h2>{language === "zh-CN" ? "个人简介" : "Profile"}</h2>
                   <p className="resume-summary">{frontmatter.summary}</p>
                 </section>
               )}
               {hasSkills(frontmatter.skills) && (
                 <section className="resume-grid-block resume-section">
-                  <h2>Skills</h2>
+                  <h2>{language === "zh-CN" ? "专业技能" : "Skills"}</h2>
                   <ResumeSkills skills={frontmatter.skills} />
                 </section>
               )}

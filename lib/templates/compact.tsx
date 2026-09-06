@@ -1,8 +1,10 @@
+import { getResumeLanguage } from "./language";
 import React from "react";
 import { ModernHeader } from "@/components/modern-header";
 import { TemplateProps, TemplateBase, mergeThemeVariables } from "./base";
 import { ResumeMarkdown } from "./resume-markdown";
 import { hasSkills, ResumeSkills } from "./resume-skills";
+import { basicsValues } from "./sections";
 import { ThemeVariables } from "../types";
 
 export const compactDefaultTheme: ThemeVariables = {
@@ -34,11 +36,13 @@ function joinContact(c?: TemplateProps["frontmatter"]["contact"]): string[] {
 
 export function CompactTemplate({ frontmatter, body, themeVariables, photo }: TemplateProps) {
   const vars = mergeThemeVariables(compactDefaultTheme, themeVariables);
+  const language = getResumeLanguage(frontmatter, body);
   const contactParts = joinContact(frontmatter.contact);
+  const contactLine = [...contactParts, ...basicsValues(frontmatter.basics)];
   const useModernHeader = vars.photoLayout === "floating-monolith";
 
   return (
-    <TemplateBase themeId="compact" vars={vars}>
+    <TemplateBase themeId="compact" vars={vars} language={language}>
       {useModernHeader && photo ? (
         <ModernHeader frontmatter={frontmatter} photo={photo} />
       ) : (
@@ -46,7 +50,7 @@ export function CompactTemplate({ frontmatter, body, themeVariables, photo }: Te
           <div className="resume-compact-identity">
             {frontmatter.name && <h1 className="resume-h1">{frontmatter.name}</h1>}
             {frontmatter.title && <div className="resume-compact-title">{frontmatter.title}</div>}
-            {contactParts.length > 0 && <p className="resume-compact-contact">{contactParts.join(" | ")}</p>}
+            {contactLine.length > 0 && <p className="resume-compact-contact">{contactLine.join(" | ")}</p>}
           </div>
           {photo && (
             <figure className="resume-photo-figure resume-photo-figure--compact">
@@ -61,13 +65,13 @@ export function CompactTemplate({ frontmatter, body, themeVariables, photo }: Te
         <section className="resume-compact-overview resume-section">
           {frontmatter.summary && (
             <div className="resume-compact-summary">
-              <h2>Summary</h2>
+              <h2>{language === "zh-CN" ? "个人简介" : "Summary"}</h2>
               <p>{frontmatter.summary}</p>
             </div>
           )}
           {hasSkills(frontmatter.skills) && (
             <div className="resume-compact-skills">
-              <h2>Skills</h2>
+              <h2>{language === "zh-CN" ? "专业技能" : "Skills"}</h2>
               <ResumeSkills skills={frontmatter.skills} />
             </div>
           )}

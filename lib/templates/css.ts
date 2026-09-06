@@ -1,20 +1,7 @@
 import fs from "fs";
 import path from "path";
 
-export const resumeTemplateStyleFiles = [
-  "base.css",
-  "modern-header.css",
-  "minimal.css",
-  "tech.css",
-  "developer.css",
-  "grid.css",
-  "editorial.css",
-  "executive.css",
-  "compact.css",
-  "ledger.css",
-  "authority.css",
-  "blueprint.css",
-] as const;
+export const resumeTemplateStyleFiles = ["base.css", "modern-header.css", "folio.css"] as const;
 
 export function readResumeTemplateCss(): string {
   const stylesDir = path.join(

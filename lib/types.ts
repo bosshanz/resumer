@@ -45,6 +45,8 @@ export const themeVariablesSchema = z.object({
   marginBottom: safeCssString,
   marginLeft: safeCssString,
   marginRight: safeCssString,
+  photoFit: z.enum(["cover", "contain"]).optional().catch(undefined),
+  photoPosition: z.number().min(0).max(100).optional().catch(undefined),
   photoLayout: z.enum(["default", "floating-monolith"]).optional(),
 }).catchall(z.union([z.string(), z.number(), z.boolean()]));
 

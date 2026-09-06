@@ -1,8 +1,10 @@
+import { getResumeLanguage } from "./language";
 import React from "react";
 import { ModernHeader } from "@/components/modern-header";
 import { TemplateProps, TemplateBase, mergeThemeVariables } from "./base";
 import { ResumeMarkdown } from "./resume-markdown";
 import { hasSkills, ResumeSkills } from "./resume-skills";
+import { basicsValues } from "./sections";
 import { ThemeVariables } from "../types";
 
 export const executiveDefaultTheme: ThemeVariables = {
@@ -34,11 +36,13 @@ function contactRows(c?: TemplateProps["frontmatter"]["contact"]): { label: stri
 
 export function ExecutiveTemplate({ frontmatter, body, themeVariables, photo }: TemplateProps) {
   const vars = mergeThemeVariables(executiveDefaultTheme, themeVariables);
+  const language = getResumeLanguage(frontmatter, body);
   const rows = contactRows(frontmatter.contact);
+  const basics = basicsValues(frontmatter.basics);
   const useModernHeader = vars.photoLayout === "floating-monolith";
 
   return (
-    <TemplateBase themeId="executive" vars={vars}>
+    <TemplateBase themeId="executive" vars={vars} language={language}>
       {useModernHeader && photo ? (
         <ModernHeader frontmatter={frontmatter} photo={photo} />
       ) : (
@@ -63,19 +67,20 @@ export function ExecutiveTemplate({ frontmatter, body, themeVariables, photo }: 
               ))}
             </dl>
           )}
+          {basics.length > 0 && <p className="resume-executive-basics">{basics.join(" · ")}</p>}
         </header>
       )}
 
       {frontmatter.summary && (
         <section className="resume-executive-summary resume-section">
-          <span>Profile</span>
+          <span>{language === "zh-CN" ? "个人简介" : "Profile"}</span>
           <p>{frontmatter.summary}</p>
         </section>
       )}
 
       {hasSkills(frontmatter.skills) && (
         <section className="resume-executive-skills resume-section" aria-label="skills">
-          <h2>Core Strengths</h2>
+          <h2>{language === "zh-CN" ? "核心优势" : "Core Strengths"}</h2>
           <ResumeSkills skills={frontmatter.skills} />
         </section>
       )}

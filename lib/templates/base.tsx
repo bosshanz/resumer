@@ -44,6 +44,7 @@ export function TemplateBase({
   themeId,
   vars,
   children,
+  language,
 }: {
   themeId:
     | "minimal"
@@ -57,10 +58,11 @@ export function TemplateBase({
     | "authority"
     | "blueprint";
   vars: ThemeVariables;
+  language?: "zh-CN" | "en";
   children: React.ReactNode;
 }) {
   return (
-    <div className={`resume-page theme-${themeId}`} style={buildPageStyle(vars)}>
+    <div className={`resume-page theme-${themeId}`} style={buildPageStyle(vars)} lang={language}>
       {children}
     </div>
   );

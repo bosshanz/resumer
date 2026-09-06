@@ -1,9 +1,11 @@
+import { getResumeLanguage } from "./language";
 import React from "react";
 import { ModernHeader } from "@/components/modern-header";
 import { MailIcon, PhoneIcon, GlobeIcon, MapPinIcon, GithubMark, LinkedinMark } from "./icons";
 import { TemplateProps, TemplateBase, mergeThemeVariables } from "./base";
 import { ResumeMarkdown } from "./resume-markdown";
 import { hasSkills, ResumeSkills } from "./resume-skills";
+import { basicsValues } from "./sections";
 import { ThemeVariables } from "../types";
 
 export const techDefaultTheme: ThemeVariables = {
@@ -23,7 +25,9 @@ export const techDefaultTheme: ThemeVariables = {
 
 export function TechTemplate({ frontmatter, body, themeVariables, photo }: TemplateProps) {
   const vars = mergeThemeVariables(techDefaultTheme, themeVariables);
+  const language = getResumeLanguage(frontmatter, body);
   const c = frontmatter.contact;
+  const basics = basicsValues(frontmatter.basics);
   const useModernHeader = vars.photoLayout === "floating-monolith";
 
   const skillsStrip = hasSkills(frontmatter.skills) && (
@@ -34,7 +38,7 @@ export function TechTemplate({ frontmatter, body, themeVariables, photo }: Templ
   );
 
   return (
-    <TemplateBase themeId="tech" vars={vars}>
+    <TemplateBase themeId="tech" vars={vars} language={language}>
       {useModernHeader && photo ? (
         <>
           <ModernHeader frontmatter={frontmatter} photo={photo} />
@@ -56,38 +60,43 @@ export function TechTemplate({ frontmatter, body, themeVariables, photo }: Templ
                 {frontmatter.title && <div className="resume-h1-mono">{`> ${frontmatter.title}`}</div>}
               </div>
             </div>
-            {c && (
+            {(c || basics.length > 0) && (
               <div className="resume-contact">
-                {c.email && (
+                {c?.email && (
                   <span className="resume-contact-item">
                     <MailIcon /> {c.email}
                   </span>
                 )}
-                {c.phone && (
+                {c?.phone && (
                   <span className="resume-contact-item">
                     <PhoneIcon /> {c.phone}
                   </span>
                 )}
-                {c.github && (
+                {c?.github && (
                   <span className="resume-contact-item">
                     <GithubMark /> {c.github}
                   </span>
                 )}
-                {c.website && (
+                {c?.website && (
                   <span className="resume-contact-item">
                     <GlobeIcon /> {c.website}
                   </span>
                 )}
-                {c.linkedin && (
+                {c?.linkedin && (
                   <span className="resume-contact-item">
                     <LinkedinMark /> {c.linkedin}
                   </span>
                 )}
-                {c.location && (
+                {c?.location && (
                   <span className="resume-contact-item">
                     <MapPinIcon /> {c.location}
                   </span>
                 )}
+                {basics.map((value) => (
+                  <span className="resume-contact-item" key={value}>
+                    {value}
+                  </span>
+                ))}
               </div>
             )}
           </div>

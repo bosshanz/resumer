@@ -1,0 +1,571 @@
+/* The five-piece collection. All dimensions describe the printed sheet. */
+.folio {
+  --folio-line: color-mix(in srgb, var(--resume-fg) 19%, transparent);
+  --folio-wash: color-mix(in srgb, var(--resume-accent) 5%, var(--resume-bg));
+  color: var(--resume-fg);
+}
+.folio h1,
+.folio h2,
+.folio p,
+.folio figure {
+  margin: 0;
+}
+.folio-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5mm;
+  padding-bottom: 8mm;
+  margin-bottom: 7mm;
+  border-bottom: 0.3mm solid var(--folio-line);
+  break-inside: avoid;
+}
+.folio-identity {
+  flex: 1;
+  min-width: 0;
+}
+.folio .folio-header h1 {
+  font-size: 3.3em;
+  line-height: 1.14;
+  letter-spacing: -0.045em;
+  font-weight: 500;
+  color: var(--resume-accent);
+  overflow-wrap: anywhere;
+}
+.folio-role {
+  margin-top: 3mm !important;
+  font-size: 1.02em;
+  letter-spacing: 0.045em;
+  color: var(--resume-muted);
+  line-height: 1.55;
+}
+.folio-contact {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 4mm;
+  row-gap: 1.5mm;
+  width: 100%;
+  font-size: 0.78em;
+  color: var(--resume-muted);
+  line-height: 1.6;
+}
+.folio-contact-item {
+  display: inline-flex;
+  gap: 2mm;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.folio-contact-label {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.74em;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+  align-self: baseline;
+  opacity: 0.8;
+}
+.folio-photo {
+  margin-left: auto !important;
+  padding: 1.2mm;
+  border: 0.2mm solid var(--folio-line);
+  background: var(--resume-bg);
+}
+.folio-photo .resume-photo {
+  width: var(--portrait-width, 24mm);
+  height: var(--portrait-height, 30mm);
+  max-width: none;
+  background: var(--resume-bg);
+}
+.folio-label {
+  font-family: var(--font-geist-sans), var(--resume-cjk-sans);
+  font-size: 0.79em;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--resume-accent);
+  line-height: 1.5;
+  margin-bottom: 2.5mm !important;
+}
+.folio-profile {
+  margin-bottom: 6mm;
+}
+.folio-profile p {
+  font-size: 0.96em;
+  line-height: 1.85;
+  text-wrap: pretty;
+}
+.folio-skills {
+  margin: 0 0 7mm;
+}
+.folio .resume-skill-group-label {
+  font-size: 0.76em;
+  letter-spacing: 0.025em;
+  min-width: 5em;
+  font-weight: 500;
+}
+.folio .resume-skill-tag,
+.folio .resume-skill-sep {
+  font-size: 0.87em;
+  line-height: 1.6;
+}
+.folio .resume-skill-groups {
+  gap: 1.8mm;
+}
+.folio-section {
+  margin-top: 7mm;
+}
+.folio-section:first-child {
+  margin-top: 0;
+}
+.folio-section-heading {
+  margin-bottom: 3.5mm;
+  break-after: avoid;
+}
+.folio-section-heading h2 {
+  font-family: var(--resume-heading-font);
+  font-size: 1.13em;
+  line-height: 1.45;
+  font-weight: 550;
+  color: var(--resume-accent);
+  letter-spacing: 0.015em;
+}
+.folio-section-content {
+  min-width: 0;
+}
+.folio .resume-body {
+  font-size: 0.94em;
+  line-height: inherit;
+  overflow-wrap: anywhere;
+}
+.folio .resume-body h3 {
+  font-family: var(--font-geist-sans), var(--resume-cjk-sans) !important;
+  font-size: 1.04em;
+  font-weight: 600;
+  color: var(--resume-fg);
+  line-height: 1.55;
+  margin-bottom: 1.6mm;
+}
+.folio .resume-body .resume-entry + .resume-entry {
+  margin-top: 4.5mm;
+}
+.folio .resume-body .resume-entry > * + * {
+  margin-top: 1.8mm;
+}
+.folio .resume-body h3 + p {
+  font-size: 1em;
+  opacity: 1;
+  break-after: auto;
+}
+.folio .resume-body ul {
+  list-style: none;
+  padding-left: 3mm;
+}
+.folio .resume-body ul > li {
+  padding-left: 0.5mm;
+  position: relative;
+}
+.folio .resume-body ul > li::before {
+  content: "";
+  width: 0.8mm;
+  height: 0.8mm;
+  position: absolute;
+  left: -2.5mm;
+  top: 0.73em;
+  border-radius: 50%;
+  background: var(--resume-muted);
+}
+.folio .resume-body li {
+  margin: 0.22em 0;
+}
+.folio .resume-entry-date {
+  color: var(--resume-muted);
+  font-family: var(--font-geist-sans), var(--resume-cjk-sans);
+  font-size: 0.78em;
+  white-space: normal;
+}
+.folio .resume-entry-role {
+  color: var(--resume-muted);
+  font-size: 0.9em;
+}
+.folio .resume-entry-identity {
+  flex-basis: 12em;
+}
+.folio .resume-body table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9em;
+  margin: 3mm 0;
+}
+.folio .resume-body :is(th, td) {
+  padding: 1.5mm 2mm;
+  border-bottom: 0.2mm solid var(--folio-line);
+  text-align: left;
+}
+.folio .resume-body img {
+  max-width: 100%;
+  height: auto;
+}
+.folio .resume-body pre {
+  white-space: pre-wrap;
+  padding: 3mm;
+  background: var(--folio-wash);
+}
+/* 01 / 留白 — a broad, quiet single column with a typographic signature. */
+.folio-minimal .folio-header {
+  padding-bottom: 8mm;
+  border-bottom-color: var(--resume-accent);
+  border-bottom-width: 0.45mm;
+}
+.folio-minimal .folio-header h1 {
+  font-size: 3.7em;
+  letter-spacing: -0.05em;
+}
+.folio-minimal .folio-role {
+  font-size: 0.94em;
+  letter-spacing: 0.1em;
+}
+.folio-minimal .folio-profile .folio-label {
+  display: none;
+}
+.folio-minimal .folio-profile p {
+  font-size: 1.04em;
+  line-height: 1.9;
+}
+.folio-minimal .folio-skills {
+  padding-bottom: 5mm;
+  border-bottom: 0.2mm solid var(--folio-line);
+}
+.folio-minimal .folio-section-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 4mm;
+}
+.folio-minimal .folio-section-heading::after {
+  content: "";
+  height: 0.2mm;
+  flex: 1;
+  background: var(--folio-line);
+}
+/* 02 / 纸刊 — masthead above an asymmetric main column and right margin notes. */
+.folio-editorial .folio-header {
+  border-top: 0.8mm solid var(--resume-accent);
+  padding-top: 7mm;
+  border-bottom-width: 0.2mm;
+  margin-bottom: 8mm;
+}
+.folio-editorial .folio-header h1 {
+  font-size: 3.65em;
+  letter-spacing: -0.055em;
+}
+.folio-editorial .folio-identity {
+  display: flex;
+  align-items: baseline;
+  gap: 5mm;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.folio-editorial .folio-role {
+  font-size: 0.88em;
+  flex: 1 1 48mm;
+  text-align: right;
+}
+.folio-columns {
+  display: grid;
+  grid-template-columns: 41mm minmax(0, 1fr);
+  column-gap: 7mm;
+  align-items: start;
+}
+.folio-editorial .folio-columns {
+  grid-template-columns: minmax(0, 1fr) 39mm;
+  column-gap: 8mm;
+}
+.folio-editorial .folio-rail {
+  grid-column: 2;
+  grid-row: 1;
+  padding-left: 5mm;
+  border-left: 0.2mm solid var(--folio-line);
+}
+.folio-editorial .folio-experience {
+  grid-column: 1;
+  grid-row: 1;
+}
+.folio-rail .folio-contact {
+  flex-direction: column;
+  padding-bottom: 6mm;
+  margin-bottom: 6mm;
+  border-bottom: 0.2mm solid var(--folio-line);
+  font-size: 0.8em;
+  gap: 2mm;
+}
+.folio-rail .folio-contact-item {
+  display: block;
+}
+.folio-rail .folio-contact-label {
+  display: block;
+  font-size: 0.72em;
+  margin-bottom: 0.6mm;
+}
+.folio-rail .folio-profile {
+  margin-bottom: 7mm;
+}
+.folio-rail .folio-profile p {
+  font-size: 0.89em;
+  line-height: 1.85;
+}
+.folio-rail .resume-skill-group {
+  display: block;
+}
+.folio-rail .resume-skill-group-label {
+  display: block;
+  margin-bottom: 1mm;
+}
+.folio-rail .resume-skill-group-items {
+  column-gap: 1.2mm;
+}
+.folio-editorial .folio-section-heading h2 {
+  font-size: 1.35em;
+  font-weight: 500;
+}
+.folio-editorial .folio-section {
+  margin-top: 8mm;
+}
+.folio-editorial .folio-section:first-child {
+  margin-top: 0;
+}
+.folio-editorial .resume-entry-heading {
+  display: block !important;
+}
+.folio-editorial .resume-entry-date {
+  display: block;
+  margin-top: 0.8mm;
+}
+.folio-editorial .resume-dropcap::first-letter {
+  float: left;
+  font-family: var(--font-fraunces);
+  font-size: 2.9em;
+  line-height: 1;
+  padding-right: 1mm;
+  color: var(--resume-accent);
+}
+/* 03 / 序列 — a precise numbered contents rail, one line per professional fact. */
+.folio-ledger .folio-header {
+  border-bottom: 0.65mm solid var(--resume-fg);
+  align-items: start;
+  padding-bottom: 6mm;
+}
+.folio-ledger .folio-header h1 {
+  font-weight: 600;
+  font-size: 3.6em;
+}
+.folio-ledger .folio-header > .folio-contact {
+  flex: 0 1 62mm;
+  flex-direction: column;
+  gap: 1mm;
+  padding-top: 1mm;
+}
+.folio-ledger .folio-contact-label {
+  width: 15mm;
+}
+.folio-ledger .folio-header.folio-with-photo > .folio-contact {
+  flex-basis: 100%;
+  flex-direction: row;
+}
+.folio-ledger .folio-profile,
+.folio-ledger .folio-skills {
+  display: grid;
+  grid-template-columns: 29mm minmax(0, 1fr);
+  gap: 5mm;
+}
+.folio-ledger .folio-section {
+  display: grid;
+  grid-template-columns: 29mm minmax(0, 1fr);
+  /* Do not stretch the unbreakable label to the full experience column.
+     Chromium otherwise moves the entire section to the next printed page. */
+  align-items: start;
+  gap: 5mm;
+  border-top: 0.2mm solid var(--folio-line);
+  padding-top: 5mm;
+  margin-top: 6mm;
+}
+.folio-ledger .folio-section-heading {
+  margin: 0;
+}
+.folio-ledger .folio-index {
+  display: block;
+  font-family: var(--font-geist-mono);
+  font-size: 1.8em;
+  font-weight: 400;
+  color: var(--resume-accent);
+  line-height: 1;
+  margin-bottom: 2.5mm;
+}
+.folio-ledger .folio-section-heading h2 {
+  font-size: 0.84em;
+  font-weight: 550;
+  color: var(--resume-fg);
+}
+.folio-ledger .resume-entry-heading {
+  column-gap: 2mm !important;
+}
+/* 04 / 沉静 — a centered nameplate and measured, full-width professional record. */
+.folio-authority .folio-header {
+  justify-content: center;
+  text-align: center;
+  border-top: 0.6mm solid var(--resume-accent);
+  padding-top: 8mm;
+  border-bottom: 0.2mm solid var(--folio-line);
+  padding-bottom: 7mm;
+}
+.folio-authority .folio-header h1 {
+  font-size: 3.3em;
+  letter-spacing: 0.01em;
+}
+.folio-authority .folio-role {
+  font-size: 0.9em;
+  letter-spacing: 0.12em;
+}
+.folio-authority .folio-contact {
+  justify-content: center;
+  font-size: 0.77em;
+}
+.folio-authority .folio-profile {
+  padding: 4mm 5mm;
+  background: var(--folio-wash);
+  border-left: 0.5mm solid var(--resume-accent);
+  margin-bottom: 7mm;
+}
+.folio-authority .folio-profile p {
+  font-size: 0.93em;
+}
+.folio-authority .folio-section-heading {
+  border-bottom: 0.2mm solid var(--folio-line);
+  padding-bottom: 2.3mm;
+}
+.folio-authority .folio-section-heading h2 {
+  font-size: 1.18em;
+}
+.folio-authority .folio-skills {
+  margin-top: 7mm;
+  padding-top: 4mm;
+  border-top: 0.35mm solid var(--resume-accent);
+  margin-bottom: 0;
+}
+/* 05 / 构筑 — an ink-blue identity panel, restrained technical margin, open body. */
+.folio-blueprint .folio-header {
+  background: var(--resume-accent);
+  padding: 7mm 7mm;
+  border: 0;
+  margin-bottom: 7mm;
+}
+.folio-blueprint .folio-header h1 {
+  color: var(--resume-bg);
+  font-size: 3.2em;
+  font-weight: 500;
+}
+.folio-blueprint .folio-role {
+  color: var(--resume-bg);
+  opacity: 0.85;
+  font-size: 0.93em;
+  letter-spacing: 0.025em;
+}
+.folio-blueprint .folio-photo {
+  border: none;
+  padding: 0.8mm;
+}
+.folio-blueprint .folio-rail {
+  padding-right: 5mm;
+  border-right: 0.2mm solid var(--folio-line);
+}
+.folio-blueprint .folio-label {
+  font-size: 0.8em;
+  letter-spacing: 0.02em;
+}
+.folio-blueprint .folio-section-heading {
+  border-bottom: 0.4mm solid var(--resume-accent);
+  padding-bottom: 2mm;
+}
+.folio-blueprint .folio-section-heading h2 {
+  font-size: 0.94em;
+  letter-spacing: 0.04em;
+}
+.folio-blueprint .resume-entry-heading {
+  display: block !important;
+}
+.folio-blueprint .resume-entry-date {
+  display: block;
+  font-family: var(--font-plex-mono), var(--resume-cjk-mono);
+  margin-top: 0.8mm;
+  font-size: 0.77em;
+}
+/* The paper keeps its physical geometry at every editor viewport size. */
+@media print {
+  .folio-header {
+    break-inside: avoid;
+  }
+  .folio-section-heading {
+    break-inside: avoid;
+    break-after: avoid;
+  }
+  .folio-section,
+  .folio-experience,
+  .folio-columns,
+  .folio-rail {
+    break-inside: auto;
+  }
+}
+
+.folio-rail .resume-skill-group-items { display: flex; flex-direction: column; align-items: flex-start; gap: 1mm; }
+.folio-rail .resume-skill-sep { display: none; }
+.folio-rail .resume-skill-groups { gap: 3mm; }
+/* A multiline employer/role/date heading must never split across sheets. */
+.folio .resume-body h3 { break-inside: avoid; page-break-inside: avoid; }
+
+/* Portrait compositions use reserved tracks, so identity text cannot displace the photo. */
+.folio-has-portrait .folio-photo { margin: 0 !important; justify-self: end; break-inside: avoid; }
+.folio-minimal { --portrait-width: 24mm; --portrait-height: 30mm; }
+.folio-minimal.folio-portrait-large { --portrait-width: 28mm; --portrait-height: 35mm; }
+.folio-minimal .folio-header.folio-with-photo {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4mm 9mm; align-items: start;
+}
+.folio-minimal .folio-with-photo .folio-identity { grid-column: 1; grid-row: 1; }
+.folio-minimal .folio-with-photo .folio-photo { grid-column: 2; grid-row: 1 / span 2; }
+.folio-minimal .folio-with-photo .folio-contact { grid-column: 1; grid-row: 2; }
+.folio-minimal .folio-header.folio-with-photo h1 { font-size: 3.25em; }
+/* The magazine portrait belongs to its margin notes, leaving the masthead open. */
+.folio-editorial .folio-rail > .folio-photo { width: 100%; padding: 0; border: 0; margin-bottom: 6mm !important; }
+.folio-editorial .folio-photo .resume-photo { width: 100%; height: 42mm; }
+.folio-editorial.folio-portrait-large .folio-photo .resume-photo { height: 50mm; }
+.folio-editorial.folio-has-portrait .folio-rail > :last-child { margin-bottom: 0; }
+.folio-editorial.folio-portrait-large .folio-rail > .folio-photo { margin-bottom: 4mm !important; }
+.folio-editorial.folio-portrait-large .folio-contact { padding-bottom: 4mm; margin-bottom: 4mm; }
+.folio-editorial.folio-portrait-large .folio-profile { margin-bottom: 5mm; }
+/* A square portrait aligns with the numbered rail; contacts retain their own column. */
+.folio-ledger { --portrait-width: 25mm; --portrait-height: 25mm; }
+.folio-ledger.folio-portrait-large { --portrait-width: 29mm; --portrait-height: 29mm; }
+.folio-ledger .folio-header.folio-with-photo {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) 53mm; gap: 5mm; align-items: start;
+}
+.folio-ledger .folio-with-photo .folio-photo { grid-column: 1; grid-row: 1; padding: 0; border: 0; }
+.folio-ledger .folio-with-photo .folio-identity { grid-column: 2; grid-row: 1; padding-top: 1mm; }
+.folio-ledger .folio-header.folio-with-photo > .folio-contact { grid-column: 3; grid-row: 1; flex-direction: column; }
+.folio-ledger .folio-header.folio-with-photo h1 { font-size: 2.85em; }
+.folio-ledger .folio-with-photo .folio-role { font-size: .88em; }
+/* Equal side tracks keep the name on the paper's centre, even with a right portrait. */
+.folio-authority { --portrait-width: 24mm; --portrait-height: 30mm; }
+.folio-authority.folio-portrait-large { --portrait-width: 28mm; --portrait-height: 35mm; }
+.folio-authority .folio-header.folio-with-photo {
+  display: grid; grid-template-columns: calc(var(--portrait-width) + 3mm) minmax(0, 1fr) calc(var(--portrait-width) + 3mm);
+  gap: 5mm; align-items: center;
+}
+.folio-authority .folio-with-photo .folio-identity { grid-column: 2; grid-row: 1; }
+.folio-authority .folio-with-photo .folio-photo { grid-column: 3; grid-row: 1; }
+.folio-authority .folio-with-photo .folio-contact { grid-column: 1 / -1; grid-row: 2; }
+.folio-authority .folio-header.folio-with-photo h1 { font-size: 2.85em; }
+/* The ink panel frames the portrait, with a stable white mat and no overlap. */
+.folio-blueprint { --portrait-width: 24mm; --portrait-height: 30mm; }
+.folio-blueprint.folio-portrait-large { --portrait-width: 28mm; --portrait-height: 35mm; }
+.folio-blueprint .folio-header.folio-with-photo {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8mm;
+}
+.folio-blueprint .folio-with-photo .folio-identity { grid-column: 1; grid-row: 1; }
+.folio-blueprint .folio-with-photo .folio-photo { grid-column: 2; grid-row: 1; }
+.folio-blueprint .folio-header.folio-with-photo h1 { font-size: 2.95em; }

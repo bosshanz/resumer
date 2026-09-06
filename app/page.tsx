@@ -61,14 +61,14 @@ export default async function Home({
             <div className="mb-6 flex items-center justify-between">
               <h1 className="text-2xl font-bold tracking-tight">Resumer</h1>
               <span className="rounded-full border border-zinc-200 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
-                Markdown → PDF
+                YOUR STORY, WELL DESIGNED
               </span>
             </div>
             <p className="text-lg font-medium leading-7 text-zinc-900 dark:text-zinc-100">
               写内容，设计简历，导出即用。
             </p>
             <p className="mb-5 mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-              面向程序员的 Markdown 简历工作台。实时预览、多套版式与稳定 PDF 导出都在一个界面里完成。
+              从经历到成品，用可视化区块整理内容，以专业版式呈现价值。实时预览，随时导出 PDF。
             </p>
             <div className="mb-6 flex flex-wrap gap-2" aria-label="产品能力">
               {['实时预览', '版式与配色', 'PDF 导出'].map((feature) => (

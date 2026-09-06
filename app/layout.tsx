@@ -38,8 +38,8 @@ const interTight = Inter_Tight({
 });
 
 export const metadata: Metadata = {
-  title: "Resumer - Markdown 简历生成器",
-  description: "面向程序员的在线 Markdown 简历模板生成器",
+  title: "Resumer — 让经历成为作品",
+  description: "可视化简历工作台，区块编辑、专业主题与 PDF 导出。",
 };
 
 export default function RootLayout({

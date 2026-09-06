@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { parseResumeContent } from "@/lib/parser";
-import { getTemplate } from "@/lib/templates";
+import { resolveTemplateSettings } from "@/lib/templates";
 import { ThemeVariables } from "@/lib/types";
 import {
   A4_WIDTH_MM,
@@ -45,10 +45,10 @@ function PageSeams({
   );
 }
 
-export function Preview({ content, templateId, themeVariables, photo, scale = 1, onPageFit }: PreviewProps) {
+export function Preview({ content, templateId, themeVariables: savedTheme, photo, scale = 1, onPageFit }: PreviewProps) {
   const { frontmatter, body, frontmatterError } = parseResumeContent(content);
-  const template = getTemplate(templateId) || getTemplate("minimal")!;
-  const mergedTheme = { ...template.defaultTheme, ...themeVariables };
+  const { template, themeVariables } = useMemo(() => resolveTemplateSettings(templateId, savedTheme), [templateId, savedTheme]);
+  const mergedTheme = themeVariables;
   const themeKey = JSON.stringify(themeVariables);
   const viewportRef = useRef<HTMLDivElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);

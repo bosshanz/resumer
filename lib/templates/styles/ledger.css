@@ -57,6 +57,14 @@
   overflow-wrap: anywhere;
 }
 
+/* 基本信息（性别/学历等）：值并入联系区，作为 dl 下方的一行弱化文本 */
+.theme-ledger .resume-ledger-basics {
+  margin: 1.8mm 0 0;
+  font-family: var(--font-plex-mono), var(--resume-cjk-mono);
+  font-size: 0.77em;
+  color: var(--resume-muted, #687078);
+}
+
 .theme-ledger .resume-ledger-photo {
   margin: 0;
   width: 28mm;

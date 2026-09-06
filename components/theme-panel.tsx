@@ -9,7 +9,8 @@ import { AlertTriangle, ChevronDown, ChevronRight } from "lucide-react";
 interface ThemePanelProps {
   value: ThemeVariables;
   templateId: string;
-  onTemplateChange: (templateId: string) => void;
+  photo?: string;
+  onTemplateChange: (templateId: string, preserveAdjustments: boolean) => void;
   onChange: (vars: ThemeVariables) => void;
   onReset: () => void;
 }
@@ -88,12 +89,14 @@ function activeMargin(v: ThemeVariables): string | null {
 export function ThemePanel({
   value,
   templateId,
+  photo,
   onTemplateChange,
   onChange,
   onReset,
 }: ThemePanelProps) {
   const [activeTab, setActiveTab] = useState<DesignTab>("layout");
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [preserveAdjustments, setPreserveAdjustments] = useState(true);
 
   const applyPalette = (p: Palette) =>
     onChange({
@@ -147,7 +150,16 @@ export function ThemePanel({
         {activeTab === "layout" && (
           <div role="tabpanel" id="design-layout-panel" aria-labelledby="design-layout-tab">
             <Section label="简历版式">
-              <TemplateSelector value={templateId} onChange={onTemplateChange} variant="panel" />
+              <label className="mb-3 flex items-start gap-2 text-xs leading-5 text-zinc-600 dark:text-zinc-400">
+                <input
+                  type="checkbox"
+                  checked={preserveAdjustments}
+                  onChange={(event) => setPreserveAdjustments(event.target.checked)}
+                  className="mt-1 accent-zinc-900 dark:accent-zinc-100"
+                />
+                切换版式时保留我的配色与排版调整
+              </label>
+              <TemplateSelector photo={photo} value={templateId} onChange={(id) => onTemplateChange(id, preserveAdjustments)} variant="panel" />
             </Section>
           </div>
         )}
@@ -209,12 +221,23 @@ export function ThemePanel({
             <Section label="照片排版">
               <Segmented
                 options={[
-                  { id: "default", label: "模板默认" },
-                  { id: "floating-monolith", label: "浮岛肖像" },
+                  { id: "default", label: "标准照片" },
+                  { id: "floating-monolith", label: "强化肖像" },
                 ]}
                 value={value.photoLayout || "default"}
                 onChange={(id) => onChange({ ...value, photoLayout: id as "default" | "floating-monolith" })}
               />
+              <p className="mt-2 text-[11px] leading-5 text-zinc-500">照片随主题自动安排位置，可在「更多操作」上传或更换。</p>
+              <div className="mt-3">
+                <Segmented options={[{ id: "cover", label: "填满裁切" }, { id: "contain", label: "完整显示" }]}
+                  value={value.photoFit || "cover"} onChange={(id) => onChange({ ...value, photoFit: id as "cover" | "contain" })} />
+              </div>
+              <label className="mt-3 block text-xs text-zinc-600 dark:text-zinc-400">
+                <span>取景位置 · 上下移动</span>
+                <input className="mt-2 block w-full accent-zinc-700 disabled:opacity-40" type="range" min="0" max="100" step="1"
+                  aria-label="照片垂直取景位置" disabled={value.photoFit === "contain"}
+                  value={value.photoPosition ?? 35} onChange={e => onChange({ ...value, photoPosition: Number(e.target.value) })} />
+              </label>
             </Section>
 
             <AdvancedToggle open={advancedOpen} onToggle={() => setAdvancedOpen((v) => !v)} label="高级颜色" />

@@ -69,6 +69,14 @@
   color: var(--resume-fg, #0a0a0a);
 }
 
+/* 基本信息（性别/学历等）：值并入 Contact 区，作为 dl 下方的一行弱化文本 */
+.theme-grid .resume-grid-basics {
+  margin: 0.55em 0 0;
+  font-family: var(--font-plex-mono), var(--resume-cjk-mono);
+  font-size: 0.76em;
+  color: color-mix(in srgb, var(--resume-fg, #0a0a0a) 68%, transparent);
+}
+
 .theme-grid .resume-summary {
   font-size: 1.1em;
   line-height: 1.45;

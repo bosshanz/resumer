@@ -42,7 +42,7 @@
   font-size: 0.62em;
   text-transform: uppercase;
   letter-spacing: 0.34em;
-  color: var(--resume-muted, #a87b3f);
+  color: color-mix(in srgb, var(--resume-fg, #2a1c10) 70%, var(--resume-muted, #a87b3f));
   margin-bottom: 1em;
 }
 
@@ -53,7 +53,7 @@
   font-size: 0.78em;
   text-transform: uppercase;
   letter-spacing: 0.18em;
-  color: var(--resume-muted, #a87b3f);
+  color: color-mix(in srgb, var(--resume-fg, #2a1c10) 70%, var(--resume-muted, #a87b3f));
   margin-bottom: 0.4em;
 }
 
@@ -110,7 +110,7 @@
   font-style: italic;
   font-size: 0.62em;
   letter-spacing: 0.06em;
-  color: var(--resume-muted, #a87b3f);
+  color: color-mix(in srgb, var(--resume-fg, #2a1c10) 70%, var(--resume-muted, #a87b3f));
   margin-top: 0.8em;
   text-align: center;
   opacity: 0.85;
@@ -198,7 +198,7 @@
   font-size: 0.78em;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--resume-muted, #a87b3f);
+  color: color-mix(in srgb, var(--resume-fg, #2a1c10) 70%, var(--resume-muted, #a87b3f));
   opacity: 1;
   margin-top: 0.2em;
 }
@@ -220,7 +220,7 @@
 }
 .theme-editorial .resume-body .resume-subhead::before {
   content: "❦  ";
-  color: var(--resume-muted, #a87b3f);
+  color: color-mix(in srgb, var(--resume-fg, #2a1c10) 70%, var(--resume-muted, #a87b3f));
   font-style: normal;
   font-size: 0.85em;
 }
@@ -237,7 +237,7 @@
   content: "·";
   position: absolute;
   left: 0;
-  color: var(--resume-muted, #a87b3f);
+  color: color-mix(in srgb, var(--resume-fg, #2a1c10) 70%, var(--resume-muted, #a87b3f));
   font-weight: 700;
   top: -0.05em;
   font-size: 1.4em;
@@ -262,6 +262,6 @@
   content: "❧";
   font-family: var(--font-fraunces), var(--resume-cjk-serif);
   font-size: 0.95em;
-  color: var(--resume-muted, #a87b3f);
+  color: color-mix(in srgb, var(--resume-fg, #2a1c10) 70%, var(--resume-muted, #a87b3f));
   opacity: 0.7;
 }

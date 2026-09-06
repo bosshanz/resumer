@@ -4,8 +4,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Preview } from "./preview";
+import dynamic from "next/dynamic";
+const ResumeStudio = dynamic(() => import("./studio/resume-studio").then(m => m.ResumeStudio), { ssr: false, loading: () => <div className="p-8 text-sm text-zinc-500">正在打开简历工作台…</div> });
 import { ThemePanel } from "./theme-panel";
 import { ResumeSelector } from "./resume-selector";
+import { FileMenu } from "./file-menu";
+import { UserMenu } from "./user-menu";
+import { FocusToggle, FocusMode } from "./focus-toggle";
+import { useFocusTrap } from "./use-focus-trap";
 import type { ResumeListItem } from "@/lib/resumes";
 import { ConfirmDialog } from "./confirm-dialog";
 import { HistoryDialog } from "./history-dialog";
@@ -13,39 +19,26 @@ import { RewritePanel, RewritePreviewState } from "./rewrite-panel";
 import { Resume, ThemeVariables } from "@/lib/types";
 import { PageFit } from "@/lib/page-fit";
 import { EditorDrawer, editorDrawerClassName, toggleEditorDrawer } from "@/lib/editor-drawer";
-import { getDefaultTheme } from "@/lib/templates";
+import { getDefaultTheme, getTemplate, resolveTemplateSettings } from "@/lib/templates";
+import { transitionTheme } from "@/lib/theme-transition";
 import {
   Download,
-  FileUp,
-  FileDown,
-  LogOut,
   Palette,
-  Eye,
-  PenLine,
-  Columns,
   X,
   Loader2,
-  Trash2,
-  MoreHorizontal,
-  ImagePlus,
   AlertCircle,
-  History,
   Target,
 } from "lucide-react";
-import Image from "next/image";
 
 interface EditorProps {
   initialResume: Resume;
 }
 
 type SaveStatus = "saved" | "saving" | "unsaved" | "error";
-type FocusMode = "split" | "edit" | "preview";
 type SavePayload = Pick<Resume, "title" | "content" | "templateId" | "themeVariables" | "photo">;
 
 function resolveThemeVariables(resume: Resume): ThemeVariables {
-  return resume.themeVariables && Object.keys(resume.themeVariables).length > 0
-    ? resume.themeVariables
-    : getDefaultTheme(resume.templateId);
+  return resolveTemplateSettings(resume.templateId, resume.themeVariables).themeVariables;
 }
 
 export function Editor({ initialResume }: EditorProps) {
@@ -54,7 +47,7 @@ export function Editor({ initialResume }: EditorProps) {
   const [currentResumeId, setCurrentResumeId] = useState(initialResume.id);
   const [title, setTitleState] = useState(initialResume.title);
   const [content, setContentState] = useState(initialResume.content);
-  const [templateId, setTemplateIdState] = useState(initialResume.templateId);
+  const [templateId, setTemplateIdState] = useState(getTemplate(initialResume.templateId)?.id ?? "minimal");
   const [themeVariables, setThemeVariablesState] = useState<ThemeVariables>(
     resolveThemeVariables(initialResume)
   );
@@ -65,30 +58,23 @@ export function Editor({ initialResume }: EditorProps) {
   const rewriteOpen = drawer === "rewrite";
   const [rewritePreview, setRewritePreview] = useState<RewritePreviewState | null>(null);
   const [pageFit, setPageFit] = useState<PageFit | null>(null);
+  const [editorMode, setEditorMode] = useState<"visual" | "source">("visual");
   const [focusMode, setFocusMode] = useState<FocusMode>("split");
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [fileMenuOpen, setFileMenuOpen] = useState(false);
   const [photo, setPhotoState] = useState<string | undefined>(initialResume.photo);
   const [resumes, setResumes] = useState<ResumeListItem[]>([]);
   const [isSwitching, setIsSwitching] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<ResumeListItem | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const photoInputRef = useRef<HTMLInputElement>(null);
   const drawerRef = useRef<HTMLElement>(null);
   const drawerTriggerRef = useRef<HTMLButtonElement>(null);
   const drawerCloseRef = useRef<HTMLButtonElement>(null);
-  const fileMenuRef = useRef<HTMLDivElement>(null);
-  const fileMenuButtonRef = useRef<HTMLButtonElement>(null);
-  const userMenuRef = useRef<HTMLDivElement>(null);
-  const userMenuButtonRef = useRef<HTMLButtonElement>(null);
   // 最近一次已持久化的快照，自动保存只提交与它的差异（避免每次全量重发照片等大字段）
   const lastSavedRef = useRef<SavePayload>({
     title: initialResume.title,
     content: initialResume.content,
     templateId: initialResume.templateId,
-    themeVariables: resolveThemeVariables(initialResume),
+    themeVariables: initialResume.themeVariables,
     photo: initialResume.photo,
   });
   const currentResumeIdRef = useRef(initialResume.id);
@@ -98,11 +84,14 @@ export function Editor({ initialResume }: EditorProps) {
   const markUnsaved = useCallback(() => setSaveStatus("unsaved"), []);
   const setContent = useCallback((v: string) => { setContentState(v); markUnsaved(); }, [markUnsaved]);
   const setTitle = useCallback((v: string) => { setTitleState(v); markUnsaved(); }, [markUnsaved]);
-  const setTemplateId = useCallback((v: string) => {
+  const setTemplateId = useCallback((v: string, preserveAdjustments = true) => {
+    if (v === templateId) return;
     setTemplateIdState(v);
-    setThemeVariablesState(getDefaultTheme(v));
+    setThemeVariablesState((current) => transitionTheme(
+      current, getDefaultTheme(templateId), getDefaultTheme(v), preserveAdjustments,
+    ));
     markUnsaved();
-  }, [markUnsaved]);
+  }, [markUnsaved, templateId]);
   const setThemeVariables = useCallback((v: ThemeVariables) => { setThemeVariablesState(v); markUnsaved(); }, [markUnsaved]);
   const setPhoto = useCallback((v: string | undefined) => { setPhotoState(v); markUnsaved(); }, [markUnsaved]);
 
@@ -217,35 +206,15 @@ export function Editor({ initialResume }: EditorProps) {
     window.URL.revokeObjectURL(url);
   };
 
-  const handleImportMarkdown = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => setContent(String(event.target?.result || ""));
-    reader.readAsText(file);
-    e.target.value = "";
-  };
-
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      alert("请上传图片文件");
-      e.target.value = "";
-      return;
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      alert("图片大小不能超过 2MB");
-      e.target.value = "";
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = (event) => setPhoto(String(event.target?.result || ""));
-    reader.readAsDataURL(file);
-    e.target.value = "";
-  };
+  const handleImportMarkdown = useCallback(
+    (imported: string) => setContent(imported),
+    [setContent]
+  );
 
   const clearPhoto = () => setPhoto("");
+
+  // 稳定引用：useFocusTrap 依赖它，内联箭头函数会让 effect 每次渲染重跑并抢回焦点
+  const closeDrawer = useCallback(() => setDrawer(null), []);
 
   const resetTheme = () => setThemeVariables(getDefaultTheme(templateId));
 
@@ -254,7 +223,7 @@ export function Editor({ initialResume }: EditorProps) {
     setCurrentResumeId(resume.id);
     setTitleState(resume.title);
     setContentState(resume.content);
-    setTemplateIdState(resume.templateId);
+    setTemplateIdState(getTemplate(resume.templateId)?.id ?? "minimal");
     const theme = resolveThemeVariables(resume);
     setThemeVariablesState(theme);
     setPhotoState(resume.photo);
@@ -262,7 +231,7 @@ export function Editor({ initialResume }: EditorProps) {
       title: resume.title,
       content: resume.content,
       templateId: resume.templateId,
-      themeVariables: theme,
+      themeVariables: resume.themeVariables,
       photo: resume.photo,
     };
     setSaveStatus("saved");
@@ -458,74 +427,14 @@ export function Editor({ initialResume }: EditorProps) {
     return () => media.removeEventListener("change", syncMode);
   }, []);
 
-  useEffect(() => {
-    if (!drawerOpen) return;
-
-    const previousFocus = document.activeElement instanceof HTMLElement
-      ? document.activeElement
-      : drawerTriggerRef.current;
-    const drawer = drawerRef.current;
-    requestAnimationFrame(() => drawerCloseRef.current?.focus());
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        setDrawer(null);
-        return;
-      }
-      if (event.key !== "Tab" || !drawer) return;
-
-      const focusable = Array.from(
-        drawer.querySelectorAll<HTMLElement>(
-          'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-        )
-      ).filter((element) => !element.hasAttribute("inert"));
-      if (focusable.length === 0) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      previousFocus?.focus();
-    };
-  }, [drawerOpen]);
-
-  useEffect(() => {
-    if (!fileMenuOpen && !userMenuOpen) return;
-
-    const closeMenus = (event: PointerEvent) => {
-      const target = event.target as Node;
-      if (fileMenuOpen && !fileMenuRef.current?.contains(target)) setFileMenuOpen(false);
-      if (userMenuOpen && !userMenuRef.current?.contains(target)) setUserMenuOpen(false);
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      if (fileMenuOpen) {
-        setFileMenuOpen(false);
-        fileMenuButtonRef.current?.focus();
-      }
-      if (userMenuOpen) {
-        setUserMenuOpen(false);
-        userMenuButtonRef.current?.focus();
-      }
-    };
-
-    document.addEventListener("pointerdown", closeMenus);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("pointerdown", closeMenus);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [fileMenuOpen, userMenuOpen]);
+  // 设计抽屉的焦点圈定与 Escape 关闭
+  useFocusTrap({
+    open: drawerOpen,
+    containerRef: drawerRef,
+    closeRef: drawerCloseRef,
+    triggerRef: drawerTriggerRef,
+    onClose: closeDrawer,
+  });
 
   // Keyboard shortcut: Cmd/Ctrl + S to force save
   useEffect(() => {
@@ -559,7 +468,7 @@ export function Editor({ initialResume }: EditorProps) {
   }, [saveStatus]);
 
   return (
-    <div className="flex h-screen flex-col bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
+    <div className="editor-shell flex h-screen flex-col bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
       <header className="relative z-50 flex flex-shrink-0 flex-wrap items-center gap-x-3 border-b border-zinc-200 bg-white/90 px-3 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-900/90 sm:px-4">
         <div className="order-1 flex min-w-0 flex-1 items-center gap-2 py-2">
           <span className="select-none text-base font-semibold tracking-tight">Resumer</span>
@@ -606,54 +515,12 @@ export function Editor({ initialResume }: EditorProps) {
           />
 
         {session?.user ? (
-          <div ref={userMenuRef} className="relative flex-shrink-0">
-            <button
-              ref={userMenuButtonRef}
-              type="button"
-              onClick={() => setUserMenuOpen((v) => !v)}
-              aria-label="账户菜单"
-              aria-haspopup="menu"
-              aria-expanded={userMenuOpen}
-              className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 dark:hover:bg-zinc-800"
-              title={session.user.name || "账户菜单"}
-            >
-              {session.user.image ? (
-                <Image
-                  src={session.user.image}
-                  alt=""
-                  width={28}
-                  height={28}
-                  className="rounded-full"
-                  unoptimized
-                />
-              ) : (
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-200 text-xs font-medium dark:bg-zinc-800">
-                  {(session.user.name || "U").charAt(0).toUpperCase()}
-                </span>
-              )}
-            </button>
-            {userMenuOpen && (
-              <div role="menu" className="absolute right-0 top-full z-30 mt-1 min-w-[180px] rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
-                <div className="border-b border-zinc-200 px-3 py-2 dark:border-zinc-800">
-                  <div className="truncate text-sm font-medium">{session.user.name}</div>
-                  {session.user.email && (
-                    <div className="truncate text-xs text-zinc-500">{session.user.email}</div>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={() => {
-                    setUserMenuOpen(false);
-                    signOut();
-                  }}
-                  className="flex min-h-9 w-full items-center gap-2 px-3 text-left text-sm hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-500 dark:hover:bg-zinc-800"
-                >
-                  <LogOut className="h-3.5 w-3.5" /> 退出登录
-                </button>
-              </div>
-            )}
-          </div>
+          <UserMenu
+            name={session.user.name}
+            email={session.user.email}
+            image={session.user.image}
+            onSignOut={() => signOut()}
+          />
         ) : (
           <button
             type="button"
@@ -666,7 +533,8 @@ export function Editor({ initialResume }: EditorProps) {
         </div>
 
         <div className="order-3 flex w-full items-center justify-end gap-1.5 border-t border-zinc-200 py-2 dark:border-zinc-800 lg:order-2 lg:w-auto lg:border-0">
-          <FocusToggle value={focusMode} onChange={setFocusMode} />
+          <div className="studio-mode-toggle" aria-label="编辑模式"><button type="button" aria-pressed={editorMode === "visual"} onClick={() => setEditorMode("visual")}>可视化</button><button type="button" aria-pressed={editorMode === "source"} onClick={() => setEditorMode("source")} aria-label="Markdown"><span className="hidden sm:inline">Markdown</span><span className="sm:hidden">源码</span></button></div>
+          {editorMode === "source" && <FocusToggle value={focusMode} onChange={setFocusMode} />}
 
         <button
           ref={drawerTriggerRef}
@@ -703,78 +571,14 @@ export function Editor({ initialResume }: EditorProps) {
           改写
         </button>
 
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".md,.markdown,text/markdown"
-            onChange={handleImportMarkdown}
-            className="hidden"
+          <FileMenu
+            hasPhoto={!!photo}
+            onImportMarkdown={handleImportMarkdown}
+            onExportMarkdown={handleExportMarkdown}
+            onOpenHistory={() => setHistoryOpen(true)}
+            onChangePhoto={setPhoto}
+            onRemovePhoto={clearPhoto}
           />
-          <input
-            ref={photoInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handlePhotoChange}
-            className="hidden"
-          />
-          <div ref={fileMenuRef} className="relative">
-            <IconButton
-              buttonRef={fileMenuButtonRef}
-              title="更多操作"
-              ariaExpanded={fileMenuOpen}
-              onClick={() => setFileMenuOpen((v) => !v)}
-            >
-              <MoreHorizontal className="h-4 w-4" />
-            </IconButton>
-            {fileMenuOpen && (
-              <div role="menu" className="absolute right-0 top-full z-30 mt-1 min-w-[190px] rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
-                <MenuButton
-                  icon={<FileUp className="h-4 w-4" />}
-                  label="导入 Markdown"
-                  onClick={() => {
-                    setFileMenuOpen(false);
-                    fileInputRef.current?.click();
-                  }}
-                />
-                <MenuButton
-                  icon={<FileDown className="h-4 w-4" />}
-                  label="导出 Markdown"
-                  onClick={() => {
-                    setFileMenuOpen(false);
-                    handleExportMarkdown();
-                  }}
-                />
-                <MenuButton
-                  icon={<History className="h-4 w-4" />}
-                  label="历史版本…"
-                  onClick={() => {
-                    setFileMenuOpen(false);
-                    setHistoryOpen(true);
-                  }}
-                />
-                <div className="my-1 border-t border-zinc-200 dark:border-zinc-800" />
-                <MenuButton
-                  icon={<ImagePlus className="h-4 w-4" />}
-                  label={photo ? "更换照片" : "上传照片"}
-                  onClick={() => {
-                    setFileMenuOpen(false);
-                    photoInputRef.current?.click();
-                  }}
-                />
-                {photo && (
-                  <MenuButton
-                    icon={<Trash2 className="h-4 w-4" />}
-                    label="删除照片"
-                    danger
-                    onClick={() => {
-                      setFileMenuOpen(false);
-                      clearPhoto();
-                    }}
-                  />
-                )}
-              </div>
-            )}
-          </div>
 
           <button
             type="button"
@@ -789,7 +593,8 @@ export function Editor({ initialResume }: EditorProps) {
       </header>
 
       <main className="relative flex min-h-0 flex-1 overflow-hidden">
-        {showEditor && (
+        {editorMode === "visual" && <ResumeStudio key={currentResumeId} content={content} previewContent={previewContent} templateId={templateId} themeVariables={themeVariables} photo={photo} onChange={setContent} onPageFit={setPageFit} pageFit={pageFit} onSource={() => setEditorMode("source")} onDesign={() => setDrawer("design")} suggestion={!!(rewriteOpen && rewritePreview?.ready)} generating={!!(rewriteOpen && rewritePreview?.generating)} />}
+        {editorMode === "source" && showEditor && (
           <div
             className={[
               "min-w-0 flex-col border-r border-zinc-200 dark:border-zinc-800",
@@ -809,7 +614,7 @@ export function Editor({ initialResume }: EditorProps) {
           </div>
         )}
 
-        {showPreview && (
+        {editorMode === "source" && showPreview && (
           <div className={`relative min-w-0 flex-col ${showEditor ? "w-1/2 md:flex" : "flex w-full"} ${showEditor && focusMode === "split" ? "max-md:hidden" : ""}`}>
             {rewriteOpen && rewritePreview?.ready ? (
               <div
@@ -873,6 +678,7 @@ export function Editor({ initialResume }: EditorProps) {
           inert={!drawerOpen}
         >
           <ThemePanel
+            photo={photo}
             value={themeVariables}
             templateId={templateId}
             onTemplateChange={setTemplateId}
@@ -939,100 +745,6 @@ export function Editor({ initialResume }: EditorProps) {
         }}
         onCancel={() => setDeleteTarget(null)}
       />
-    </div>
-  );
-}
-
-function IconButton({
-  buttonRef,
-  title,
-  onClick,
-  children,
-  ariaExpanded,
-}: {
-  buttonRef?: React.RefObject<HTMLButtonElement | null>;
-  title: string;
-  onClick: () => void;
-  children: React.ReactNode;
-  ariaExpanded?: boolean;
-}) {
-  return (
-    <button
-      ref={buttonRef}
-      type="button"
-      onClick={onClick}
-      title={title}
-      aria-label={title}
-      aria-haspopup={ariaExpanded === undefined ? undefined : "menu"}
-      aria-expanded={ariaExpanded}
-      className="flex h-9 w-9 items-center justify-center rounded-md text-zinc-700 hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 dark:text-zinc-300 dark:hover:bg-zinc-800"
-    >
-      {children}
-    </button>
-  );
-}
-
-function MenuButton({
-  icon,
-  label,
-  onClick,
-  danger = false,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  onClick: () => void;
-  danger?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      role="menuitem"
-      onClick={onClick}
-      className={[
-        "flex min-h-9 w-full items-center gap-2 px-3 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-500",
-        danger
-          ? "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
-          : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800",
-      ].join(" ")}
-    >
-      {icon}
-      {label}
-    </button>
-  );
-}
-
-function FocusToggle({
-  value,
-  onChange,
-}: {
-  value: FocusMode;
-  onChange: (v: FocusMode) => void;
-}) {
-  const opts: { id: FocusMode; icon: React.ReactNode; title: string }[] = [
-    { id: "edit", icon: <PenLine className="h-3.5 w-3.5" />, title: "仅编辑器" },
-    { id: "split", icon: <Columns className="h-3.5 w-3.5" />, title: "分屏" },
-    { id: "preview", icon: <Eye className="h-3.5 w-3.5" />, title: "仅预览" },
-  ];
-  return (
-    <div role="group" aria-label="工作区视图" className="flex items-center gap-0.5 rounded-md bg-zinc-100 p-0.5 dark:bg-zinc-800">
-      {opts.map((o) => (
-        <button
-          key={o.id}
-          type="button"
-          onClick={() => onChange(o.id)}
-          aria-pressed={value === o.id}
-          title={o.title}
-          className={[
-            "h-8 w-8 items-center justify-center rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500",
-            o.id === "split" ? "hidden md:flex" : "flex",
-            value === o.id
-              ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-100"
-              : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100",
-          ].join(" ")}
-        >
-          {o.icon}
-        </button>
-      ))}
     </div>
   );
 }

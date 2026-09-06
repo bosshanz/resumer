@@ -8,7 +8,11 @@ export function ResumeSkills({
   skills?: SkillsInput;
   className?: string;
 }) {
-  const groups = normalizeSkillGroups(skills);
+  const normalized = normalizeSkillGroups(skills);
+  // Flat skills are one wrapping flow; named categories keep their own rows.
+  const groups = normalized.some((group) => group.label)
+    ? normalized
+    : normalized.length > 0 ? [{ items: normalized.flatMap((group) => group.items) }] : [];
   if (groups.length === 0) return null;
 
   const labeled = groups.some((group) => group.label);
@@ -25,7 +29,7 @@ export function ResumeSkills({
           {group.label && <span className="resume-skill-group-label">{group.label}</span>}
           <span className="resume-skill-group-items">
             {group.items.map((item, itemIndex) => (
-              <span key={`${group.label || "group"}-${item}`}>
+              <span key={`${group.label || "group"}-${itemIndex}-${item}`}>
                 {itemIndex > 0 && (
                   <span className="resume-skill-sep" aria-hidden>
                     {" / "}

@@ -10,6 +10,12 @@ export interface DraftValidation {
 const HTML_TAG = /<\/?[a-z][\s\S]*?>/i;
 const HEADING_RE = /^(#{2,3})\s+(.+?)\s*$/gm;
 
+// Hidden content is opaque editor state: compare exact annotations, including
+// their order and count, before the display parser removes them.
+function hiddenAnnotations(content: string): string[] {
+  return content.match(/<!-- resumer-hidden-[23]:[^\r\n]*?-->/g) || [];
+}
+
 export function extractHeadings(markdown: string, depth: 2 | 3): string[] {
   const headings: string[] = [];
   const re = new RegExp(HEADING_RE.source, "gm");
@@ -68,6 +74,10 @@ function extrasIn(actual: string[], allowed: string[]): string[] {
 export function validateDraftAgainstSource(source: string, draft: string): DraftValidation {
   const errors: string[] = [];
   const pendingItems: string[] = [];
+
+  if (JSON.stringify(hiddenAnnotations(source)) !== JSON.stringify(hiddenAnnotations(draft))) {
+    errors.push("不能删除、修改、新增或重排隐藏区块标记，请逐字保留底稿中的标记。");
+  }
 
   if (HTML_TAG.test(draft)) {
     errors.push("建议稿包含 HTML，只能使用标准 Markdown。");

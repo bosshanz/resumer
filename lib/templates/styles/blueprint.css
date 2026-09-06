@@ -8,8 +8,8 @@
   background: var(--resume-bg, #ffffff);
   /* 工程图纸底纹：5mm 淡钴蓝网格，落在纸色之下 */
   background-image:
-    linear-gradient(color-mix(in srgb, var(--resume-accent, #1452c2) 5%, transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in srgb, var(--resume-accent, #1452c2) 5%, transparent) 1px, transparent 1px);
+    linear-gradient(color-mix(in srgb, var(--resume-accent, #1452c2) 2.5%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--resume-accent, #1452c2) 2.5%, transparent) 1px, transparent 1px);
   background-size: 5mm 5mm;
   /* 线宽分级：外框 1.25 < 主标题块底 1.5，次级规则降到 0.75 */
   border: 1.25px solid var(--resume-accent, #1452c2);
@@ -156,23 +156,6 @@
   border-bottom: 1px dotted color-mix(in srgb, var(--resume-accent, #1452c2) 28%, transparent);
   font-family: var(--font-plex-mono), var(--resume-cjk-mono);
   font-size: 0.78em;
-}
-
-.theme-blueprint .resume-blueprint-meta dl {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 2mm 3mm;
-  margin: 0;
-  font-size: 0.72em;
-}
-
-.theme-blueprint .resume-blueprint-meta dt {
-  color: var(--resume-accent, #1452c2);
-  font-family: var(--font-plex-mono), var(--resume-cjk-mono);
-}
-
-.theme-blueprint .resume-blueprint-meta dd {
-  margin: 0;
 }
 
 .theme-blueprint .resume-blueprint-section {
