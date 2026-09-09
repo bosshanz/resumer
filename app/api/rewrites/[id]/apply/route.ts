@@ -1,13 +1,10 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
-import { getDatabase, initDb } from "@/lib/db";
+import { getDatabase } from "@/lib/db";
 import { applyRewrite, RewriteRequestError } from "@/lib/rewrite/service";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
-
-initDb();
-const db = getDatabase();
 
 export async function POST(
   _request: Request,
@@ -17,6 +14,7 @@ export async function POST(
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const db = getDatabase();
 
   const { id } = await params;
   try {

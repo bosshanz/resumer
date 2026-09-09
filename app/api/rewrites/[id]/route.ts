@@ -1,15 +1,12 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
-import { getDatabase, initDb } from "@/lib/db";
+import { getDatabase } from "@/lib/db";
 import { continueRewrite, RewriteRequestError } from "@/lib/rewrite/service";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
-
-initDb();
-const db = getDatabase();
 
 const continueSchema = z.object({
   instruction: z.string(),
@@ -45,6 +42,7 @@ export async function POST(
   }
 
   const { id } = await params;
+  const db = getDatabase();
   try {
     const rewrite = await continueRewrite(db, {
       userId: session.user.id,

@@ -1,7 +1,8 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
-import { getDatabase, initDb } from "@/lib/db";
+import { getDatabase } from "@/lib/db";
 import { normalizeResume } from "@/lib/resumes";
+import { pruneOrphanPhotos, resolveResumePhoto } from "@/lib/photos";
 import {
   createResumeVersion,
   getResumeVersion,
@@ -9,9 +10,6 @@ import {
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
-
-initDb();
-const db = getDatabase();
 
 // 恢复 = 先把被替换的当前状态留档（恢复错了还能退回来），再整体回到所选快照
 export async function POST(
@@ -22,6 +20,7 @@ export async function POST(
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const db = getDatabase();
 
   const { id, versionId } = await params;
   const current = db
@@ -58,9 +57,10 @@ export async function POST(
       version.photo,
       id
     );
+    pruneOrphanPhotos(db);
   });
   restore();
 
   const resume = db.prepare(`SELECT * FROM resumes WHERE id = ?`).get(id) as Record<string, unknown>;
-  return NextResponse.json({ resume: normalizeResume(resume) });
+  return NextResponse.json({ resume: resolveResumePhoto(db, normalizeResume(resume)) });
 }

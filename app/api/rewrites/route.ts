@@ -1,15 +1,12 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
-import { getDatabase, initDb } from "@/lib/db";
+import { getDatabase } from "@/lib/db";
 import { loadActiveRewrite, RewriteRequestError, startRewrite } from "@/lib/rewrite/service";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
-
-initDb();
-const db = getDatabase();
 
 const createSchema = z.object({
   resumeId: z.string().min(1),
@@ -35,6 +32,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Missing resumeId" }, { status: 400 });
   }
 
+  const db = getDatabase();
   try {
     const rewrite = loadActiveRewrite(db, resumeId, session.user.id);
     return NextResponse.json({ rewrite });
@@ -61,6 +59,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
+  const db = getDatabase();
   try {
     const rewrite = await startRewrite(db, {
       userId: session.user.id,

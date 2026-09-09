@@ -1,12 +1,13 @@
 # 模板设计验收
 
+> 本文记录旧版十套模板阶段的历史验收，不代表当前五套成品主题已经重跑验收。当前模板清单以 README 为准。
+
 ## 对照对象
 
-- 设计图：
-  - `/Users/andy/.codex/generated_images/019f51d2-ddca-7ec0-bee0-3826bb9db473/exec-2749e44b-f905-409c-a546-84c4c3363ca4.png`（账本）
-  - `/Users/andy/.codex/generated_images/019f51d2-ddca-7ec0-bee0-3826bb9db473/exec-7d00af13-12b3-4931-8dd6-1fe92b935459.png`（沉静）
-  - `/Users/andy/.codex/generated_images/019f51d2-ddca-7ec0-bee0-3826bb9db473/exec-9eafe826-095c-4b27-83f6-5f2db513abaa.png`（蓝图）
-- 实现截图：`/tmp/resumer-design-qa/{ledger,authority,blueprint}.png`，由 Puppeteer 生成的 A4 PDF 首页栅格化得到。
+- 设计图：账本 / 沉静 / 蓝图三张 AI 生成图。原图生成于本地会话（`~/.codex/generated_images/`），未入库；
+  重跑验收时需重新生成。
+- 实现截图：`/tmp/resumer-design-qa/{ledger,authority,blueprint}.png`，由 Puppeteer 生成的 A4 PDF 首页栅格化得到
+  （临时目录，重启后失效，可用 `scripts/test-all-pdfs.mjs` 重新产出 PDF）。
 - 全页对照：`/tmp/resumer-design-qa/{ledger,authority,blueprint}-comparison.png`。
 - 局部对照：`/tmp/resumer-design-qa/{ledger,authority,blueprint}-header-comparison.png`。
 - 浏览器状态：本地开发预览，默认简历内容、已上传测试肖像、三套模板均可选择；浏览器控制台无 error。

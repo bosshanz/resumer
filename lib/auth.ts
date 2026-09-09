@@ -3,7 +3,7 @@ import GitHubProvider from "next-auth/providers/github";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { HttpsProxyAgent } from "https-proxy-agent";
 import { custom as openidCustom } from "openid-client";
-import { getDatabase, initDb } from "./db";
+import { getDatabase } from "./db";
 import crypto from "crypto";
 
 const proxyUrl = process.env.HTTPS_PROXY || process.env.HTTP_PROXY;
@@ -23,10 +23,6 @@ interface GitHubProfile {
   name?: string;
   avatar_url?: string;
 }
-
-initDb();
-
-const db = getDatabase();
 
 const githubConfigured = Boolean(process.env.GITHUB_ID && process.env.GITHUB_SECRET);
 
@@ -55,6 +51,7 @@ export const authOptions: NextAuthOptions = {
               name: { label: "Name", type: "text", defaultValue: "Dev User" },
             },
             async authorize(credentials) {
+              const db = getDatabase();
               const name = (credentials?.name as string) || "Dev User";
               const githubId = `dev-${name.toLowerCase().replace(/\s+/g, "-")}`;
 
@@ -86,6 +83,7 @@ export const authOptions: NextAuthOptions = {
         return false;
       }
 
+      const db = getDatabase();
       const githubId = String((profile as unknown as GitHubProfile).id);
       const existing = db
         .prepare("SELECT id FROM users WHERE github_id = ?")
@@ -106,6 +104,7 @@ export const authOptions: NextAuthOptions = {
     },
     async jwt({ token, account, profile }) {
       if (account?.provider === "github" && profile) {
+        const db = getDatabase();
         const githubId = String((profile as unknown as GitHubProfile).id);
         const dbUser = db.prepare("SELECT id FROM users WHERE github_id = ?").get(githubId) as
           | { id: string }
@@ -118,6 +117,7 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (token?.sub && session.user) {
+        const db = getDatabase();
         const user = db.prepare("SELECT id FROM users WHERE id = ?").get(token.sub) as
           | { id: string }
           | undefined;

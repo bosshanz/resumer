@@ -1,7 +1,8 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions, isGithubAuthConfigured } from "@/lib/auth";
-import { getDatabase, initDb } from "@/lib/db";
+import { getDatabase } from "@/lib/db";
 import { normalizeResume } from "@/lib/resumes";
+import { resolveResumePhoto } from "@/lib/photos";
 import { defaultResumeContent, Resume } from "@/lib/types";
 import { Editor } from "@/components/editor";
 import { Providers } from "@/components/providers";
@@ -10,16 +11,14 @@ import crypto from "crypto";
 
 export const runtime = "nodejs";
 
-initDb();
-const db = getDatabase();
-
 async function getOrCreateResume(userId: string): Promise<Resume> {
+  const db = getDatabase();
   const existing = db
     .prepare(`SELECT * FROM resumes WHERE user_id = ? ORDER BY updated_at DESC LIMIT 1`)
     .get(userId) as Record<string, unknown> | undefined;
 
   if (existing) {
-    return normalizeResume(existing)!;
+    return resolveResumePhoto(db, normalizeResume(existing))!;
   }
 
   const id = crypto.randomUUID();
@@ -33,12 +32,13 @@ async function getOrCreateResume(userId: string): Promise<Resume> {
 
 async function getResume(userId: string, resumeId?: string): Promise<Resume> {
   if (resumeId) {
+    const db = getDatabase();
     const existing = db
       .prepare(`SELECT * FROM resumes WHERE id = ? AND user_id = ?`)
       .get(resumeId, userId) as Record<string, unknown> | undefined;
 
     if (existing) {
-      return normalizeResume(existing)!;
+      return resolveResumePhoto(db, normalizeResume(existing))!;
     }
   }
 

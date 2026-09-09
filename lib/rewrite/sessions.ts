@@ -1,7 +1,7 @@
 import type Database from "better-sqlite3";
 import crypto from "crypto";
 import { STALE_GENERATING_MS } from "./limits";
-import { isRewriteStatus, RewriteSession, RewriteStatus } from "./types";
+import { isRewriteStatus, RewriteSession, RewriteStatus, SessionTransitionError } from "./types";
 
 const TABLE_SQL = `
 CREATE TABLE IF NOT EXISTS rewrite_sessions (
@@ -132,7 +132,7 @@ export function beginRewriteGeneration(
   markStaleGeneratingSessions(db);
   const existing = getActiveRewriteSession(db, input.sourceResumeId, input.userId);
   if (existing?.status === "generating") {
-    throw new Error("GENERATING");
+    throw new SessionTransitionError("GENERATING");
   }
   if (existing) {
     return updateRewriteSession(db, existing.id, input.userId, {
@@ -161,9 +161,9 @@ export function beginContinueGeneration(
     .run(input.sessionId, input.userId);
   if (result.changes === 0) {
     const session = getRewriteSession(db, input.sessionId, input.userId);
-    if (!session) throw new Error("NOT_FOUND");
-    if (session.status === "generating") throw new Error("GENERATING");
-    throw new Error("NOT_READY");
+    if (!session) throw new SessionTransitionError("NOT_FOUND");
+    if (session.status === "generating") throw new SessionTransitionError("GENERATING");
+    throw new SessionTransitionError("NOT_READY");
   }
   return getRewriteSession(db, input.sessionId, input.userId)!;
 }

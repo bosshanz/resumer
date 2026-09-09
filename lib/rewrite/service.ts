@@ -1,6 +1,7 @@
 import type Database from "better-sqlite3";
 import crypto from "crypto";
 import { normalizeResume, briefVariantLabel } from "../resumes";
+import { resolveResumePhoto } from "../photos";
 import { Resume } from "../types";
 import { briefError } from "./brief";
 import {
@@ -16,7 +17,7 @@ import {
   markStaleGeneratingSessions,
   updateRewriteSession,
 } from "./sessions";
-import { RewriteSession } from "./types";
+import { RewriteSession, SessionTransitionError } from "./types";
 
 export class RewriteRequestError extends Error {
   status: number;
@@ -24,6 +25,18 @@ export class RewriteRequestError extends Error {
     super(message);
     this.name = "RewriteRequestError";
     this.status = status;
+  }
+}
+
+// sessions 层抛出的流转失败统一转成对应的 HTTP 语义
+function toRequestError(error: SessionTransitionError): RewriteRequestError {
+  switch (error.code) {
+    case "GENERATING":
+      return new RewriteRequestError(409, "正在生成建议稿，请稍候");
+    case "NOT_FOUND":
+      return new RewriteRequestError(404, "改写会话不存在");
+    case "NOT_READY":
+      return new RewriteRequestError(409, "请先生成建议稿");
   }
 }
 
@@ -116,8 +129,8 @@ export async function startRewrite(
       })
     )();
   } catch (error) {
-    if (error instanceof Error && error.message === "GENERATING") {
-      throw new RewriteRequestError(409, "正在生成建议稿，请稍候");
+    if (error instanceof SessionTransitionError) {
+      throw toRequestError(error);
     }
     throw error;
   }
@@ -143,14 +156,8 @@ export async function continueRewrite(
       beginContinueGeneration(db, { userId: input.userId, sessionId: input.sessionId })
     )();
   } catch (error) {
-    if (error instanceof Error && error.message === "GENERATING") {
-      throw new RewriteRequestError(409, "正在生成建议稿，请稍候");
-    }
-    if (error instanceof Error && error.message === "NOT_FOUND") {
-      throw new RewriteRequestError(404, "改写会话不存在");
-    }
-    if (error instanceof Error && error.message === "NOT_READY") {
-      throw new RewriteRequestError(409, "请先生成建议稿");
+    if (error instanceof SessionTransitionError) {
+      throw toRequestError(error);
     }
     throw error;
   }
@@ -171,7 +178,7 @@ export function applyRewrite(
   if (!session) throw new RewriteRequestError(404, "改写会话不存在");
   if (session.status === "applied" && session.resultResumeId) {
     const existing = requireOwnedResume(db, session.resultResumeId, input.userId);
-    return { session, resume: normalizeResume(existing)! };
+    return { session, resume: resolveResumePhoto(db, normalizeResume(existing))! };
   }
   if (session.status !== "ready" || !session.draftContent.trim()) {
     throw new RewriteRequestError(409, "没有可另存的建议稿");
@@ -212,8 +219,11 @@ export function applyRewrite(
 
   const resume = normalizeResume(
     db.prepare(`SELECT * FROM resumes WHERE id = ?`).get(id) as Record<string, unknown>
-  )!;
-  return { session: getRewriteSession(db, session.id, input.userId)!, resume };
+  );
+  return {
+    session: getRewriteSession(db, session.id, input.userId)!,
+    resume: resolveResumePhoto(db, resume)!,
+  };
 }
 
 export function discardRewrite(

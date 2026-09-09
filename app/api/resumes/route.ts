@@ -1,16 +1,14 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
-import { getDatabase, initDb } from "@/lib/db";
+import { getDatabase } from "@/lib/db";
 import { normalizeResume } from "@/lib/resumes";
+import { resolveResumePhoto } from "@/lib/photos";
 import { defaultResumeContent } from "@/lib/types";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import crypto from "crypto";
 
 export const runtime = "nodejs";
-
-initDb();
-const db = getDatabase();
 
 const createSchema = z.object({
   sourceResumeId: z.string().optional(),
@@ -21,6 +19,7 @@ export async function GET() {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const db = getDatabase();
 
   const resumes = db
     .prepare(
@@ -38,6 +37,7 @@ export async function POST(request: Request) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const db = getDatabase();
 
   let body: unknown = {};
   try {
@@ -86,5 +86,5 @@ export async function POST(request: Request) {
     .prepare(`SELECT * FROM resumes WHERE id = ?`)
     .get(id) as Record<string, unknown> | undefined;
 
-  return NextResponse.json({ resume: normalizeResume(resume) }, { status: 201 });
+  return NextResponse.json({ resume: resolveResumePhoto(db, normalizeResume(resume)) }, { status: 201 });
 }

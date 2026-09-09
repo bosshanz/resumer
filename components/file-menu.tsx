@@ -16,6 +16,7 @@ interface FileMenuProps {
   onImportMarkdown: (content: string) => void;
   onExportMarkdown: () => void;
   onOpenHistory: () => void;
+  onOpenBackup: () => void;
   onChangePhoto: (dataUrl: string) => void;
   onRemovePhoto: () => void;
 }
@@ -27,6 +28,7 @@ export function FileMenu({
   onImportMarkdown,
   onExportMarkdown,
   onOpenHistory,
+  onOpenBackup,
   onChangePhoto,
   onRemovePhoto,
 }: FileMenuProps) {
@@ -116,6 +118,11 @@ export function FileMenu({
               close();
               onOpenHistory();
             }}
+          />
+          <MenuButton
+            icon={<FileDown className="h-4 w-4" />}
+            label="备份与恢复…"
+            onClick={() => { close(); onOpenBackup(); }}
           />
           <div className="my-1 border-t border-zinc-200 dark:border-zinc-800" />
           <MenuButton

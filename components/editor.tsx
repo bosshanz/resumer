@@ -9,6 +9,7 @@ const ResumeStudio = dynamic(() => import("./studio/resume-studio").then(m => m.
 import { ThemePanel } from "./theme-panel";
 import { ResumeSelector } from "./resume-selector";
 import { FileMenu } from "./file-menu";
+import { BackupDialog } from "./backup-dialog";
 import { UserMenu } from "./user-menu";
 import { FocusToggle, FocusMode } from "./focus-toggle";
 import { useFocusTrap } from "./use-focus-trap";
@@ -65,6 +66,8 @@ export function Editor({ initialResume }: EditorProps) {
   const [isSwitching, setIsSwitching] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<ResumeListItem | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [backupOpen, setBackupOpen] = useState(false);
+  const closeBackup = useCallback(() => setBackupOpen(false), []);
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const drawerRef = useRef<HTMLElement>(null);
   const drawerTriggerRef = useRef<HTMLButtonElement>(null);
@@ -278,6 +281,9 @@ export function Editor({ initialResume }: EditorProps) {
   );
 
   const flushCurrentResume = useCallback(async () => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    // 等待在途保存再比较：用户可能在请求期间撤销回旧内容。
+    await saveChainRef.current;
     const diff = diffPayload();
     if (!diff) {
       setSaveStatus("saved");
@@ -442,12 +448,8 @@ export function Editor({ initialResume }: EditorProps) {
       if ((e.metaKey || e.ctrlKey) && e.key === "s") {
         e.preventDefault();
         const diff = diffPayload();
-        if (diff) {
-          // 手动保存是有意的锚点：服务端立即留一份历史版本
-          saveResume(diff, { snapshot: true });
-        } else {
-          setSaveStatus((s) => (s === "unsaved" ? "saved" : s));
-        }
+        // 自动保存过的内容也可以手动留档，由服务端去重相同快照。
+        saveResume(diff ?? {}, { snapshot: true });
       }
     };
     window.addEventListener("keydown", onKey);
@@ -478,7 +480,7 @@ export function Editor({ initialResume }: EditorProps) {
                 type="button"
                 onClick={() => {
                   const diff = diffPayload();
-                  if (diff) saveResume(diff, { snapshot: true });
+                  saveResume(diff ?? {}, { snapshot: true });
                 }}
                 title="点击重试保存"
                 className={`flex min-h-7 items-center gap-1 rounded-full bg-red-50 px-2 text-[11px] font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:bg-red-950/50 ${saveIndicator.tone}`}
@@ -572,6 +574,7 @@ export function Editor({ initialResume }: EditorProps) {
         </button>
 
           <FileMenu
+            onOpenBackup={() => { setDrawer(null); setBackupOpen(true); }}
             hasPhoto={!!photo}
             onImportMarkdown={handleImportMarkdown}
             onExportMarkdown={handleExportMarkdown}
@@ -711,6 +714,11 @@ export function Editor({ initialResume }: EditorProps) {
         />
       </main>
 
+      {backupOpen && <BackupDialog
+        onClose={closeBackup}
+        onBeforeBackup={flushCurrentResume}
+        onRestored={loadResumes}
+      />}
       {historyOpen && (
         <HistoryDialog
           resumeId={currentResumeId}
