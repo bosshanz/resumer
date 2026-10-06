@@ -1,21 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ThemeVariables } from "@/lib/types";
 import { TemplateSelector } from "./template-selector";
 import { getContrastWarning } from "@/lib/color-contrast";
-import { AlertTriangle, ChevronDown, ChevronRight } from "lucide-react";
+import { AlertTriangle, ChevronDown, ChevronRight, ImagePlus, Trash2 } from "lucide-react";
+import { readPhotoFile } from "./read-photo-file";
 
 interface ThemePanelProps {
   value: ThemeVariables;
   templateId: string;
   photo?: string;
+  onChangePhoto: (dataUrl: string) => void;
+  onRemovePhoto: () => void;
   onTemplateChange: (templateId: string, preserveAdjustments: boolean) => void;
   onChange: (vars: ThemeVariables) => void;
   onReset: () => void;
 }
-
-type DesignTab = "layout" | "appearance" | "typography";
 
 interface Palette {
   id: string;
@@ -90,13 +91,42 @@ export function ThemePanel({
   value,
   templateId,
   photo,
+  onChangePhoto,
+  onRemovePhoto,
   onTemplateChange,
   onChange,
   onReset,
 }: ThemePanelProps) {
-  const [activeTab, setActiveTab] = useState<DesignTab>("layout");
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [preserveAdjustments, setPreserveAdjustments] = useState(true);
+  const [photoError, setPhotoError] = useState("");
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const mountedRef = useRef(false);
+  const photoRequestRef = useRef(0);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      photoRequestRef.current += 1;
+    };
+  }, []);
+
+  const handlePhotoChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    const requestId = ++photoRequestRef.current;
+    setPhotoError("");
+    try {
+      const dataUrl = await readPhotoFile(file);
+      if (mountedRef.current && requestId === photoRequestRef.current) onChangePhoto(dataUrl);
+    } catch (error) {
+      if (mountedRef.current && requestId === photoRequestRef.current) {
+        setPhotoError(error instanceof Error ? error.message : "照片读取失败，原照片未更改，请重试。");
+      }
+    }
+  };
 
   const applyPalette = (p: Palette) =>
     onChange({
@@ -123,111 +153,119 @@ export function ThemePanel({
   const contrastWarnings = contrastChecks.filter((check) => check.status.level === "warning");
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
+      {/* 顶部固定标题栏 */}
+      <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3 pr-12 dark:border-zinc-800">
         <div>
           <h2 id="design-panel-title" className="text-sm font-semibold tracking-tight">设计</h2>
-          <p className="mt-0.5 text-[10px] text-zinc-500 dark:text-zinc-400">版式与简历外观独立于编辑器界面</p>
+          <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">调整版式、配色与照片</p>
         </div>
         <button
           type="button"
           onClick={onReset}
           className="rounded px-1.5 py-1 text-xs text-zinc-500 underline-offset-2 hover:bg-zinc-100 hover:text-zinc-900 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
         >
-          重置为模板默认
+          重置
         </button>
       </div>
 
-      <div className="border-b border-zinc-200 px-3 py-2 dark:border-zinc-800">
-        <div role="tablist" aria-label="设计设置" className="grid grid-cols-3 gap-1 rounded-lg bg-zinc-100 p-1 dark:bg-zinc-800/70">
-          <DesignTabButton id="layout" label="版式" active={activeTab === "layout"} onSelect={setActiveTab} />
-          <DesignTabButton id="appearance" label="外观" active={activeTab === "appearance"} onSelect={setActiveTab} />
-          <DesignTabButton id="typography" label="排版" active={activeTab === "typography"} onSelect={setActiveTab} />
-        </div>
-      </div>
+      {/* 单列滚动区 */}
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-1">
+        {/* ── 版式 ── */}
+        <Section label="版式">
+          <label className="mb-3 flex items-start gap-2 text-xs leading-5 text-zinc-600 dark:text-zinc-400">
+            <input
+              type="checkbox"
+              checked={preserveAdjustments}
+              onChange={(event) => setPreserveAdjustments(event.target.checked)}
+              className="mt-1 accent-zinc-900 dark:accent-zinc-100"
+            />
+            切换版式时保留配色与排版调整
+          </label>
+          <TemplateSelector photo={photo} value={templateId} onChange={(id) => onTemplateChange(id, preserveAdjustments)} variant="panel" />
+        </Section>
 
-      <div className="flex-1 overflow-y-auto px-4 py-4">
-        {activeTab === "layout" && (
-          <div role="tabpanel" id="design-layout-panel" aria-labelledby="design-layout-tab">
-            <Section label="简历版式">
-              <label className="mb-3 flex items-start gap-2 text-xs leading-5 text-zinc-600 dark:text-zinc-400">
-                <input
-                  type="checkbox"
-                  checked={preserveAdjustments}
-                  onChange={(event) => setPreserveAdjustments(event.target.checked)}
-                  className="mt-1 accent-zinc-900 dark:accent-zinc-100"
-                />
-                切换版式时保留我的配色与排版调整
-              </label>
-              <TemplateSelector photo={photo} value={templateId} onChange={(id) => onTemplateChange(id, preserveAdjustments)} variant="panel" />
-            </Section>
-          </div>
-        )}
-
-        {activeTab === "appearance" && (
-          <div role="tabpanel" id="design-appearance-panel" aria-labelledby="design-appearance-tab">
-            <Section label="配色">
-              <div className="grid grid-cols-2 gap-2">
-                {palettes.map((p) => {
-                  const active = palId === p.id;
-                  const paletteContrast = getContrastWarning(p.secondary, p.background);
-                  return (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => applyPalette(p)}
-                      title={`${p.name} · ${paletteContrast.message}`}
-                      aria-label={`${p.name}，${paletteContrast.message}`}
-                      aria-pressed={active}
-                      className={[
-                        "group relative h-12 overflow-hidden rounded-md border transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 focus-visible:ring-offset-2 dark:focus-visible:ring-zinc-300 dark:focus-visible:ring-offset-zinc-900",
-                        active
-                          ? "border-zinc-900 ring-1 ring-zinc-900 dark:border-zinc-100 dark:ring-zinc-100"
-                          : "border-zinc-200 hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-600",
-                      ].join(" ")}
-                      style={{ backgroundColor: p.background, color: p.text }}
-                    >
-                      <span className="absolute inset-x-0 top-0 flex h-7">
-                        <span className="flex-[3]" style={{ background: p.primary }} />
-                        <span className="flex-1" style={{ background: p.secondary }} />
-                      </span>
-                      {paletteContrast.level === "warning" && (
-                        <span className="absolute right-1 top-1 rounded-full bg-white/90 p-0.5 text-amber-700 shadow-sm" aria-hidden>
-                          <AlertTriangle className="h-2.5 w-2.5" />
-                        </span>
-                      )}
-                      <span
-                        className={[
-                          "absolute inset-x-0 bottom-0 truncate bg-black/[0.035] px-1 py-0.5 text-center text-[10px] font-medium tracking-tight",
-                          active ? "font-semibold" : "opacity-75",
-                        ].join(" ")}
-                      >
-                        {p.name}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-              {contrastWarnings.length > 0 && (
-                <div role="status" className="mt-3 flex gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] leading-4 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200">
-                  <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
-                  <span>
-                    {contrastWarnings.map((check) => `${check.label} ${check.status.ratio?.toFixed(2)}:1`).join("，")}；低对比色请仅用于装饰，正文建议至少 4.5:1。
+        {/* ── 配色 ── */}
+        <Section label="配色">
+          <div className="grid grid-cols-2 gap-2">
+            {palettes.map((p) => {
+              const active = palId === p.id;
+              const paletteContrast = getContrastWarning(p.secondary, p.background);
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => applyPalette(p)}
+                  title={`${p.name} · ${paletteContrast.message}`}
+                  aria-label={`${p.name}，${paletteContrast.message}`}
+                  aria-pressed={active}
+                  className={[
+                    "group relative overflow-hidden rounded-md border transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 focus-visible:ring-offset-2 dark:focus-visible:ring-zinc-300 dark:focus-visible:ring-offset-zinc-900",
+                    active
+                      ? "border-zinc-900 ring-1 ring-zinc-900 dark:border-zinc-100 dark:ring-zinc-100"
+                      : "border-zinc-200 hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-600",
+                  ].join(" ")}
+                  style={{ backgroundColor: p.background }}
+                >
+                  <span className="absolute inset-x-0 top-0 flex h-5">
+                    <span className="flex-[3]" style={{ background: p.primary }} />
+                    <span className="flex-1" style={{ background: p.secondary }} />
                   </span>
-                </div>
-              )}
-            </Section>
+                  <span className="flex flex-col items-start px-2 pb-2 pt-6 text-left leading-tight">
+                    <span className="block truncate text-[10px] font-semibold tracking-tight" style={{ color: p.text }}>
+                      张明远
+                    </span>
+                    <span className="block truncate text-[8.5px]" style={{ color: p.secondary }}>
+                      {p.name}
+                    </span>
+                  </span>
+                  {paletteContrast.level === "warning" && (
+                    <span className="absolute right-1 top-1 rounded-full bg-white/90 p-0.5 text-amber-700 shadow-sm" aria-hidden>
+                      <AlertTriangle className="h-2.5 w-2.5" />
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          {contrastWarnings.length > 0 && (
+            <div role="status" className="mt-3 flex gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] leading-4 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200">
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+              <span>
+                {contrastWarnings.map((check) => `${check.label} ${check.status.ratio?.toFixed(2)}:1`).join("，")}；低对比色请仅用于装饰，正文建议至少 4.5:1。
+              </span>
+            </div>
+          )}
+        </Section>
 
-            <Section label="照片排版">
-              <Segmented
-                options={[
-                  { id: "default", label: "标准照片" },
-                  { id: "floating-monolith", label: "强化肖像" },
-                ]}
-                value={value.photoLayout || "default"}
-                onChange={(id) => onChange({ ...value, photoLayout: id as "default" | "floating-monolith" })}
-              />
-              <p className="mt-2 text-[11px] leading-5 text-zinc-500">照片随主题自动安排位置，可在「更多操作」上传或更换。</p>
+        {/* ── 照片 ── */}
+        <Section label="照片">
+          <input ref={photoInputRef} type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
+          {photo ? (
+            <>
+              <div className="flex items-center gap-3 rounded-lg border border-zinc-200 p-2 dark:border-zinc-800">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={photo} alt="当前简历照片" className="h-20 w-16 flex-shrink-0 rounded bg-zinc-100 object-cover dark:bg-zinc-800"
+                  style={{ objectFit: value.photoFit === "contain" ? "contain" : "cover", objectPosition: `50% ${value.photoPosition ?? 35}%` }} />
+                <div className="flex min-w-0 flex-col gap-1.5">
+                  <button type="button" onClick={() => photoInputRef.current?.click()} className="inline-flex items-center gap-1.5 rounded-md border border-zinc-300 px-2.5 py-1.5 text-xs font-medium hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 dark:border-zinc-700 dark:hover:bg-zinc-800">
+                    <ImagePlus className="h-3.5 w-3.5" />更换照片
+                  </button>
+                  <button type="button" onClick={() => { photoRequestRef.current += 1; setPhotoError(""); onRemovePhoto(); }} className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs text-red-600 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:text-red-400 dark:hover:bg-red-950/40">
+                    <Trash2 className="h-3.5 w-3.5" />移除照片
+                  </button>
+                </div>
+              </div>
+              <div className="mt-3">
+                <Segmented
+                  options={[
+                    { id: "default", label: "标准照片" },
+                    { id: "floating-monolith", label: "强化肖像" },
+                  ]}
+                  value={value.photoLayout || "default"}
+                  onChange={(id) => onChange({ ...value, photoLayout: id as "default" | "floating-monolith" })}
+                />
+              </div>
               <div className="mt-3">
                 <Segmented options={[{ id: "cover", label: "填满裁切" }, { id: "contain", label: "完整显示" }]}
                   value={value.photoFit || "cover"} onChange={(id) => onChange({ ...value, photoFit: id as "cover" | "contain" })} />
@@ -238,58 +276,63 @@ export function ThemePanel({
                   aria-label="照片垂直取景位置" disabled={value.photoFit === "contain"}
                   value={value.photoPosition ?? 35} onChange={e => onChange({ ...value, photoPosition: Number(e.target.value) })} />
               </label>
-            </Section>
+              {value.photoFit === "contain" && <p className="mt-1 text-[11px] leading-5 text-zinc-500">完整显示会保留整张照片，无需调整取景位置。</p>}
+            </>
+          ) : (
+            <button type="button" onClick={() => photoInputRef.current?.click()} className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-zinc-300 px-3 py-5 text-sm font-medium text-zinc-700 hover:border-zinc-500 hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800">
+              <ImagePlus className="h-4 w-4" />上传照片
+            </button>
+          )}
+          {photoError && <p role="alert" className="mt-2 text-xs leading-5 text-red-600 dark:text-red-400">{photoError}</p>}
+        </Section>
 
-            <AdvancedToggle open={advancedOpen} onToggle={() => setAdvancedOpen((v) => !v)} label="高级颜色" />
-            {advancedOpen && (
-              <div className="mt-3 space-y-2">
-                <RawField label="主色" value={value.primaryColor || ""} onChange={(v) => onChange({ ...value, primaryColor: v })} color />
-                <RawField label="副色" value={value.secondaryColor || ""} onChange={(v) => onChange({ ...value, secondaryColor: v })} color />
-                <RawField label="文字色" value={value.textColor || ""} onChange={(v) => onChange({ ...value, textColor: v })} color />
-                <RawField label="背景色" value={value.backgroundColor || ""} onChange={(v) => onChange({ ...value, backgroundColor: v })} color />
+        {/* ── 字号 ── */}
+        <Section label="字号">
+          <Segmented
+            options={sizes.map((s) => ({ id: s.id, label: s.label }))}
+            value={sizeId}
+            onChange={(id) => {
+              const s = sizes.find((x) => x.id === id);
+              if (s) applySize(s);
+            }}
+          />
+        </Section>
+
+        {/* ── 页边距 ── */}
+        <Section label="页边距">
+          <Segmented
+            options={margins.map((m) => ({ id: m.id, label: m.label }))}
+            value={mgnId}
+            onChange={(id) => {
+              const m = margins.find((x) => x.id === id);
+              if (m) applyMargin(m);
+            }}
+          />
+        </Section>
+
+        {/* ── 高级（颜色 + 排版 合并折叠）── */}
+        <AdvancedToggle open={advancedOpen} onToggle={() => setAdvancedOpen((v) => !v)} label="高级选项" />
+        {advancedOpen && (
+          <div className="mt-3 space-y-4">
+            <div className="space-y-2">
+              <div className="text-[10px] font-medium uppercase tracking-wider text-zinc-400">颜色</div>
+              <RawField label="主色" value={value.primaryColor || ""} onChange={(v) => onChange({ ...value, primaryColor: v })} color />
+              <RawField label="副色" value={value.secondaryColor || ""} onChange={(v) => onChange({ ...value, secondaryColor: v })} color />
+              <RawField label="文字色" value={value.textColor || ""} onChange={(v) => onChange({ ...value, textColor: v })} color />
+              <RawField label="背景色" value={value.backgroundColor || ""} onChange={(v) => onChange({ ...value, backgroundColor: v })} color />
+            </div>
+            <div className="space-y-2">
+              <div className="text-[10px] font-medium uppercase tracking-wider text-zinc-400">排版</div>
+              <RawField label="正文字体" value={value.fontFamily || ""} onChange={(v) => onChange({ ...value, fontFamily: v })} />
+              <RawField label="标题字体" value={value.headingFontFamily || ""} onChange={(v) => onChange({ ...value, headingFontFamily: v })} />
+              <RawField label="基准字号" value={value.baseFontSize || ""} onChange={(v) => onChange({ ...value, baseFontSize: v })} />
+              <div className="grid grid-cols-2 gap-2">
+                <RawField label="上边距" value={value.marginTop || ""} onChange={(v) => onChange({ ...value, marginTop: v })} />
+                <RawField label="下边距" value={value.marginBottom || ""} onChange={(v) => onChange({ ...value, marginBottom: v })} />
+                <RawField label="左边距" value={value.marginLeft || ""} onChange={(v) => onChange({ ...value, marginLeft: v })} />
+                <RawField label="右边距" value={value.marginRight || ""} onChange={(v) => onChange({ ...value, marginRight: v })} />
               </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === "typography" && (
-          <div role="tabpanel" id="design-typography-panel" aria-labelledby="design-typography-tab">
-            <Section label="字号">
-              <Segmented
-                options={sizes.map((s) => ({ id: s.id, label: s.label }))}
-                value={sizeId}
-                onChange={(id) => {
-                  const s = sizes.find((x) => x.id === id);
-                  if (s) applySize(s);
-                }}
-              />
-            </Section>
-
-            <Section label="页边距">
-              <Segmented
-                options={margins.map((m) => ({ id: m.id, label: m.label }))}
-                value={mgnId}
-                onChange={(id) => {
-                  const m = margins.find((x) => x.id === id);
-                  if (m) applyMargin(m);
-                }}
-              />
-            </Section>
-
-            <AdvancedToggle open={advancedOpen} onToggle={() => setAdvancedOpen((v) => !v)} label="高级排版" />
-            {advancedOpen && (
-              <div className="mt-3 space-y-2">
-                <RawField label="正文字体" value={value.fontFamily || ""} onChange={(v) => onChange({ ...value, fontFamily: v })} />
-                <RawField label="标题字体" value={value.headingFontFamily || ""} onChange={(v) => onChange({ ...value, headingFontFamily: v })} />
-                <RawField label="基准字号" value={value.baseFontSize || ""} onChange={(v) => onChange({ ...value, baseFontSize: v })} />
-                <div className="grid grid-cols-2 gap-2">
-                  <RawField label="上边距" value={value.marginTop || ""} onChange={(v) => onChange({ ...value, marginTop: v })} />
-                  <RawField label="下边距" value={value.marginBottom || ""} onChange={(v) => onChange({ ...value, marginBottom: v })} />
-                  <RawField label="左边距" value={value.marginLeft || ""} onChange={(v) => onChange({ ...value, marginLeft: v })} />
-                  <RawField label="右边距" value={value.marginRight || ""} onChange={(v) => onChange({ ...value, marginRight: v })} />
-                </div>
-              </div>
-            )}
+            </div>
           </div>
         )}
       </div>
@@ -297,55 +340,7 @@ export function ThemePanel({
   );
 }
 
-function DesignTabButton({
-  id,
-  label,
-  active,
-  onSelect,
-}: {
-  id: DesignTab;
-  label: string;
-  active: boolean;
-  onSelect: (id: DesignTab) => void;
-}) {
-  const tabOrder: DesignTab[] = ["layout", "appearance", "typography"];
-  const moveFocus = (direction: -1 | 1) => {
-    const index = tabOrder.indexOf(id);
-    const next = tabOrder[(index + direction + tabOrder.length) % tabOrder.length];
-    onSelect(next);
-    requestAnimationFrame(() => document.getElementById(`design-${next}-tab`)?.focus());
-  };
 
-  return (
-    <button
-      id={`design-${id}-tab`}
-      type="button"
-      role="tab"
-      aria-selected={active}
-      aria-controls={`design-${id}-panel`}
-      tabIndex={active ? 0 : -1}
-      onClick={() => onSelect(id)}
-      onKeyDown={(event) => {
-        if (event.key === "ArrowLeft") {
-          event.preventDefault();
-          moveFocus(-1);
-        }
-        if (event.key === "ArrowRight") {
-          event.preventDefault();
-          moveFocus(1);
-        }
-      }}
-      className={[
-        "rounded-md px-2 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500",
-        active
-          ? "bg-white text-zinc-950 shadow-sm dark:bg-zinc-700 dark:text-zinc-50"
-          : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100",
-      ].join(" ")}
-    >
-      {label}
-    </button>
-  );
-}
 
 function AdvancedToggle({ open, onToggle, label }: { open: boolean; onToggle: () => void; label: string }) {
   return (

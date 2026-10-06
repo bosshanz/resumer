@@ -12,14 +12,13 @@ import { FileMenu } from "./file-menu";
 import { BackupDialog } from "./backup-dialog";
 import { UserMenu } from "./user-menu";
 import { FocusToggle, FocusMode } from "./focus-toggle";
-import { useFocusTrap } from "./use-focus-trap";
 import type { ResumeListItem } from "@/lib/resumes";
 import { ConfirmDialog } from "./confirm-dialog";
 import { HistoryDialog } from "./history-dialog";
 import { RewritePanel, RewritePreviewState } from "./rewrite-panel";
 import { Resume, ThemeVariables } from "@/lib/types";
 import { PageFit } from "@/lib/page-fit";
-import { EditorDrawer, editorDrawerClassName, toggleEditorDrawer } from "@/lib/editor-drawer";
+import { EditorDrawer, toggleEditorDrawer } from "@/lib/editor-drawer";
 import { getDefaultTheme, getTemplate, resolveTemplateSettings } from "@/lib/templates";
 import { transitionTheme } from "@/lib/theme-transition";
 import {
@@ -30,6 +29,8 @@ import {
   AlertCircle,
   Target,
 } from "lucide-react";
+
+const ignorePageFit = () => {};
 
 interface EditorProps {
   initialResume: Resume;
@@ -54,6 +55,12 @@ export function Editor({ initialResume }: EditorProps) {
   );
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
   const [isExporting, setIsExporting] = useState(false);
+  const exportBusyRef = useRef(false);
+  const applyBusyRef = useRef(false);
+  const [applyingRewrite, setApplyingRewrite] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<{ payload: SavePayload; message: string; newlySaved: boolean } | null>(null);
+  const [panelView, setPanelView] = useState<"settings" | "preview">("settings");
   const [drawer, setDrawer] = useState<EditorDrawer>(null);
   const drawerOpen = drawer === "design";
   const rewriteOpen = drawer === "rewrite";
@@ -84,7 +91,8 @@ export function Editor({ initialResume }: EditorProps) {
   // 串行化保存请求，避免快速连续保存时旧响应覆盖新数据
   const saveChainRef = useRef<Promise<boolean>>(Promise.resolve(false));
 
-  const markUnsaved = useCallback(() => setSaveStatus("unsaved"), []);
+  const editRevision = useRef(0);
+  const markUnsaved = useCallback(() => { editRevision.current += 1; setSaveStatus("unsaved"); }, []);
   const setContent = useCallback((v: string) => { setContentState(v); markUnsaved(); }, [markUnsaved]);
   const setTitle = useCallback((v: string) => { setTitleState(v); markUnsaved(); }, [markUnsaved]);
   const setTemplateId = useCallback((v: string, preserveAdjustments = true) => {
@@ -102,6 +110,7 @@ export function Editor({ initialResume }: EditorProps) {
     async (data: Partial<SavePayload>, options?: { snapshot?: boolean }): Promise<boolean> => {
       setSaveStatus("saving");
       const resumeId = currentResumeId;
+      const revision = editRevision.current;
       const run = saveChainRef.current.then(async () => {
         try {
           const res = await fetch(`/api/resumes/${resumeId}`, {
@@ -110,15 +119,13 @@ export function Editor({ initialResume }: EditorProps) {
             body: JSON.stringify(options?.snapshot ? { ...data, snapshot: true } : data),
           });
           if (!res.ok) throw new Error("Save failed");
+          const { resume: savedResume } = await res.json() as { resume: Resume };
           // 保存期间可能已切换简历，此时不要把旧简历的数据混入新快照
           if (currentResumeIdRef.current === resumeId) {
             lastSavedRef.current = { ...lastSavedRef.current, ...data };
-            setSaveStatus("saved");
-            if (data.title !== undefined) {
-              setResumes((prev) =>
-                prev.map((r) => (r.id === resumeId ? { ...r, title: data.title as string } : r))
-              );
-            }
+            setSaveStatus(editRevision.current === revision ? "saved" : "unsaved");
+            setResumes((prev) => prev.map((r) => r.id === resumeId
+              ? { ...r, title: savedResume.title, updatedAt: savedResume.updatedAt } : r));
           }
           return true;
         } catch (err) {
@@ -173,30 +180,35 @@ export function Editor({ initialResume }: EditorProps) {
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
   }, [saveStatus]);
 
-  const handleExportPdf = async () => {
+  const exportPdf = async (payload: SavePayload, newlySaved = false) => {
+    if (exportBusyRef.current) return;
+    exportBusyRef.current = true;
     setIsExporting(true);
+    setExportError(null);
     try {
       const res = await fetch("/api/export/pdf", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content, templateId, themeVariables, photo }),
+        body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error("Export failed");
+      if (!res.ok) throw new Error(res.status === 401
+        ? "登录已过期，请重新登录后导出。"
+        : "请检查本地服务是否运行，然后重试。");
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      const safeName = (title || "resume").replace(/[^\w一-龥\-_. ]/g, "_");
-      a.download = `${safeName}.pdf`;
+      a.download = `${(payload.title || "resume").replace(/[^\w一-龥\-_. ]/g, "_")}.pdf`;
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      console.error(err);
-      alert("PDF 导出失败，请检查浏览器控制台");
+      setExportError({ payload, newlySaved, message: `${newlySaved ? "简历已另存，PDF 导出失败。" : "PDF 导出失败，编辑内容仍保留。"} ${err instanceof Error ? err.message : "请检查连接后重试。"}` });
     } finally {
+      exportBusyRef.current = false;
       setIsExporting(false);
     }
   };
+  const handleExportPdf = () => exportPdf({ title, content, templateId, themeVariables, photo });
 
   const handleExportMarkdown = () => {
     const blob = new Blob([content], { type: "text/markdown" });
@@ -216,12 +228,16 @@ export function Editor({ initialResume }: EditorProps) {
 
   const clearPhoto = () => setPhoto("");
 
-  // 稳定引用：useFocusTrap 依赖它，内联箭头函数会让 effect 每次渲染重跑并抢回焦点
+  // 面板不卸载，关闭后保留输入和滚动位置。
   const closeDrawer = useCallback(() => setDrawer(null), []);
 
   const resetTheme = () => setThemeVariables(getDefaultTheme(templateId));
 
   const applyResume = useCallback((resume: Resume) => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    setExportError(null);
+    setActionError(null);
+    setRewritePreview(null);
     currentResumeIdRef.current = resume.id;
     setCurrentResumeId(resume.id);
     setTitleState(resume.title);
@@ -291,6 +307,33 @@ export function Editor({ initialResume }: EditorProps) {
     }
     return saveResume(diff);
   }, [diffPayload, saveResume]);
+
+  const applyRewrite = async (sessionId: string, download = false) => {
+    if (applyBusyRef.current || exportBusyRef.current) return;
+    applyBusyRef.current = true;
+    setApplyingRewrite(true);
+    setActionError(null);
+    try {
+      if (!await flushCurrentResume()) {
+        setActionError("底稿保存失败，建议稿和输入已保留。请重试保存后再另存。");
+        return;
+      }
+      const res = await fetch(`/api/rewrites/${sessionId}/apply`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "另存失败，请重试");
+      const resume = data.resume as Resume;
+      applyResume(resume);
+      setDrawer(null);
+      router.replace(`/?resumeId=${resume.id}`);
+      await loadResumes();
+      if (download) await exportPdf({ ...resume, themeVariables: resolveThemeVariables(resume) }, true);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "另存失败，建议稿已保留，请重试。");
+    } finally {
+      applyBusyRef.current = false;
+      setApplyingRewrite(false);
+    }
+  };
 
   const handleSwitchResume = useCallback(
     async (resumeId: string) => {
@@ -433,20 +476,28 @@ export function Editor({ initialResume }: EditorProps) {
     return () => media.removeEventListener("change", syncMode);
   }, []);
 
-  // 设计抽屉的焦点圈定与 Escape 关闭
-  useFocusTrap({
-    open: drawerOpen,
-    containerRef: drawerRef,
-    closeRef: drawerCloseRef,
-    triggerRef: drawerTriggerRef,
-    onClose: closeDrawer,
-  });
+  // 工作面板是非模态区域；Escape 关闭，但 Tab 可以进入画布与顶栏。
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const frame = requestAnimationFrame(() => drawerCloseRef.current?.focus());
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !historyOpen && !backupOpen) closeDrawer();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      cancelAnimationFrame(frame);
+      document.removeEventListener("keydown", onKey);
+      previous?.focus();
+    };
+  }, [drawerOpen, closeDrawer, historyOpen, backupOpen]);
 
   // Keyboard shortcut: Cmd/Ctrl + S to force save
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "s") {
         e.preventDefault();
+        if (historyOpen || backupOpen || applyingRewrite || isSwitching) return;
         const diff = diffPayload();
         // 自动保存过的内容也可以手动留档，由服务端去重相同快照。
         saveResume(diff ?? {}, { snapshot: true });
@@ -454,7 +505,7 @@ export function Editor({ initialResume }: EditorProps) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [diffPayload, saveResume]);
+  }, [diffPayload, saveResume, historyOpen, backupOpen, applyingRewrite, isSwitching]);
 
   const saveIndicator = useMemo(() => {
     switch (saveStatus) {
@@ -471,7 +522,7 @@ export function Editor({ initialResume }: EditorProps) {
 
   return (
     <div className="editor-shell flex h-screen flex-col bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
-      <header className="relative z-50 flex flex-shrink-0 flex-wrap items-center gap-x-3 border-b border-zinc-200 bg-white/90 px-3 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-900/90 sm:px-4">
+      <header inert={historyOpen || backupOpen || applyingRewrite} className="relative z-50 flex flex-shrink-0 flex-wrap items-center gap-x-3 border-b border-zinc-200 bg-white/90 px-3 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-900/90 sm:px-4">
         <div className="order-1 flex min-w-0 flex-1 items-center gap-2 py-2">
           <span className="select-none text-base font-semibold tracking-tight">Resumer</span>
           <div role="status" aria-live="polite" className="flex-shrink-0">
@@ -541,8 +592,7 @@ export function Editor({ initialResume }: EditorProps) {
         <button
           ref={drawerTriggerRef}
           type="button"
-          onClick={() => setDrawer((current) => toggleEditorDrawer(current, "design"))}
-          aria-haspopup="dialog"
+          onClick={() => { setPanelView("settings"); setDrawer((current) => toggleEditorDrawer(current, "design")); }}
           aria-expanded={drawerOpen}
           aria-controls="design-drawer"
           className={[
@@ -558,8 +608,7 @@ export function Editor({ initialResume }: EditorProps) {
 
         <button
           type="button"
-          onClick={() => setDrawer((current) => toggleEditorDrawer(current, "rewrite"))}
-          aria-haspopup="dialog"
+          onClick={() => { setPanelView("settings"); setDrawer((current) => toggleEditorDrawer(current, "rewrite")); }}
           aria-expanded={rewriteOpen}
           aria-controls="rewrite-drawer"
           className={[
@@ -574,6 +623,7 @@ export function Editor({ initialResume }: EditorProps) {
         </button>
 
           <FileMenu
+            key={currentResumeId}
             onOpenBackup={() => { setDrawer(null); setBackupOpen(true); }}
             hasPhoto={!!photo}
             onImportMarkdown={handleImportMarkdown}
@@ -583,23 +633,42 @@ export function Editor({ initialResume }: EditorProps) {
             onRemovePhoto={clearPhoto}
           />
 
+          {rewriteOpen && rewritePreview?.ready && <details className="relative">
+            <summary className="cursor-pointer rounded px-2 py-2 text-sm" aria-label="更多导出选项">导出选项</summary>
+            <div className="absolute right-0 z-50 w-36 rounded border border-zinc-200 bg-white p-1 shadow dark:border-zinc-700 dark:bg-zinc-900">
+              <button type="button" className="w-full rounded p-2 text-sm" disabled={isExporting} onClick={(event) => { event.currentTarget.closest("details")?.removeAttribute("open"); void handleExportPdf(); }}>导出底稿</button>
+            </div>
+          </details>}
           <button
             type="button"
-            onClick={handleExportPdf}
-            disabled={isExporting}
+            onClick={() => rewriteOpen && rewritePreview?.ready && rewritePreview.sessionId ? void applyRewrite(rewritePreview.sessionId, true) : void handleExportPdf()}
+            disabled={isExporting || applyingRewrite || !!(rewriteOpen && rewritePreview?.generating)}
             className="flex min-h-9 items-center gap-1.5 whitespace-nowrap rounded-md bg-zinc-900 px-3 text-sm font-medium text-white shadow-sm hover:bg-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 focus-visible:ring-offset-2 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300 dark:focus-visible:ring-offset-zinc-900"
           >
             {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-            导出 PDF
+            {applyingRewrite ? "正在另存…" : isExporting ? "正在导出…" : rewriteOpen && rewritePreview?.ready ? "另存后导出" : "导出 PDF"}
           </button>
         </div>
       </header>
 
-      <main className="relative flex min-h-0 flex-1 overflow-hidden">
-        {editorMode === "visual" && <ResumeStudio key={currentResumeId} content={content} previewContent={previewContent} templateId={templateId} themeVariables={themeVariables} photo={photo} onChange={setContent} onPageFit={setPageFit} pageFit={pageFit} onSource={() => setEditorMode("source")} onDesign={() => setDrawer("design")} suggestion={!!(rewriteOpen && rewritePreview?.ready)} generating={!!(rewriteOpen && rewritePreview?.generating)} />}
-        {editorMode === "source" && showEditor && (
+      {actionError && <div role="alert" className="flex items-center gap-3 border-b border-red-200 bg-red-50 px-4 py-2 text-sm text-red-800">{actionError}<button type="button" onClick={() => setActionError(null)} aria-label="关闭错误提示">×</button></div>}
+      {exportError && <div role="alert" className="flex flex-wrap items-center gap-3 border-b border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">
+        <span>{exportError.message}</span>
+        <button type="button" disabled={isExporting} className="underline" onClick={() => void exportPdf(exportError.payload, exportError.newlySaved)}>重试导出「{exportError.payload.title || "未命名简历"}」</button>
+        <button type="button" onClick={() => setExportError(null)} aria-label="关闭导出错误提示">×</button>
+      </div>}
+      {drawer && <div inert={historyOpen || backupOpen || applyingRewrite} className="editor-panel-switch" aria-label="工作面板视图">
+        <button type="button" aria-pressed={panelView === "settings"} onClick={() => setPanelView("settings")}>{drawerOpen ? "设置" : "改写"}</button>
+        <button type="button" aria-pressed={panelView === "preview"} onClick={() => setPanelView("preview")}>{drawerOpen ? "查看效果" : "查看建议稿"}</button>
+        <button type="button" onClick={closeDrawer}>返回编辑</button>
+      </div>}
+      <main inert={historyOpen || backupOpen || applyingRewrite} className="editor-workspace relative flex min-h-0 flex-1 overflow-hidden" data-panel-open={!!drawer} data-panel-view={panelView}>
+        <div className={editorMode === "visual" ? "studio-workspace contents" : "hidden"}><ResumeStudio key={currentResumeId} content={content} previewContent={previewContent} templateId={templateId} themeVariables={themeVariables} photo={photo} onChange={setContent} onPageFit={editorMode === "visual" ? setPageFit : ignorePageFit} pageFit={pageFit} onSource={() => setEditorMode("source")} onDesign={() => { setPanelView("settings"); setDrawer("design"); }} onInspect={closeDrawer} panelOpen={!!drawer} panelView={panelView} suggestion={!!(rewriteOpen && rewritePreview?.ready)} generating={!!(rewriteOpen && rewritePreview?.generating)} /></div>
+        <div className={editorMode === "source" ? "source-workspace flex min-h-0 min-w-0 flex-1" : "hidden"}>
           <div
+            hidden={!showEditor || !!drawer}
             className={[
+              !showEditor || drawer ? "!hidden" : "",
               "min-w-0 flex-col border-r border-zinc-200 dark:border-zinc-800",
               showPreview ? "w-1/2 md:flex" : "flex w-full",
               showPreview && focusMode === "split" ? "flex max-md:w-full" : "",
@@ -615,17 +684,16 @@ export function Editor({ initialResume }: EditorProps) {
               placeholder={"---\nname: 你的名字\n---\n\n## 工作经历\n..."}
             />
           </div>
-        )}
 
-        {editorMode === "source" && showPreview && (
-          <div className={`relative min-w-0 flex-col ${showEditor ? "w-1/2 md:flex" : "flex w-full"} ${showEditor && focusMode === "split" ? "max-md:hidden" : ""}`}>
+        {(showPreview || !!drawer) && (
+          <div className={`relative min-w-0 flex-col ${showEditor && !drawer ? "w-1/2 md:flex" : "flex w-full"} ${showEditor && !drawer && focusMode === "split" ? "max-md:hidden" : ""}`}>
             {rewriteOpen && rewritePreview?.ready ? (
               <div
                 role="status"
                 className="flex shrink-0 items-center justify-between border-b border-zinc-800 bg-zinc-900 px-3 py-2 text-[11px] font-medium tracking-wide text-white"
               >
                 <span>建议稿 · 尚未另存</span>
-                <span className="font-normal text-zinc-400">左侧是底稿</span>
+                <span className="font-normal text-zinc-400">底稿保持不变</span>
               </div>
             ) : null}
             <div className="relative flex-1 overflow-auto bg-zinc-200/60 px-3 py-4 dark:bg-zinc-900 sm:px-6 sm:py-8">
@@ -641,8 +709,8 @@ export function Editor({ initialResume }: EditorProps) {
                 templateId={templateId}
                 themeVariables={themeVariables}
                 photo={photo}
-                scale={showEditor ? 0.82 : 1}
-                onPageFit={setPageFit}
+                scale={showEditor && !drawer ? 0.82 : 1}
+                onPageFit={editorMode === "source" ? setPageFit : undefined}
               />
               {pageFit && (
                 <span
@@ -661,32 +729,27 @@ export function Editor({ initialResume }: EditorProps) {
           </div>
         )}
 
-        {(drawerOpen || rewriteOpen) && (
-          <button
-            type="button"
-            aria-label={rewriteOpen ? "关闭改写面板" : "关闭设计面板"}
-            onClick={() => setDrawer(null)}
-            className="absolute inset-0 z-10 cursor-default bg-zinc-950/15 backdrop-blur-[1px]"
-          />
-        )}
+        </div>
 
         {/* Design drawer */}
         <aside
           ref={drawerRef}
           id="design-drawer"
-          role="dialog"
-          aria-modal="true"
+          role="region"
           aria-labelledby="design-panel-title"
-          className={editorDrawerClassName(drawerOpen, "sm:w-[360px]")}
+          className={`editor-dock relative h-full min-h-0 overflow-hidden flex-col border-l border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 ${drawerOpen ? "flex" : "hidden"}`}
           inert={!drawerOpen}
         >
           <ThemePanel
+            key={currentResumeId}
             photo={photo}
             value={themeVariables}
             templateId={templateId}
             onTemplateChange={setTemplateId}
             onChange={setThemeVariables}
             onReset={resetTheme}
+            onChangePhoto={setPhoto}
+            onRemovePhoto={clearPhoto}
           />
           <button
             ref={drawerCloseRef}
@@ -700,17 +763,14 @@ export function Editor({ initialResume }: EditorProps) {
         </aside>
 
         <RewritePanel
+          key={currentResumeId}
+          applying={applyingRewrite}
           open={rewriteOpen}
           resumeId={currentResumeId}
-          onClose={() => setDrawer(null)}
+          onClose={closeDrawer}
           onBeforeGenerate={flushCurrentResume}
           onPreviewState={setRewritePreview}
-          onApplied={async (resume) => {
-            await loadResumes();
-            applyResume(resume);
-            router.replace(`/?resumeId=${resume.id}`);
-            setDrawer(null);
-          }}
+          onApply={(id) => applyRewrite(id)}
         />
       </main>
 
@@ -722,11 +782,12 @@ export function Editor({ initialResume }: EditorProps) {
       {historyOpen && (
         <HistoryDialog
           resumeId={currentResumeId}
+          onBeforeRestore={flushCurrentResume}
           onClose={() => setHistoryOpen(false)}
           onRestore={(resume) => {
             applyResume(resume);
             setResumes((prev) =>
-              prev.map((r) => (r.id === resume.id ? { ...r, title: resume.title } : r))
+              prev.map((r) => (r.id === resume.id ? { ...r, title: resume.title, updatedAt: resume.updatedAt } : r))
             );
             setHistoryOpen(false);
           }}

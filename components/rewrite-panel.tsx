@@ -2,12 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, X } from "lucide-react";
-import { Resume } from "@/lib/types";
-import { editorDrawerClassName } from "@/lib/editor-drawer";
 import { MIN_BRIEF_CHARS } from "@/lib/rewrite/brief";
 import { RewriteSession } from "@/lib/rewrite/types";
 
 export interface RewritePreviewState {
+  sessionId?: string;
   generating: boolean;
   ready: boolean;
   draftContent: string;
@@ -18,7 +17,8 @@ interface RewritePanelProps {
   resumeId: string;
   onClose: () => void;
   onBeforeGenerate: () => Promise<boolean>;
-  onApplied: (resume: Resume) => Promise<void>;
+  onApply: (sessionId: string) => Promise<void>;
+  applying: boolean;
   onPreviewState: (state: RewritePreviewState | null) => void;
 }
 
@@ -27,7 +27,8 @@ export function RewritePanel({
   resumeId,
   onClose,
   onBeforeGenerate,
-  onApplied,
+  onApply,
+  applying,
   onPreviewState,
 }: RewritePanelProps) {
   const panelRef = useRef<HTMLElement>(null);
@@ -37,7 +38,10 @@ export function RewritePanel({
   const [followUp, setFollowUp] = useState("");
   const [rewrite, setRewrite] = useState<RewriteSession | null>(null);
   const [loading, setLoading] = useState(false);
-  const [applying, setApplying] = useState(false);
+  const loadedRef = useRef(false);
+  const [sessionLoading, setSessionLoading] = useState(true);
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  const [loadError, setLoadError] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const generating = loading || rewrite?.status === "generating";
@@ -51,19 +55,22 @@ export function RewritePanel({
   }, []);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || loadedRef.current) return;
     const controller = new AbortController();
     fetch(`/api/rewrites?resumeId=${encodeURIComponent(resumeId)}`, { signal: controller.signal })
-      .then((res) => (res.ok ? res.json() : null))
+      .then((res) => { if (!res.ok) throw new Error("加载改写会话失败"); return res.json(); })
       .then((data) => {
         if (!data) return;
+        loadedRef.current = true;
         applyLoadedSession((data.rewrite || null) as RewriteSession | null);
       })
       .catch((err: unknown) => {
         if (err instanceof DOMException && err.name === "AbortError") return;
-      });
+        setLoadError(true);
+      })
+      .finally(() => { if (!controller.signal.aborted) setSessionLoading(false); });
     return () => controller.abort();
-  }, [open, resumeId, applyLoadedSession]);
+  }, [open, resumeId, applyLoadedSession, loadAttempt]);
 
   useEffect(() => {
     if (!open) {
@@ -71,11 +78,12 @@ export function RewritePanel({
       return;
     }
     onPreviewState({
-      generating,
+      sessionId: rewrite?.id,
+      generating: generating || sessionLoading,
       ready: Boolean(ready),
       draftContent: rewrite?.draftContent || "",
     });
-  }, [open, generating, ready, rewrite, onPreviewState]);
+  }, [open, generating, sessionLoading, ready, rewrite, onPreviewState]);
 
   useEffect(() => {
     if (!open) return;
@@ -83,27 +91,12 @@ export function RewritePanel({
     requestAnimationFrame(() => closeRef.current?.focus());
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
+      if (event.key === "Escape" && !(event.target instanceof Element && event.target.closest('[role="dialog"]'))) {
         event.preventDefault();
         onClose();
         return;
       }
-      if (event.key !== "Tab" || !panelRef.current) return;
-      const focusable = Array.from(
-        panelRef.current.querySelectorAll<HTMLElement>(
-          'button:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-        )
-      );
-      if (focusable.length === 0) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
+
     };
 
     document.addEventListener("keydown", onKeyDown);
@@ -114,7 +107,7 @@ export function RewritePanel({
   }, [open, onClose]);
 
   const generate = async () => {
-    if (inFlightRef.current || generating) return;
+    if (inFlightRef.current || generating || sessionLoading || loadError) return;
     inFlightRef.current = true;
     setError(null);
     const saved = await onBeforeGenerate();
@@ -135,11 +128,13 @@ export function RewritePanel({
       setRewrite(data.rewrite as RewriteSession);
     } catch (err) {
       setError(err instanceof Error ? err.message : "生成失败");
-      const res = await fetch(`/api/rewrites?resumeId=${encodeURIComponent(resumeId)}`);
-      if (res.ok) {
-        const data = await res.json();
-        applyLoadedSession((data.rewrite || null) as RewriteSession | null);
-      }
+      try {
+        const res = await fetch(`/api/rewrites?resumeId=${encodeURIComponent(resumeId)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.rewrite) setRewrite(data.rewrite as RewriteSession);
+        }
+      } catch { /* Keep the original error and all input for retry. */ }
     } finally {
       inFlightRef.current = false;
       setLoading(false);
@@ -163,11 +158,13 @@ export function RewritePanel({
       setFollowUp("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "再改一版失败");
-      const res = await fetch(`/api/rewrites?resumeId=${encodeURIComponent(resumeId)}`);
-      if (res.ok) {
-        const data = await res.json();
-        applyLoadedSession((data.rewrite || null) as RewriteSession | null);
-      }
+      try {
+        const res = await fetch(`/api/rewrites?resumeId=${encodeURIComponent(resumeId)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.rewrite) setRewrite(data.rewrite as RewriteSession);
+        }
+      } catch { /* Keep the original error and all input for retry. */ }
     } finally {
       inFlightRef.current = false;
       setLoading(false);
@@ -175,19 +172,8 @@ export function RewritePanel({
   };
 
   const apply = async () => {
-    if (!rewrite) return;
-    setApplying(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/rewrites/${rewrite.id}/apply`, { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "另存失败");
-      await onApplied(data.resume as Resume);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "另存失败");
-    } finally {
-      setApplying(false);
-    }
+    if (!rewrite || applying || generating) return;
+    await onApply(rewrite.id);
   };
 
   const discard = async () => {
@@ -208,10 +194,9 @@ export function RewritePanel({
     <aside
       ref={panelRef}
       id="rewrite-drawer"
-      role="dialog"
-      aria-modal="true"
+      role="region"
       aria-labelledby="rewrite-panel-title"
-      className={editorDrawerClassName(open, ready ? "sm:w-[320px]" : "sm:w-[380px]")}
+      className={`editor-dock flex-col border-l border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 ${open ? "flex" : "hidden"}`}
       inert={!open}
     >
       <div className="flex items-start justify-between gap-3 border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
@@ -235,6 +220,8 @@ export function RewritePanel({
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto px-4 py-4">
+        {sessionLoading && <p role="status" className="text-sm text-zinc-500">正在读取改写会话…</p>}
+        {loadError && <div role="alert" className="text-sm text-red-700 dark:text-red-300">读取改写会话失败，已有输入仍保留。<button type="button" className="ml-2 underline" onClick={() => { setSessionLoading(true); setLoadError(false); setLoadAttempt((v) => v + 1); }}>重试读取</button></div>}
         {ready ? (
           <p className="rounded-md bg-zinc-100 px-3 py-2 text-sm leading-6 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
             {brief}
@@ -245,13 +232,13 @@ export function RewritePanel({
             <textarea
               value={brief}
               onChange={(e) => setBrief(e.target.value)}
-              disabled={generating}
+              disabled={generating || sessionLoading || loadError}
               rows={8}
               className="mt-1.5 w-full resize-y rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm leading-6 text-zinc-800 outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200"
               placeholder={"可以贴一份 JD，也可以只写一句方向，例如：\n更偏后端\n把参与和主导写清楚\n删空话，保留有证据的成果"}
             />
             <span className="mt-1.5 block text-xs leading-5 text-zinc-500">
-              建议稿会显示在右侧预览。主导次数不能比底稿多。
+              依据原有经历改写，不新增未经确认的成果。建议稿核对后可另存，底稿保持不变。
             </span>
           </label>
         )}
@@ -260,7 +247,7 @@ export function RewritePanel({
           <button
             type="button"
             onClick={() => void generate()}
-            disabled={generating || brief.trim().length < MIN_BRIEF_CHARS}
+            disabled={generating || sessionLoading || loadError || brief.trim().length < MIN_BRIEF_CHARS}
             className="flex min-h-9 items-center justify-center gap-1.5 rounded-md bg-zinc-900 px-3 text-sm font-medium text-white hover:bg-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
           >
             {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
@@ -312,7 +299,7 @@ export function RewritePanel({
               <textarea
                 value={followUp}
                 onChange={(e) => setFollowUp(e.target.value)}
-                disabled={generating}
+                disabled={generating || sessionLoading || loadError}
                 rows={3}
                 className="mt-1.5 w-full resize-y rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm leading-6 outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-950"
                 placeholder="例如：再短一点，更偏后端。"

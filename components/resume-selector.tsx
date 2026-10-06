@@ -1,10 +1,19 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { ChevronDown, Plus, Copy, Trash2, FileText, GitBranch, Loader2 } from "lucide-react";
 import { groupResumesByRoot, ResumeListItem } from "@/lib/resumes";
 
 export type { ResumeListItem };
+
+function formatUpdatedAt(value: string): string {
+  if (!value) return "更新时间未知";
+  const iso = value.includes("T") ? value : value.replace(" ", "T");
+  const date = new Date(/(?:Z|[+-]\d{2}:?\d{2})$/.test(iso) ? iso : `${iso}Z`);
+  return Number.isNaN(date.getTime())
+    ? "更新时间未知"
+    : `更新于 ${date.toLocaleString("zh-CN", { year: "numeric", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false })}`;
+}
 
 interface ResumeSelectorProps {
   resumes: ResumeListItem[];
@@ -29,6 +38,7 @@ export function ResumeSelector({
 }: ResumeSelectorProps) {
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [menuLeft, setMenuLeft] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -149,6 +159,23 @@ export function ResumeSelector({
     items[nextIndex]?.focus();
   }, [open, currentIndex]);
 
+  useLayoutEffect(() => {
+    if (!open) return;
+    const placeMenu = () => {
+      const container = containerRef.current;
+      const menu = menuRef.current;
+      if (!container || !menu) return;
+      const rect = container.getBoundingClientRect();
+      const ideal = rect.width - menu.offsetWidth;
+      const minimum = 12 - rect.left;
+      const maximum = window.innerWidth - 12 - menu.offsetWidth - rect.left;
+      setMenuLeft(Math.max(minimum, Math.min(ideal, maximum)));
+    };
+    placeMenu();
+    window.addEventListener("resize", placeMenu);
+    return () => window.removeEventListener("resize", placeMenu);
+  }, [open]);
+
   function handleTriggerKeyDown(event: ReactKeyboardEvent<HTMLButtonElement>) {
     if (disabled || open) return;
 
@@ -159,12 +186,12 @@ export function ResumeSelector({
     }
   }
 
-  function renderRow(resume: ResumeListItem, index: number, isVariant: boolean) {
+  function renderRow(resume: ResumeListItem, index: number, isVariant: boolean, rootTitle?: string) {
     const active = resume.id === currentId;
     const title = resume.title?.trim() || "未命名简历";
-    const tooltip = isVariant && resume.originNote
-      ? `${title}（来自：${resume.originNote}）`
-      : title;
+    const origin = isVariant
+      ? `来自 ${rootTitle || "母本"}${resume.originNote ? ` · ${resume.originNote}` : ""}`
+      : "母本";
     return (
       <div
         key={resume.id}
@@ -189,15 +216,21 @@ export function ResumeSelector({
             onSelect(resume.id);
           }}
           onFocus={() => setActiveIndex(index)}
-          title={tooltip}
-          className="flex min-w-0 flex-1 items-center gap-2 text-left"
+          className="flex min-w-0 flex-1 items-start gap-2 text-left"
         >
           {isVariant ? (
-            <GitBranch className="h-3 w-3 flex-shrink-0 text-zinc-400 dark:text-zinc-500" />
+            <GitBranch className="mt-1 h-3 w-3 flex-shrink-0 text-zinc-400 dark:text-zinc-500" />
           ) : (
-            <FileText className="h-3.5 w-3.5 flex-shrink-0 text-zinc-400 dark:text-zinc-500" />
+            <FileText className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-zinc-400 dark:text-zinc-500" />
           )}
-          <span className="truncate">{title}</span>
+          <span className="min-w-0 flex-1">
+            <span className="flex flex-wrap items-start gap-x-1.5 gap-y-0.5">
+              <span className="min-w-0 break-words font-medium [overflow-wrap:anywhere]">{title}</span>
+              {active && <span className="rounded bg-zinc-200 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-700 dark:bg-zinc-700 dark:text-zinc-200">当前</span>}
+            </span>
+            <span className="mt-0.5 block break-words text-[11px] leading-4 text-zinc-500 [overflow-wrap:anywhere] dark:text-zinc-400">{origin}</span>
+            <span suppressHydrationWarning className="block text-[11px] leading-4 text-zinc-500 dark:text-zinc-400">{formatUpdatedAt(resume.updatedAt)}</span>
+          </span>
         </button>
 
         <button
@@ -210,7 +243,7 @@ export function ResumeSelector({
             closeMenu(true);
             onDelete(resume.id);
           }}
-          className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded text-zinc-400 opacity-0 transition-opacity hover:bg-red-50 hover:text-red-600 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/60 group-hover:opacity-100 dark:text-zinc-500 dark:hover:bg-red-950/30 dark:hover:text-red-400"
+          className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded text-zinc-400 transition-opacity hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/60 sm:opacity-0 sm:focus-visible:opacity-100 sm:group-hover:opacity-100 dark:text-zinc-500 dark:hover:bg-red-950/30 dark:hover:text-red-400"
         >
           <Trash2 className="h-3.5 w-3.5" />
         </button>
@@ -261,7 +294,8 @@ export function ResumeSelector({
           tabIndex={-1}
           onKeyDown={handleMenuKeyDown}
           data-testid="resume-list"
-          className="absolute right-0 top-full z-40 mt-1.5 w-[min(280px,calc(100vw-24px))] rounded-lg border border-zinc-200 bg-white py-1.5 shadow-lg dark:border-zinc-800 dark:bg-zinc-900"
+          style={{ left: menuLeft }}
+          className="absolute top-full z-40 mt-1.5 w-[min(340px,calc(100vw-24px))] rounded-lg border border-zinc-200 bg-white py-1.5 shadow-lg dark:border-zinc-800 dark:bg-zinc-900"
         >
           <div role="presentation" className="max-h-[320px] overflow-y-auto px-1.5">
             {flat.length === 0 ? (
@@ -273,7 +307,7 @@ export function ResumeSelector({
                 <div key={group.root.id} role="presentation">
                   {renderRow(group.root, flat.findIndex((r) => r.id === group.root.id), false)}
                   {group.variants.map((variant) =>
-                    renderRow(variant, flat.findIndex((r) => r.id === variant.id), true)
+                    renderRow(variant, flat.findIndex((r) => r.id === variant.id), true, group.root.title?.trim() || "未命名简历")
                   )}
                 </div>
               ))

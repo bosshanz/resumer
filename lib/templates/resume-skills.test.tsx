@@ -20,7 +20,7 @@ describe("ResumeSkills", () => {
     expect(html).toContain("Agent");
     expect(html).toContain("Kotlin");
     expect(html).toContain("resume-skill-sep");
-    expect(html).toContain(" / ");
+    expect(html).toContain(" · ");
     expect(html.match(/resume-skill-sep/g)?.length).toBe(3);
   });
 

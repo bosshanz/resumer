@@ -32,7 +32,7 @@ export function ResumeSkills({
               <span key={`${group.label || "group"}-${itemIndex}-${item}`}>
                 {itemIndex > 0 && (
                   <span className="resume-skill-sep" aria-hidden>
-                    {" / "}
+                    {" · "}
                   </span>
                 )}
                 <span className="resume-skill-tag">{item}</span>

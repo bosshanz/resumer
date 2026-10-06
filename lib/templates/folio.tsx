@@ -63,7 +63,13 @@ export function Folio({
   );
   const skills = hasSkills(fm.skills) && (
     <section className="folio-skills resume-section" data-folio-block="skills">
-      <h2 className="folio-label">{zh ? "专业技能" : "Expertise"}</h2>
+      {rail ? (
+        <h2 className="folio-label">{zh ? "专业技能" : "Expertise"}</h2>
+      ) : (
+        <div className="folio-section-heading">
+          <h2>{zh ? "专业技能" : "Expertise"}</h2>
+        </div>
+      )}
       <ResumeSkills skills={fm.skills} />
     </section>
   );

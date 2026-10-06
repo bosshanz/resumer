@@ -97,10 +97,12 @@
   margin: 0 0 7mm;
 }
 .folio .resume-skill-group-label {
-  font-size: 0.76em;
-  letter-spacing: 0.025em;
-  min-width: 5em;
+  font-size: 0.8em;
+  letter-spacing: 0;
+  min-width: 0;
   font-weight: 500;
+  text-transform: none;
+  overflow-wrap: anywhere;
 }
 .folio .resume-skill-tag,
 .folio .resume-skill-sep {
@@ -108,7 +110,16 @@
   line-height: 1.6;
 }
 .folio .resume-skill-groups {
-  gap: 1.8mm;
+  gap: 1.4mm;
+}
+/* Single-column categories share a fixed track, including wrapped rows. */
+.folio > .folio-skills .resume-skill-groups--labeled .resume-skill-group {
+  display: grid;
+  grid-template-columns: 7em minmax(0, 1fr);
+  column-gap: 0.8em;
+}
+.folio > .folio-skills .resume-skill-groups--labeled .resume-skill-group-items {
+  grid-column: 2;
 }
 .folio-section {
   margin-top: 7mm;
@@ -229,10 +240,6 @@
 .folio-minimal .folio-profile p {
   font-size: 1.04em;
   line-height: 1.9;
-}
-.folio-minimal .folio-skills {
-  padding-bottom: 5mm;
-  border-bottom: 0.2mm solid var(--folio-line);
 }
 .folio-minimal .folio-section-heading {
   display: flex;
@@ -445,8 +452,6 @@
 }
 .folio-authority .folio-skills {
   margin-top: 7mm;
-  padding-top: 4mm;
-  border-top: 0.35mm solid var(--resume-accent);
   margin-bottom: 0;
 }
 /* 05 / 构筑 — an ink-blue identity panel, restrained technical margin, open body. */

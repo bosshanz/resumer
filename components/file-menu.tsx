@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   FileDown,
   FileUp,
@@ -10,6 +10,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useMenuDismiss } from "./use-menu-dismiss";
+import { readPhotoFile } from "./read-photo-file";
 
 interface FileMenuProps {
   hasPhoto: boolean;
@@ -33,10 +34,21 @@ export function FileMenu({
   onRemovePhoto,
 }: FileMenuProps) {
   const [open, setOpen] = useState(false);
+  const [photoError, setPhotoError] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const markdownInputRef = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const mountedRef = useRef(false);
+  const photoRequestRef = useRef(0);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      photoRequestRef.current += 1;
+    };
+  }, []);
   // 稳定引用，避免 useMenuDismiss 的 effect 每次渲染重挂监听器
   const close = useCallback(() => setOpen(false), []);
   useMenuDismiss(open, containerRef, buttonRef, close);
@@ -50,23 +62,20 @@ export function FileMenu({
     e.target.value = "";
   };
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      alert("请上传图片文件");
-      e.target.value = "";
-      return;
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      alert("图片大小不能超过 2MB");
-      e.target.value = "";
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = (event) => onChangePhoto(String(event.target?.result || ""));
-    reader.readAsDataURL(file);
     e.target.value = "";
+    if (!file) return;
+    const requestId = ++photoRequestRef.current;
+    setPhotoError("");
+    try {
+      const dataUrl = await readPhotoFile(file);
+      if (mountedRef.current && requestId === photoRequestRef.current) onChangePhoto(dataUrl);
+    } catch (error) {
+      if (mountedRef.current && requestId === photoRequestRef.current) {
+        setPhotoError(error instanceof Error ? error.message : "照片读取失败，原照片未更改，请重试。");
+      }
+    }
   };
 
   return (
@@ -89,10 +98,16 @@ export function FileMenu({
         buttonRef={buttonRef}
         title="更多操作"
         ariaExpanded={open}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => { setPhotoError(""); setOpen((v) => !v); }}
       >
         <MoreHorizontal className="h-4 w-4" />
       </IconButton>
+      {photoError && !open && (
+        <div role="alert" className="absolute right-0 top-full z-40 mt-1 w-[min(260px,calc(100vw-24px))] rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs leading-5 text-red-800 shadow-lg dark:border-red-900 dark:bg-red-950 dark:text-red-200">
+          {photoError}
+          <button type="button" onClick={() => setPhotoError("")} className="ml-2 underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500">关闭</button>
+        </div>
+      )}
       {open && (
         <div role="menu" className="absolute right-0 top-full z-30 mt-1 min-w-[190px] rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
           <MenuButton
@@ -130,6 +145,7 @@ export function FileMenu({
             label={hasPhoto ? "更换照片" : "上传照片"}
             onClick={() => {
               close();
+              setPhotoError("");
               photoInputRef.current?.click();
             }}
           />
@@ -140,6 +156,7 @@ export function FileMenu({
               danger
               onClick={() => {
                 close();
+                photoRequestRef.current += 1;
                 onRemovePhoto();
               }}
             />

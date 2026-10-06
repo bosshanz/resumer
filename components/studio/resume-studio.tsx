@@ -3,16 +3,21 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowDown,
   ArrowUp,
+  Briefcase,
   Eye,
   EyeOff,
   FileText,
+  FolderOpen,
+  GraduationCap,
   Layers3,
+  LayoutList,
   Plus,
+  Star,
   Trash2,
   UserRound,
   Sparkles,
   ChevronRight,
-  PanelRightClose,
+  X,
 } from "lucide-react";
 import { Preview } from "../preview";
 import { RichText } from "./rich-text";
@@ -47,8 +52,11 @@ interface Props {
   pageFit: PageFit | null;
   onSource: () => void;
   onDesign: () => void;
+  onInspect: () => void;
   suggestion: boolean;
   generating: boolean;
+  panelOpen: boolean;
+  panelView: "settings" | "preview";
 }
 function Field({
   label,
@@ -284,18 +292,95 @@ export function ResumeStudio({
   pageFit,
   onSource,
   onDesign,
+  onInspect,
   suggestion,
   generating,
+  panelOpen,
+  panelView,
 }: Props) {
   const model = useMemo(() => readBuilder(content), [content]);
   const [selection, setSelection] = useState<Selection>({ kind: "basics" });
   const [mobilePane, setMobilePane] = useState<"content" | "preview">(
     "content",
   );
+  const [mobileOutlineOpen, setMobileOutlineOpen] = useState(false);
+  const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [undo, setUndo] = useState<{ before: string; after: string } | null>(
     null,
   );
   const canvas = useRef<HTMLDivElement>(null);
+  const outline = useRef<HTMLElement>(null);
+  const outlineTrigger = useRef<HTMLButtonElement>(null);
+  const outlineClose = useRef<HTMLButtonElement>(null);
+  const addMenuRef = useRef<HTMLDivElement>(null);
+  const outlineVisible = mobileOutlineOpen && !panelOpen && mobilePane === "content";
+  useEffect(() => {
+    if (!panelOpen) return;
+    const frame = requestAnimationFrame(() => setMobileOutlineOpen(false));
+    return () => cancelAnimationFrame(frame);
+  }, [panelOpen]);
+  useEffect(() => {
+    const narrow = window.matchMedia("(max-width: 599px)");
+    const onResize = () => {
+      if (!narrow.matches) setMobileOutlineOpen(false);
+    };
+    narrow.addEventListener("change", onResize);
+    return () => narrow.removeEventListener("change", onResize);
+  }, []);
+  useEffect(() => {
+    if (!outlineVisible) return;
+    outlineClose.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setMobileOutlineOpen(false);
+        requestAnimationFrame(() => outlineTrigger.current?.focus());
+      }
+      if (event.key !== "Tab" || !outline.current) return;
+      const controls = [...outline.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), select:not([disabled]), input:not([disabled]), a[href]',
+      )].filter((control) => control.getClientRects().length > 0);
+      if (controls.length === 0) return;
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (!outline.current.contains(document.activeElement)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      } else if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [outlineVisible]);
+  const closeOutline = (restoreFocus = true) => {
+    setMobileOutlineOpen(false);
+    if (restoreFocus) requestAnimationFrame(() => outlineTrigger.current?.focus());
+  };
+  useEffect(() => {
+    if (!addMenuOpen) return;
+    const onPointer = (event: PointerEvent) => {
+      if (!addMenuRef.current?.contains(event.target as Node)) {
+        setAddMenuOpen(false);
+      }
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.stopPropagation();
+        setAddMenuOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", onPointer, true);
+    document.addEventListener("keydown", onKeyDown, true);
+    return () => {
+      document.removeEventListener("pointerdown", onPointer, true);
+      document.removeEventListener("keydown", onKeyDown, true);
+    };
+  }, [addMenuOpen]);
   const section =
     selection.kind === "section"
       ? model.sections[selection.section]
@@ -318,8 +403,10 @@ export function ResumeStudio({
           ? "专业技能"
           : (selected?.title ?? "选择区块");
   const choose = (next: Selection) => {
+    if (panelOpen) onInspect();
     setSelection(next);
     setMobilePane("content");
+    if (outlineVisible) closeOutline();
   };
   const commit = (next: string, structural = false) => {
     if (next === content) return;
@@ -459,8 +546,14 @@ export function ResumeStudio({
       ? (model.fields.contact as Record<string, unknown>)
       : {};
   return (
-    <div className="resume-studio" data-mobile-pane={mobilePane}>
-      <div className="studio-mobile-switch">
+    <div
+      className="resume-studio"
+      data-mobile-pane={mobilePane}
+      data-panel-open={panelOpen}
+      data-panel-view={panelView}
+      data-outline-open={outlineVisible}
+    >
+      <div className="studio-mobile-switch" inert={outlineVisible}>
         <button
           type="button"
           aria-pressed={mobilePane === "content"}
@@ -476,11 +569,34 @@ export function ResumeStudio({
           成品预览
         </button>
       </div>
-      <nav className="studio-outline" aria-label="简历目录">
+      {outlineVisible && (
+        <button
+          type="button"
+          className="studio-outline-backdrop"
+          aria-label="关闭简历目录"
+          onClick={() => closeOutline()}
+        />
+      )}
+      <nav
+        ref={outline}
+        id="studio-outline"
+        className="studio-outline"
+        aria-label="简历目录"
+        role={outlineVisible ? "dialog" : undefined}
+        aria-modal={outlineVisible ? "true" : undefined}
+      >
         <div className="studio-panel-label">
           <Layers3 size={15} />
           <span>简历目录</span>
-          <span className="studio-kicker">CONTENT</span>
+          <button
+            ref={outlineClose}
+            className="studio-outline-close"
+            type="button"
+            aria-label="关闭简历目录"
+            onClick={() => closeOutline()}
+          >
+            <X size={18} />
+          </button>
         </div>
         <div className="studio-outline-scroll">
           {(
@@ -544,29 +660,48 @@ export function ResumeStudio({
               </div>
             ),
           )}
-          <label className="studio-add">
-            <Plus size={14} />
-            <select
-              aria-label="添加区块"
-              value=""
-              onChange={(e) => {
-                if (e.target.value) addSection(e.target.value);
-              }}
+          <div ref={addMenuRef} className="studio-add-menu-wrap">
+            <button
+              type="button"
+              className="studio-add-trigger"
+              aria-expanded={addMenuOpen}
+              aria-haspopup="menu"
+              onClick={() => setAddMenuOpen((v) => !v)}
             >
-              <option value="" disabled>
-                添加区块
-              </option>
-              {[
-                "工作经历",
-                "项目经历",
-                "教育背景",
-                "荣誉与证书",
-                "自定义区块",
-              ].map((name) => (
-                <option key={name}>{name}</option>
-              ))}
-            </select>
-          </label>
+              <Plus size={14} />
+              添加区块
+            </button>
+            {addMenuOpen && (
+              <div className="studio-add-popover" role="menu">
+                {([
+                  ["工作经历", "公司、职位与时间段", Briefcase],
+                  ["项目经历", "项目名称与成果描述", FolderOpen],
+                  ["教育背景", "院校、专业与学历", GraduationCap],
+                  ["荣誉与证书", "奖项、认证与发表", Star],
+                  ["自定义区块", "自由命名的内容区", LayoutList],
+                ] as const).map(([name, desc, Icon]) => (
+                  <button
+                    key={name}
+                    type="button"
+                    role="menuitem"
+                    className="studio-add-item"
+                    onClick={() => {
+                      setAddMenuOpen(false);
+                      addSection(name);
+                    }}
+                  >
+                    <span className="studio-add-item-icon">
+                      <Icon size={15} />
+                    </span>
+                    <span className="studio-add-item-text">
+                      <span>{name}</span>
+                      <span>{desc}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
         <div className="studio-outline-footer">
           <span>让经历成为作品。</span>
@@ -575,7 +710,7 @@ export function ResumeStudio({
           </button>
         </div>
       </nav>
-      <section className="studio-canvas">
+      <section className="studio-canvas" inert={outlineVisible}>
         <div className="studio-canvas-bar">
           <span>
             <span className="studio-live-dot" />
@@ -635,19 +770,24 @@ export function ResumeStudio({
           </p>
         </div>
       </section>
-      <aside className="studio-inspector" aria-label="区块编辑面板">
+      <aside className="studio-inspector" aria-label="区块编辑面板" inert={outlineVisible}>
+        <div className="studio-current-section">
+          <span>当前区块：{title.split(/[|｜]/)[0].trim()}</span>
+          <button
+            ref={outlineTrigger}
+            type="button"
+            aria-controls="studio-outline"
+            aria-expanded={outlineVisible}
+            onClick={() => setMobileOutlineOpen(true)}
+          >
+            打开目录 <ChevronRight size={15} />
+          </button>
+        </div>
         <div className="studio-panel-label">
           <span>内容编辑</span>
-          <span className="studio-kicker">INSPECTOR</span>
-          <PanelRightClose size={15} />
         </div>
         <div className="studio-inspector-scroll">
           <div className="studio-inspector-title">
-            <span className="studio-kicker">
-              {selection.kind === "section"
-                ? "EXPERIENCE & STORY"
-                : "YOUR PROFILE"}
-            </span>
             <h2>{title.split(/[|｜]/)[0].trim()}</h2>
             <p>
               {selection.kind === "section"
