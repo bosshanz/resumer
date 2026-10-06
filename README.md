@@ -65,7 +65,7 @@ flowchart LR
 | `authority` | 沉静 | 居中名帖，松墨色、轻底色简介与舒展正文 |
 | `blueprint` | 构筑 | 墨蓝页首，左侧资料栏与精简的技术档案排版 |
 
-旧主题自动对应：`tech` / `developer` → `blueprint`，`grid` → `ledger`，`executive` → `authority`，`compact` → `minimal`。预览、编辑器和 PDF 共用同一解析规则。旧默认外观会升级，实际调整过的配色、字号和页边距会保留；保存后用 `collectionVersion: 2` 标记，避免重复迁移。旧模板源文件保留作历史兼容参考，不再进入主题选择与样式加载。
+旧主题自动对应：`tech` / `developer` → `blueprint`，`grid` → `ledger`，`executive` → `authority`，`compact` → `minimal`。预览、编辑器和 PDF 共用同一解析规则。旧默认外观会升级，实际调整过的配色、字号和页边距会保留；保存后用 `collectionVersion: 2` 标记，避免重复迁移。由 `legacy-defaults.ts` 统一保证历史版本的平滑升级与兼容。
 
 ## 技术栈
 
@@ -111,7 +111,8 @@ openssl rand -base64 32
 |---|---|
 | `NEXTAUTH_URL` | 本地地址，默认 `http://localhost:3000` |
 | `NEXTAUTH_SECRET` | NextAuth.js 会话密钥 |
-| `GITHUB_ID` / `GITHUB_SECRET` | 可选；配置后使用 GitHub OAuth，否则启用开发登录 |
+| `GITHUB_ID` / `GITHUB_SECRET` | 可选；配置后使用 GitHub OAuth，否则启用开发登录或访问口令 |
+| `AUTH_PASSWORD` | 可选；单人私有部署时设置访问口令，避免在生产模式被他人免密登录 |
 | `DATABASE_URL` | SQLite 文件路径，默认 `./data/resumer.db` |
 | `PUPPETEER_EXECUTABLE_PATH` | Chrome/Chromium 可执行文件路径 |
 | `DEEPSEEK_API_KEY` | 可选；配置后可使用「改写」 |

@@ -25,9 +25,23 @@ interface GitHubProfile {
 }
 
 const githubConfigured = Boolean(process.env.GITHUB_ID && process.env.GITHUB_SECRET);
+const authPassword = process.env.AUTH_PASSWORD?.trim();
+const isProduction = process.env.NODE_ENV === "production";
+const allowInsecureDevLogin = process.env.ALLOW_INSECURE_DEV_LOGIN === "true";
 
-// 登录页据此决定渲染 GitHub OAuth 按钮还是开发模式用户名登录
+// 登录页据此决定认证模式：GitHub OAuth、访问口令认证、开发模式或安全禁用
 export const isGithubAuthConfigured = () => githubConfigured;
+export const isPasswordAuthConfigured = () => Boolean(authPassword);
+export const isDevAuthAllowed = () =>
+  githubConfigured || Boolean(authPassword) || !isProduction || allowInsecureDevLogin;
+
+export function getAuthMode() {
+  return {
+    githubEnabled: isGithubAuthConfigured(),
+    passwordRequired: !isGithubAuthConfigured() && isPasswordAuthConfigured(),
+    canLogin: isDevAuthAllowed(),
+  };
+}
 
 if (!process.env.NEXTAUTH_SECRET) {
   console.warn(
@@ -46,13 +60,24 @@ export const authOptions: NextAuthOptions = {
         ]
       : [
           CredentialsProvider({
-            name: "dev",
+            name: "credentials",
             credentials: {
               name: { label: "Name", type: "text", defaultValue: "Dev User" },
+              password: { label: "Password", type: "password" },
             },
             async authorize(credentials) {
+              if (authPassword) {
+                if (!credentials?.password || credentials.password !== authPassword) {
+                  throw new Error("访问口令不正确");
+                }
+              } else if (isProduction && !allowInsecureDevLogin) {
+                throw new Error(
+                  "生产环境未配置认证方式，请在环境变量中设置 GITHUB_ID/GITHUB_SECRET 或 AUTH_PASSWORD"
+                );
+              }
+
               const db = getDatabase();
-              const name = (credentials?.name as string) || "Dev User";
+              const name = (credentials?.name as string)?.trim() || "Dev User";
               const githubId = `dev-${name.toLowerCase().replace(/\s+/g, "-")}`;
 
               const existing = db.prepare("SELECT id FROM users WHERE github_id = ?").get(githubId) as

@@ -8,3 +8,4 @@ data
 *.md
 !README.md
 !CONTEXT.md
+!RESUME_MARKDOWN_RULES.md

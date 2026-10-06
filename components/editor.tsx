@@ -209,8 +209,9 @@ export function Editor({ initialResume }: EditorProps) {
     }
   };
   const handleExportPdf = () => exportPdf({ title, content, templateId, themeVariables, photo });
+  const [hiddenWarningOpen, setHiddenWarningOpen] = useState(false);
 
-  const handleExportMarkdown = () => {
+  const performExportMarkdown = () => {
     const blob = new Blob([content], { type: "text/markdown" });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -219,6 +220,14 @@ export function Editor({ initialResume }: EditorProps) {
     a.download = `${safeName}.md`;
     a.click();
     window.URL.revokeObjectURL(url);
+  };
+
+  const handleExportMarkdown = () => {
+    if (content.includes("<!-- resumer-hidden-")) {
+      setHiddenWarningOpen(true);
+      return;
+    }
+    performExportMarkdown();
   };
 
   const handleImportMarkdown = useCallback(
@@ -813,6 +822,20 @@ export function Editor({ initialResume }: EditorProps) {
           setDeleteTarget(null);
         }}
         onCancel={() => setDeleteTarget(null)}
+      />
+
+      <ConfirmDialog
+        open={hiddenWarningOpen}
+        title="导出 Markdown 提示"
+        message="当前简历包含已隐藏的经历或区块。导出的 Markdown 文件中将保留这些隐藏内容（以 HTML 注释标记存储，便于再次导入时恢复）。请注意核对是否包含不便外传的敏感信息。"
+        confirmLabel="继续导出"
+        cancelLabel="取消"
+        confirmVariant="primary"
+        onConfirm={() => {
+          setHiddenWarningOpen(false);
+          performExportMarkdown();
+        }}
+        onCancel={() => setHiddenWarningOpen(false)}
       />
     </div>
   );

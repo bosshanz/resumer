@@ -27,6 +27,7 @@ export function readMarkdownRules(cwd = process.cwd()): string {
   try {
     return fs.readFileSync(filePath, "utf8");
   } catch {
+    console.warn("[rewrite] 未找到 RESUME_MARKDOWN_RULES.md，采用默认规则降级。");
     return "使用 YAML frontmatter + Markdown。不要改姓名、联系方式、公司、日期。不要使用 HTML。";
   }
 }

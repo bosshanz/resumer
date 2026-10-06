@@ -1,5 +1,5 @@
 import { getServerSession } from "next-auth/next";
-import { authOptions, isGithubAuthConfigured } from "@/lib/auth";
+import { authOptions, getAuthMode } from "@/lib/auth";
 import { getDatabase } from "@/lib/db";
 import { normalizeResume } from "@/lib/resumes";
 import { resolveResumePhoto } from "@/lib/photos";
@@ -77,7 +77,7 @@ export default async function Home({
                 </span>
               ))}
             </div>
-            <LoginButton githubEnabled={isGithubAuthConfigured()} />
+            <LoginButton {...getAuthMode()} />
           </div>
           <p className="relative mt-4 text-xs text-zinc-500 dark:text-zinc-500">你的简历内容会保存在账户中。</p>
         </main>
