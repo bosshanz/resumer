@@ -56,6 +56,16 @@
   max-width: 100%;
   overflow-wrap: anywhere;
 }
+/* 网址 / 邮箱：只在 / . @ 后换行（由 <wbr> 提供断点），片段内不断开 */
+.folio-contact-value {
+  min-width: 0;
+}
+.folio-nobreak {
+  white-space: nowrap;
+}
+.folio-phrase {
+  display: inline-block;
+}
 .folio-contact-label {
   font-family: var(--font-geist-mono), monospace;
   font-size: 0.74em;
@@ -341,6 +351,45 @@
 .folio-rail .resume-skill-group-items {
   column-gap: 1.2mm;
 }
+/* 侧栏短清单（荣誉 / 证书 / 语言）：标题沿用侧栏小标签，正文缩小一级。 */
+.folio-rail-notes {
+  margin-top: 6mm;
+  padding-top: 6mm;
+  border-top: 0.2mm solid var(--folio-line);
+}
+.folio .folio-rail .folio-rail-note {
+  margin: 0 0 5mm;
+  padding: 0;
+  border: 0;
+}
+.folio .folio-rail .folio-rail-note:last-child { margin-bottom: 0; }
+.folio .folio-rail .folio-rail-note .folio-section-heading {
+  margin: 0 0 2.5mm;
+  padding: 0;
+  border: 0;
+}
+.folio .folio-rail .folio-rail-note .folio-section-heading::after { content: none; }
+.folio .folio-rail .folio-rail-note .folio-section-heading h2 {
+  font-family: var(--font-geist-sans), var(--resume-cjk-sans);
+  font-size: 0.79em;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  line-height: 1.5;
+  color: var(--resume-accent);
+}
+.folio .folio-rail .folio-rail-note .folio-section-content {
+  font-size: 0.86em;
+  line-height: 1.65;
+}
+.folio .folio-rail .folio-rail-note .folio-section-content ul {
+  padding-left: 0;
+}
+.folio .folio-rail .folio-rail-note .folio-section-content li {
+  list-style: none;
+  margin: 0 0 1.6mm;
+  padding-left: 0;
+}
+.folio .folio-rail .folio-rail-note .folio-section-content li::before { content: none; }
 .folio-editorial .folio-section-heading h2 {
   font-size: 1.35em;
   font-weight: 500;

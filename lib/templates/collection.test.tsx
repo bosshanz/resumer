@@ -81,6 +81,8 @@ describe("eight-theme collection compatibility", () => {
           photo: "data:image/png;base64,test",
         }),
       );
+      // 网址 / 邮箱会被 <wbr> 分段，事实以可见文本为准（PDF 复制出来是同一串）
+      const visible = html.replace(/<[^>]+>/g, "");
       for (const text of [
         "张三",
         "某某科技",
@@ -90,7 +92,7 @@ describe("eight-theme collection compatibility", () => {
         "zhangsan@example.com",
         "本科",
       ])
-        expect(html).toContain(text);
+        expect(visible).toContain(text);
       expect(html).toContain('class="resume-photo"');
       expect(html).not.toContain("Quiet Authority");
       expect(html).not.toContain("Systems Blueprint");

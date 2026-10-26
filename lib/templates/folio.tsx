@@ -3,9 +3,55 @@ import { TemplateBase, mergeThemeVariables, type TemplateProps } from "./base";
 import { collectionThemes, type CollectionId } from "./collection";
 import { ResumeMarkdown } from "./resume-markdown";
 import { hasSkills, ResumeSkills } from "./resume-skills";
-import { basicsValues, splitResumeSections } from "./sections";
+import { basicsValues, splitResumeSections, type ResumeSection } from "./sections";
 import { getResumeLanguage } from "./language";
 import { photoObjectPosition } from "./photo";
+
+const LINKISH = /^[^\s]+$/;
+const LINK_SEPARATORS = /(?<=[/.@?#&=])/;
+// 超过这个长度的片段允许在内部断开，避免溢出窄栏
+const MAX_UNBREAKABLE = 22;
+
+/**
+ * 网址和邮箱只在 / . @ 等分隔符之后换行，不在连字符处断开
+ * （github.com/yuan-chen-demo 不会断成「yuan-chen-」+「demo」）。
+ * 只插入 <wbr>，文字本身不变，PDF 里复制出来仍是完整地址。
+ */
+export function breakableContact(value: string): React.ReactNode {
+  const text = value.trim();
+  if (!LINKISH.test(text) || !/[/@.]/.test(text)) return text;
+  const parts = text.split(LINK_SEPARATORS).filter(Boolean);
+  if (parts.length < 2 && text.length <= MAX_UNBREAKABLE) return <span className="folio-nobreak">{text}</span>;
+  return parts.map((part, index) => (
+    <React.Fragment key={index}>
+      {index > 0 && <wbr />}
+      {part.length <= MAX_UNBREAKABLE ? <span className="folio-nobreak">{part}</span> : part}
+    </React.Fragment>
+  ));
+}
+
+const ROLE_SEPARATOR = /\s+([·|｜/])\s+/;
+
+/**
+ * 职位常写成「A · B」：按分隔符切成整体换行的短语，避免窄栏里只把最后两个字挤到下一行。
+ * 分隔符跟在前一个短语末尾；短语用 inline-block，超长短语仍可在内部折行，不会溢出。
+ */
+export function breakableRole(value: string): React.ReactNode {
+  const tokens = value.split(ROLE_SEPARATOR);
+  if (tokens.length < 3) return value;
+  const phrases: string[] = [];
+  for (let i = 0; i < tokens.length; i += 2) {
+    phrases.push(i + 1 < tokens.length ? `${tokens[i]} ${tokens[i + 1]}` : tokens[i]);
+  }
+  return phrases.map((phrase, index) => (
+    <React.Fragment key={index}>
+      {index > 0 && " "}
+      <span className="folio-phrase">{phrase}</span>
+    </React.Fragment>
+  ));
+}
+
+const RAIL_NOTE_TITLE = /^(荣誉|奖项|获奖|证书|资格|认证|语言|兴趣|爱好|awards?|honou?rs|certifications?|certificates|languages?|interests)/i;
 
 /** Eight compositions share content semantics and a print-safe typography system. */
 export function Folio({
@@ -42,7 +88,7 @@ export function Folio({
           {(variant === "ledger" || variant === "blueprint" || variant === "sidebar") && (
             <span className="folio-contact-label">{labels[key]}</span>
           )}
-          <span>{value}</span>
+          <span className="folio-contact-value">{breakableContact(value)}</span>
         </span>
       ))}
       {basics.length > 0 && <span className="folio-contact-item folio-contact-basics">{basics.join(" · ")}</span>}
@@ -78,27 +124,39 @@ export function Folio({
       <ResumeSkills skills={fm.skills} />
     </section>
   );
+  // 纸刊 / 构筑：荣誉、证书、语言这类短清单放进侧栏，排在技能之后，
+  // 让第二页的侧栏和主栏一起收尾，而不是主栏写满、侧栏空着。
+  const railNotes = variant === "editorial" || variant === "blueprint";
+  const isNote = (section: ResumeSection) => railNotes && RAIL_NOTE_TITLE.test(section.title.trim());
+  const renderSection = (section: ResumeSection, index: number, className: string) => (
+    <section className={className} key={`${index}-${section.title}`}>
+      <div className="folio-section-heading">
+        {variant === "ledger" && (
+          <span className="folio-index" aria-hidden="true">
+            {String(index + 1).padStart(2, "0")}
+          </span>
+        )}
+        {section.heading ? (
+          <ResumeMarkdown editing={editing}>{section.heading}</ResumeMarkdown>
+        ) : (
+          <h2>{section.title}</h2>
+        )}
+      </div>
+      <div className="resume-body folio-section-content">
+        <ResumeMarkdown editing={editing}>{section.body}</ResumeMarkdown>
+      </div>
+    </section>
+  );
+  const mainSections = sections.filter((section) => !isNote(section));
+  const noteSections = sections.filter(isNote);
   const experience = (
     <div className="folio-experience">
-      {sections.map((section, index) => (
-        <section className="folio-section" key={`${index}-${section.title}`}>
-          <div className="folio-section-heading">
-            {variant === "ledger" && (
-              <span className="folio-index" aria-hidden="true">
-                {String(index + 1).padStart(2, "0")}
-              </span>
-            )}
-            {section.heading ? (
-              <ResumeMarkdown editing={editing}>{section.heading}</ResumeMarkdown>
-            ) : (
-              <h2>{section.title}</h2>
-            )}
-          </div>
-          <div className="resume-body folio-section-content">
-            <ResumeMarkdown editing={editing}>{section.body}</ResumeMarkdown>
-          </div>
-        </section>
-      ))}
+      {mainSections.map((section, index) => renderSection(section, index, "folio-section"))}
+    </div>
+  );
+  const notes = noteSections.length > 0 && (
+    <div className="folio-rail-notes">
+      {noteSections.map((section, index) => renderSection(section, index, "folio-section folio-rail-note"))}
     </div>
   );
   const contain = vars.photoFit === "contain";
@@ -122,7 +180,7 @@ export function Folio({
         )}
         {(fm.title || editing) && (
           <p className="folio-role" {...editing?.fieldProps("title")}>
-            {editing ? editing.fieldText("title", fm.title) : fm.title}
+            {editing ? editing.fieldText("title", fm.title) : breakableRole(fm.title ?? "")}
           </p>
         )}
       </div>
@@ -142,6 +200,7 @@ export function Folio({
               {contact}
               {!identityInRail && profile}
               {skills}
+              {notes}
             </aside>
             {identityInRail ? (
               <div className="folio-main">
