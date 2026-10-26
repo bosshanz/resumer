@@ -74,6 +74,12 @@ export interface Resume {
   updatedAt: string;
 }
 
+// 和 AI 从零共创时的空白稿：只有空的 frontmatter，内容全部由对话写入
+export const blankResumeContent = `---
+name: ""
+---
+`;
+
 export const defaultResumeContent = `---
 name: 张三
 title: 高级前端工程师

@@ -4,6 +4,7 @@ import fs from "fs";
 import { ensureRewriteSessionsTable } from "./rewrite/sessions";
 import { ensureResumeVersionsTable } from "./resume-versions";
 import { ensurePhotosTable, migrateLegacyPhotos } from "./photos";
+import { ensureCocreateTables } from "./cocreate/store";
 
 let db: Database.Database | null = null;
 let migrated = false;
@@ -76,6 +77,7 @@ function migrate(database: Database.Database): void {
   ensureRewriteSessionsTable(database);
   ensureResumeVersionsTable(database);
   ensurePhotosTable(database);
+  ensureCocreateTables(database);
 
   // 迁移：变体溯源（改写另存/手动复制 → 母本）
   // 索引必须在列存在之后创建：老库先走 addColumn，新库建表时已带列
