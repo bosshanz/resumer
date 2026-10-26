@@ -10,7 +10,7 @@ describe("theme portrait compositions", () => {
     const photo = renderToStaticMarkup(React.createElement(template.component, { ...props, photo: "data:image/png;base64,test" }));
     expect(photo.match(/class="resume-photo"/g)).toHaveLength(1);
     expect(photo).toContain("Alexandra Catherine Montgomery");
-    expect(photo).toContain("alex@example.com");
+    expect(photo.replace(/<[^>]+>/g, "")).toContain("alex@example.com");
     if (template.id === "editorial") expect(photo.indexOf('class="folio-photo"')).toBeGreaterThan(photo.indexOf('class="folio-rail"'));
     const none = renderToStaticMarkup(React.createElement(template.component, props));
     expect(none).not.toContain('class="folio-photo"');
@@ -25,6 +25,11 @@ describe("theme portrait compositions", () => {
     const template = templates[0];
     const html = renderToStaticMarkup(React.createElement(template.component, { frontmatter: {}, body: "", themeVariables: theme, photo: "data:image/png;base64,test" }));
     expect(html).toContain("object-fit:contain");
-    expect(html).toContain("object-position:50% 70%");
+    expect(html).toContain('data-fit="contain"');
+    // 完整显示时不裁切，焦点居中；滑杆值保留，切回「填满裁切」后继续生效
+    expect(html).toContain("object-position:50% 50%");
+    const cover = renderToStaticMarkup(React.createElement(template.component, { frontmatter: {}, body: "", themeVariables: { ...theme, photoFit: "cover", photoPositionX: 80 }, photo: "data:image/png;base64,test" }));
+    expect(cover).toContain("object-position:80% 70%");
+    expect(themeVariablesSchema.parse({ photoPositionX: -5 }).photoPositionX).toBeUndefined();
   });
 });

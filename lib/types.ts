@@ -47,6 +47,8 @@ export const themeVariablesSchema = z.object({
   marginRight: safeCssString,
   photoFit: z.enum(["cover", "contain"]).optional().catch(undefined),
   photoPosition: z.number().min(0).max(100).optional().catch(undefined),
+  /** 横向取景（0 左 · 100 右），横图或合影裁切时用；缺省居中。 */
+  photoPositionX: z.number().min(0).max(100).optional().catch(undefined),
   photoLayout: z.enum(["default", "floating-monolith"]).optional(),
 }).catchall(z.union([z.string(), z.number(), z.boolean()]));
 

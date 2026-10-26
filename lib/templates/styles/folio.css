@@ -76,6 +76,13 @@
   max-width: none;
   background: var(--resume-bg);
 }
+/* 「完整显示」：宽度仍占同一条网格轨道，高度跟随照片比例（不超过裁切框），
+   避免横图在框内留下大块空白，也不在无边框主题里「漂浮」在框顶部。 */
+.folio-photo .resume-photo[data-fit="contain"] {
+  height: auto;
+  max-height: var(--portrait-height, 30mm);
+  background: transparent;
+}
 .folio-label {
   font-family: var(--font-geist-sans), var(--resume-cjk-sans);
   font-size: 0.79em;
@@ -551,17 +558,19 @@
 .folio-has-portrait .folio-photo { margin: 0 !important; justify-self: end; break-inside: avoid; }
 .folio-minimal { --portrait-width: 24mm; --portrait-height: 30mm; }
 .folio-minimal.folio-portrait-large { --portrait-width: 28mm; --portrait-height: 35mm; }
+/* 姓名与照片底边对齐，联系方式在下方通栏一行排开（不再被照片挤成两行）。 */
 .folio-minimal .folio-header.folio-with-photo {
-  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4mm 9mm; align-items: start;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 5mm 9mm; align-items: end;
 }
 .folio-minimal .folio-with-photo .folio-identity { grid-column: 1; grid-row: 1; }
-.folio-minimal .folio-with-photo .folio-photo { grid-column: 2; grid-row: 1 / span 2; }
-.folio-minimal .folio-with-photo .folio-contact { grid-column: 1; grid-row: 2; }
+.folio-minimal .folio-with-photo .folio-photo { grid-column: 2; grid-row: 1; }
+.folio-minimal .folio-with-photo .folio-contact { grid-column: 1 / -1; grid-row: 2; }
 .folio-minimal .folio-header.folio-with-photo h1 { font-size: 3.25em; }
 /* The magazine portrait belongs to its margin notes, leaving the masthead open. */
 .folio-editorial .folio-rail > .folio-photo { width: 100%; padding: 0; border: 0; margin-bottom: 6mm !important; }
-.folio-editorial .folio-photo .resume-photo { width: 100%; height: 42mm; }
-.folio-editorial.folio-portrait-large .folio-photo .resume-photo { height: 50mm; }
+.folio-editorial { --portrait-height: 42mm; }
+.folio-editorial.folio-portrait-large { --portrait-height: 50mm; }
+.folio-editorial .folio-photo .resume-photo { width: 100%; }
 .folio-editorial.folio-has-portrait .folio-rail > :last-child { margin-bottom: 0; }
 .folio-editorial.folio-portrait-large .folio-rail > .folio-photo { margin-bottom: 4mm !important; }
 .folio-editorial.folio-portrait-large .folio-contact { padding-bottom: 4mm; margin-bottom: 4mm; }
@@ -569,10 +578,11 @@
 /* A square portrait aligns with the numbered rail; contacts retain their own column. */
 .folio-ledger { --portrait-width: 25mm; --portrait-height: 25mm; }
 .folio-ledger.folio-portrait-large { --portrait-width: 29mm; --portrait-height: 29mm; }
+/* 照片占据与正文编号栏同宽的 29mm 轨道，姓名与正文内容列左对齐（29mm + 5mm）。 */
 .folio-ledger .folio-header.folio-with-photo {
-  display: grid; grid-template-columns: auto minmax(0, 1fr) 53mm; gap: 5mm; align-items: start;
+  display: grid; grid-template-columns: 29mm minmax(0, 1fr) 53mm; gap: 5mm; align-items: start;
 }
-.folio-ledger .folio-with-photo .folio-photo { grid-column: 1; grid-row: 1; padding: 0; border: 0; }
+.folio-ledger .folio-with-photo .folio-photo { grid-column: 1; grid-row: 1; padding: 0; border: 0; justify-self: start; }
 .folio-ledger .folio-with-photo .folio-identity { grid-column: 2; grid-row: 1; padding-top: 1mm; }
 .folio-ledger .folio-header.folio-with-photo > .folio-contact { grid-column: 3; grid-row: 1; flex-direction: column; }
 .folio-ledger .folio-header.folio-with-photo h1 { font-size: 2.85em; }

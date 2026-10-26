@@ -5,6 +5,7 @@ import { ResumeMarkdown } from "./resume-markdown";
 import { hasSkills, ResumeSkills } from "./resume-skills";
 import { basicsValues, splitResumeSections } from "./sections";
 import { getResumeLanguage } from "./language";
+import { photoObjectPosition } from "./photo";
 
 /** Eight compositions share content semantics and a print-safe typography system. */
 export function Folio({
@@ -100,12 +101,12 @@ export function Folio({
       ))}
     </div>
   );
-  const imagePosition = typeof vars.photoPosition === "number" && Number.isFinite(vars.photoPosition)
-    ? Math.max(0, Math.min(100, vars.photoPosition)) : 35;
+  const contain = vars.photoFit === "contain";
   const portrait = photo ? <figure className="folio-photo">
     {/* eslint-disable-next-line @next/next/no-img-element */}
     <img src={photo} className="resume-photo" alt="" width={300} height={400}
-      style={{ objectFit: vars.photoFit === "contain" ? "contain" : "cover", objectPosition: `50% ${imagePosition}%` }} />
+      data-fit={contain ? "contain" : undefined}
+      style={{ objectFit: contain ? "contain" : "cover", objectPosition: photoObjectPosition(vars) }} />
   </figure> : null;
   const header = (
     <header

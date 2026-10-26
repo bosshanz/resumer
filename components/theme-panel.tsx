@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { photoObjectPosition } from "@/lib/templates/photo";
 import { ThemeVariables } from "@/lib/types";
 import { TemplateSelector } from "./template-selector";
 import { getContrastWarning } from "@/lib/color-contrast";
@@ -246,7 +247,7 @@ export function ThemePanel({
               <div className="flex items-center gap-3 rounded-lg border border-zinc-200 p-2 dark:border-zinc-800">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={photo} alt="当前简历照片" className="h-20 w-16 flex-shrink-0 rounded bg-zinc-100 object-cover dark:bg-zinc-800"
-                  style={{ objectFit: value.photoFit === "contain" ? "contain" : "cover", objectPosition: `50% ${value.photoPosition ?? 35}%` }} />
+                  style={{ objectFit: value.photoFit === "contain" ? "contain" : "cover", objectPosition: photoObjectPosition(value) }} />
                 <div className="flex min-w-0 flex-col gap-1.5">
                   <button type="button" onClick={() => photoInputRef.current?.click()} className="inline-flex items-center gap-1.5 rounded-md border border-zinc-300 px-2.5 py-1.5 text-xs font-medium hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 dark:border-zinc-700 dark:hover:bg-zinc-800">
                     <ImagePlus className="h-3.5 w-3.5" />更换照片
@@ -275,6 +276,12 @@ export function ThemePanel({
                 <input className="mt-2 block w-full accent-zinc-700 disabled:opacity-40" type="range" min="0" max="100" step="1"
                   aria-label="照片垂直取景位置" disabled={value.photoFit === "contain"}
                   value={value.photoPosition ?? 35} onChange={e => onChange({ ...value, photoPosition: Number(e.target.value) })} />
+              </label>
+              <label className="mt-3 block text-xs text-zinc-600 dark:text-zinc-400">
+                <span>取景位置 · 左右移动</span>
+                <input className="mt-2 block w-full accent-zinc-700 disabled:opacity-40" type="range" min="0" max="100" step="1"
+                  aria-label="照片水平取景位置" disabled={value.photoFit === "contain"}
+                  value={value.photoPositionX ?? 50} onChange={e => onChange({ ...value, photoPositionX: Number(e.target.value) })} />
               </label>
               {value.photoFit === "contain" && <p className="mt-1 text-[11px] leading-5 text-zinc-500">完整显示会保留整张照片，无需调整取景位置。</p>}
             </>
