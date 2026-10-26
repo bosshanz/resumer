@@ -28,11 +28,15 @@
   --font-plex-sans: "IBM Plex Sans", "IBM Plex Sans Fallback";
   --font-plex-mono: "IBM Plex Mono", "IBM Plex Mono Fallback";
   --font-inter-tight: "Inter Tight", "Inter Tight Fallback";
-  /* 中文字形在西文字体中缺失，需显式指定中文轴，否则按平台默认字体随机回落：
-     衬线模板用宋体轴，黑体模板用苹方/雅黑轴，等宽标注的中文配黑体。 */
-  --resume-cjk-serif: "Songti SC", "STSong", "SimSun", "Noto Serif CJK SC", serif;
-  --resume-cjk-sans: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
-  --resume-cjk-mono: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", monospace;
+  --font-noto-sans-sc: "Noto Sans SC", "Noto Sans SC Fallback";
+  --font-noto-serif-sc: "Noto Serif SC", "Noto Serif SC Fallback";
+  /* 中文字形在西文字体中缺失，需显式指定中文轴：衬线模板用思源宋体，黑体模板
+     用思源黑体，等宽标注的中文配黑体。两款字体随应用打包（app/layout.tsx），
+     预览与 PDF 用同一套字形与度量，分页不随平台变化；后面的系统字体只在
+     网页字体还没加载完时临时顶上。 */
+  --resume-cjk-serif: var(--font-noto-serif-sc), "Songti SC", "STSong", "SimSun", serif;
+  --resume-cjk-sans: var(--font-noto-sans-sc), "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --resume-cjk-mono: var(--font-noto-sans-sc), "PingFang SC", "Microsoft YaHei", monospace;
 }
 
 .resume-page h1,

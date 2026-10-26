@@ -98,7 +98,8 @@ export async function renderResumeHtml(
 
   // next/font 字体（woff2 内联）。放在模板样式之后，以便覆盖 .next 中
   // 实际生成的字体族名；找不到构建产物时为空，回落到系统字体栈。
-  const fontCss = loadEmbeddedFontCss() ?? "";
+  // 只内嵌正文（含样式里 content 生成的符号）用得到的字形切片。
+  const fontCss = loadEmbeddedFontCss(undefined, `${css}${bodyHtml}`) ?? "";
 
   return `<!DOCTYPE html>
 <html>
