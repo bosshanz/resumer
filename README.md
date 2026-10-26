@@ -29,7 +29,7 @@
 - 在设计面板上传、更换、移除和调整照片；更多操作保留快捷入口。上传头像或照片；图片以 base64 数据 URL 保存在 SQLite 中并按内容哈希去重（简历与其全部历史快照共享同一份存储），单张最大 2 MB。
 - 五套主题各自适配照片构图；支持标准照片、强化肖像、填满裁切、完整显示和垂直取景调节，无照片时自动使用完整的文字版式。
 - 使用 Puppeteer 和本地 Chrome/Chromium 导出 A4 PDF。
-- AI 共创：左侧对话、右侧实时简历。可从零开始由 AI 提问写出简历，也可边聊边完善现有简历或导入旧简历（粘贴文字或 PDF）。AI 只写你说过的事实，缺的写成「待补」；你的手动修改受保护，每条 AI 编辑可撤销。详见 [产品设计记录](docs/product.md)。
+- AI 共创：左侧对话、右侧实时简历，稿面按当前主题与版式排版，与预览和 PDF 一致。可从零开始由 AI 提问写出简历，也可边聊边完善现有简历或导入旧简历（粘贴文字或 PDF）。AI 只写你说过的事实，缺的写成「待补」；你的手动修改受保护，每条 AI 编辑可撤销。详见 [产品设计记录](docs/product.md)。
 - 改写 V2：贴岗位 JD 或写一句方向，建议稿显示在右侧预览，核对后再另存为新简历。底稿保持不变。需要配置 AI 模型（默认 DeepSeek）。主导等强主张不能比底稿增加。
 - 建议稿显示期间可「另存后导出」，也可明确选择「导出底稿」；PDF 失败后可就地重试，已另存的简历不会重复创建。
 - 变体溯源：改写另存与手动复制的简历自动挂到同一母本下，简历列表按母本分组展示变体，并显示来源摘要、更新时间和当前标识。
@@ -196,7 +196,7 @@ node scripts/test-all-pdfs.mjs
 
 `node scripts/test-design-flows.mjs` 使用临时数据库和确定性建议稿，检查历史预览与恢复、保存和另存失败、重复点击，以及 PDF 失败后的重试；实际调用 PDF 渲染器，不调用 AI。截图与 PDF 保存在系统临时目录的 `resumer-design-flows/`。同样需要先构建及本机 Chrome/Chromium。
 
-`node scripts/test-cocreate-flows.mjs` 用演示模型（`AI_PROVIDER=mock`）在临时数据库上跑 AI 共创的完整页面流程：从零开始、填写待补、选中要点操作、人工修改受保护、撤销、出错重试、窄屏和导入。截图保存在系统临时目录的 `resumer-cocreate-flows/`（可用 `SHOTS` 指定）。需要先构建及本机 Chrome/Chromium。
+`node scripts/test-cocreate-flows.mjs` 用演示模型（`AI_PROVIDER=mock`）在临时数据库上跑 AI 共创的完整页面流程：从零开始、主题联动（切换主题不丢对话）、在主题纸面上填写待补、选中要点操作、人工修改受保护、撤销、出错重试、窄屏和导入。截图保存在系统临时目录的 `resumer-cocreate-flows/`（可用 `SHOTS` 指定）。需要先构建及本机 Chrome/Chromium。
 
 GitHub Actions 在每次推送和 PR 上运行 lint、类型检查、单元测试和构建（`.github/workflows/ci.yml`）。
 

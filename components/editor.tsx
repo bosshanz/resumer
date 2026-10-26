@@ -817,6 +817,8 @@ export function Editor({ initialResume }: EditorProps) {
               flashLines={flashLines}
               onStartScratch={() => void handleStartScratch()}
               startingScratch={startingScratch}
+              onDesign={() => { setPanelView("settings"); setDrawer("design"); }}
+              showDoc={!!drawer && panelView === "preview"}
             />
           </div>
         )}

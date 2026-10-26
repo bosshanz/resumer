@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Preview } from "@/components/preview";
+import { ChevronRight } from "lucide-react";
 import { extractPending } from "@/lib/cocreate/doc";
 import { isResumeBlank } from "@/lib/cocreate/edits";
 import type { ThemeVariables } from "@/lib/types";
+import type { PageFit } from "@/lib/page-fit";
+import { resolveTemplateSettings } from "@/lib/templates";
 import type { ActionTarget, SelectionAction } from "@/lib/cocreate/types";
 import { ChatPanel } from "./chat-panel";
-import { DraftView } from "./draft-view";
+import { PaperView } from "./paper-view";
 import type { CocreateController } from "./use-cocreate";
 
 interface CocreateWorkspaceProps {
@@ -20,9 +22,12 @@ interface CocreateWorkspaceProps {
   flashLines: Set<string>;
   onStartScratch: () => void;
   startingScratch: boolean;
+  /** 打开「设计」面板调整主题；稿面随之实时变化 */
+  onDesign: () => void;
+  /** 窄屏下外部要求显示简历（例如在设计面板里点了「查看效果」） */
+  showDoc?: boolean;
 }
 
-type DocView = "draft" | "preview";
 type Tab = "chat" | "doc";
 
 export function CocreateWorkspace({
@@ -35,9 +40,13 @@ export function CocreateWorkspace({
   flashLines,
   onStartScratch,
   startingScratch,
+  onDesign,
+  showDoc,
 }: CocreateWorkspaceProps) {
-  const [view, setView] = useState<DocView>("draft");
-  const [tab, setTab] = useState<Tab>("chat");
+  const [tabState, setTab] = useState<Tab>("chat");
+  const tab: Tab = showDoc ? "doc" : tabState;
+  const [pageFit, setPageFit] = useState<PageFit | null>(null);
+  const templateName = useMemo(() => resolveTemplateSettings(templateId, themeVariables).template.name, [templateId, themeVariables]);
   const [unseen, setUnseen] = useState(false);
   const docRef = useRef<HTMLDivElement>(null);
   const pendingCount = useMemo(() => extractPending(content).length, [content]);
@@ -57,10 +66,9 @@ export function CocreateWorkspace({
   };
 
   const jumpToPending = () => {
-    setView("draft");
     setTab("doc");
     requestAnimationFrame(() => {
-      const chip = docRef.current?.querySelector<HTMLElement>("[data-pending]");
+      const chip = docRef.current?.querySelector<HTMLElement>("[data-cc-pending], [data-cc-line][data-cc-pending-row]");
       chip?.scrollIntoView({ block: "center", behavior: "smooth" });
       chip?.focus({ preventScroll: true });
     });
@@ -93,34 +101,37 @@ export function CocreateWorkspace({
 
       <section className="cc-doc" aria-label="简历">
         <div className="cc-doc-head">
-          <div className="studio-mode-toggle" aria-label="简历视图">
-            <button type="button" aria-pressed={view === "draft"} onClick={() => setView("draft")}>
-              稿面
-            </button>
-            <button type="button" aria-pressed={view === "preview"} onClick={() => setView("preview")}>
-              成品
-            </button>
-          </div>
-          <span className="cc-doc-hint">{view === "draft" ? "点一条要点可编辑或让 AI 改写" : "按当前模板排版"}</span>
+          <span className="cc-doc-hint">
+            {blank ? "回答左边的问题，内容会按这套主题排在纸上" : `按「${templateName}」排版 · 点任意一条可编辑或让 AI 改写`}
+          </span>
+          {pageFit && (
+            <span className="cc-doc-fit" data-warning={pageFit.status === "slight-overflow"} title="按当前主题字号与行高估算，与导出的 PDF 分页一致">
+              {pageFit.label}
+            </span>
+          )}
           {pendingCount > 0 && (
             <button type="button" className="cc-pending-jump" onClick={jumpToPending}>
               {pendingCount} 处待补
             </button>
           )}
+          <button type="button" className="cc-doc-design" onClick={onDesign} title="换主题、字号、颜色，稿面实时跟着变">
+            调整版式
+            <ChevronRight className="h-3 w-3" aria-hidden />
+          </button>
         </div>
-        <div ref={docRef} className={view === "draft" ? "cc-doc-body" : "cc-doc-body is-preview"}>
-          {view === "draft" ? (
-            <DraftView
-              content={content}
-              onChange={onChange}
-              onAction={runAction}
-              busy={controller.busy}
-              aiReady={!!controller.ai?.configured}
-              flashLines={flashLines}
-            />
-          ) : (
-            <Preview content={content} templateId={templateId} themeVariables={themeVariables} photo={photo} />
-          )}
+        <div ref={docRef} className="cc-doc-body">
+          <PaperView
+            content={content}
+            onChange={onChange}
+            onAction={runAction}
+            busy={controller.busy}
+            aiReady={!!controller.ai?.configured}
+            flashLines={flashLines}
+            templateId={templateId}
+            themeVariables={themeVariables}
+            photo={photo}
+            onPageFit={setPageFit}
+          />
         </div>
       </section>
     </div>

@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { parseResumeContent } from "@/lib/parser";
 import { resolveTemplateSettings } from "@/lib/templates";
 import { ThemeVariables } from "@/lib/types";
+import type { ResumeEditing } from "@/lib/templates/editing";
 import {
   A4_WIDTH_MM,
   getPageGeometry,
@@ -19,6 +20,7 @@ interface PreviewProps {
   photo?: string;
   scale?: number;
   onPageFit?: (fit: PageFit | null) => void;
+  editing?: ResumeEditing;
 }
 
 function PageSeams({
@@ -45,7 +47,7 @@ function PageSeams({
   );
 }
 
-export function Preview({ content, templateId, themeVariables: savedTheme, photo, scale = 1, onPageFit }: PreviewProps) {
+export function Preview({ content, templateId, themeVariables: savedTheme, photo, scale = 1, onPageFit, editing }: PreviewProps) {
   const { frontmatter, body, frontmatterError } = parseResumeContent(content);
   const { template, themeVariables } = useMemo(() => resolveTemplateSettings(templateId, savedTheme), [templateId, savedTheme]);
   const mergedTheme = themeVariables;
@@ -146,7 +148,7 @@ export function Preview({ content, templateId, themeVariables: savedTheme, photo
               {frontmatterError}
             </div>
           )}
-          <Component frontmatter={frontmatter} body={body} themeVariables={mergedTheme} photo={photo} />
+          <Component frontmatter={frontmatter} body={body} themeVariables={mergedTheme} photo={photo} editing={editing} />
           <PageSeams seams={seams} width={pageWidth} />
         </div>
       </div>

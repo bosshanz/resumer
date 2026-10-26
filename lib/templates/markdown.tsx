@@ -48,7 +48,7 @@ export const themedMarkdownComponents: Components = {
   },
   p({ node, children, ...props }) {
     if (isOnlyStrongParagraph(node as { children?: HastChild[] } | undefined)) {
-      return <h4 className="resume-subhead">{children}</h4>;
+      return <h4 {...props} className="resume-subhead">{children}</h4>;
     }
     return <p {...props}>{children}</p>;
   },

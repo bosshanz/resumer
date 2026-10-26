@@ -11,7 +11,6 @@
   --cc-pending-bg: #fffbeb;
   --cc-pending-ink: #92400e;
   --cc-pending-line: #fcd34d;
-  --cc-flash: rgba(16, 185, 129, 0.12);
 }
 .cc-workspace {
   display: grid;
@@ -655,264 +654,204 @@
 .cc-pending-jump:hover {
   filter: brightness(0.97);
 }
+.cc-doc-fit {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--cc-muted);
+}
+.cc-doc-fit[data-warning="true"] {
+  color: #b45309;
+}
+.cc-doc-design {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 2px;
+  border-radius: 6px;
+  padding: 3px 6px 3px 8px;
+  font-size: 12px;
+  color: var(--cc-body);
+  transition: background-color 150ms ease, color 150ms ease;
+}
+.cc-doc-design:hover {
+  background: var(--cc-soft);
+  color: var(--cc-ink);
+}
 .cc-doc-body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 32px clamp(16px, 4vw, 48px) 64px;
-}
-.cc-doc-body.is-preview {
-  background: rgba(228, 228, 231, 0.6);
-  padding: 24px clamp(12px, 3vw, 32px);
+  background: #f4f5f7;
+  padding: 28px clamp(12px, 3vw, 36px) 96px;
 }
 
-/* 稿面：像一页纸，但比成品更松，便于阅读和编辑 */
-.cc-draft {
-  max-width: 760px;
-  margin: 0 auto;
-  border: 1px solid var(--cc-line);
-  border-radius: 14px;
-  background: var(--cc-surface);
-  padding: clamp(20px, 4vw, 44px) clamp(18px, 4vw, 48px);
-  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.03);
-  color: var(--cc-body);
-}
-.cc-profile {
-  padding-bottom: 18px;
-  border-bottom: 1px solid var(--cc-line);
-}
-.cc-field {
-  display: block;
-  width: 100%;
-  border-radius: 6px;
-  margin: 0 -6px;
-  padding: 2px 6px;
-  text-align: left;
-  cursor: text;
-  transition: background-color 150ms ease;
-  box-sizing: content-box;
-}
-.cc-field:hover,
-.cc-field:focus-visible {
-  background: var(--cc-canvas);
-  outline: none;
-}
-.cc-field.is-empty {
-  color: var(--cc-faint);
-}
-.cc-name {
-  font-size: 24px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--cc-ink);
-}
-.cc-title {
-  margin-top: 2px;
-  font-size: 14px;
-  color: var(--cc-muted);
-}
-.cc-contact {
-  margin-top: 6px;
-  font-size: 12.5px;
-  color: var(--cc-muted);
-  overflow-wrap: anywhere;
-}
-.cc-summary {
-  margin-top: 10px;
-  font-size: 13.5px;
-  line-height: 1.75;
-  white-space: pre-wrap;
-}
-.cc-section {
-  margin-top: 24px;
-}
-.cc-section-title {
-  margin-bottom: 10px;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  color: var(--cc-muted);
-}
-.cc-entry + .cc-entry {
-  margin-top: 16px;
-}
-.cc-entry-heading {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 2px 16px;
-  margin: 0 -8px;
-  border-radius: 8px;
-  padding: 3px 8px;
-  cursor: text;
-  transition: background-color 150ms ease;
-}
-.cc-entry-heading:hover,
-.cc-entry-heading:focus-visible {
-  background: var(--cc-canvas);
-  outline: none;
-}
-.cc-entry-main {
-  min-width: 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--cc-ink);
-}
-.cc-entry-role {
-  margin-left: 10px;
-  font-weight: 400;
-  color: var(--cc-body);
-}
-.cc-entry-meta {
-  font-size: 12.5px;
-  color: var(--cc-muted);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-.cc-entry-empty,
-.cc-hidden-note {
-  margin: 4px 0 0;
-  font-size: 12px;
-  color: var(--cc-faint);
-}
-.cc-bullet,
-.cc-text {
+/* 主题稿面：纸面就是当前主题的成品，这里只叠加编辑反馈。
+   反馈全部基于纸面自身的文字颜色（currentColor），任何主题、深浅界面下都清楚且不改变排版。 */
+.cc-paper {
   position: relative;
-  margin: 2px -8px 0;
-  border-radius: 8px;
-  transition: background-color 150ms ease;
 }
-.cc-row {
-  display: flex;
-  gap: 10px;
-  padding: 4px 8px;
-  border-radius: 8px;
-  font-size: 13.5px;
-  line-height: 1.7;
+.cc-paper .resume-page {
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 6px 18px -2px rgba(0, 0, 0, 0.06),
+    0 20px 48px -8px rgba(0, 0, 0, 0.08);
+}
+.cc-paper [data-cc-line],
+.cc-paper [data-cc-field] {
+  border-radius: 2px;
   cursor: pointer;
-  outline: none;
+  transition: background-color 150ms ease, box-shadow 150ms ease;
 }
-.cc-row-text {
-  min-width: 0;
-  overflow-wrap: anywhere;
+.cc-paper [data-cc-field] {
+  cursor: text;
 }
-.cc-row-text strong {
-  font-weight: 600;
-  color: var(--cc-ink);
+.cc-paper [data-cc-line]:hover,
+.cc-paper [data-cc-field]:hover {
+  background-color: color-mix(in srgb, currentColor 6%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 6%, transparent);
 }
-.cc-dot {
-  flex-shrink: 0;
-  width: 4px;
-  height: 4px;
-  margin-top: 0.75em;
-  border-radius: 999px;
-  background: var(--cc-faint);
+.cc-paper [data-cc-line]:has([data-cc-line]:hover) {
+  background-color: transparent;
+  box-shadow: none;
 }
-.cc-bullet:hover,
-.cc-text:hover,
-.cc-row:focus-visible {
-  background: var(--cc-canvas);
+.cc-paper [data-cc-line]:focus-visible,
+.cc-paper [data-cc-field]:focus-visible {
+  outline: 1.5px solid color-mix(in srgb, currentColor 45%, transparent);
+  outline-offset: 2px;
 }
-.cc-bullet.is-selected,
-.cc-text.is-selected {
-  background: var(--cc-soft);
+.cc-paper [data-cc-state="selected"],
+.cc-paper [data-cc-state="selected"]:hover {
+  background-color: color-mix(in srgb, currentColor 8%, transparent);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, currentColor 8%, transparent),
+    0 0 0 4px color-mix(in srgb, currentColor 30%, transparent);
 }
-.cc-flash {
-  animation: cc-flash 2.4s ease-out;
+.cc-paper [data-cc-state="flash"] {
+  animation: cc-paper-flash 2.4s ease-out;
 }
-@keyframes cc-flash {
+@keyframes cc-paper-flash {
   0%,
   35% {
-    background-color: var(--cc-flash);
+    background-color: rgba(245, 158, 11, 0.2);
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
   }
   100% {
     background-color: transparent;
+    box-shadow: 0 0 0 3px transparent;
   }
 }
-.cc-row-actions {
+.cc-paper [data-cc-placeholder] {
+  opacity: 0.3;
+}
+
+/* 待补：琥珀色是界面里唯一的强调色，文字仍沿用纸面颜色 */
+.cc-paper [data-cc-pending] {
+  margin: 0 0.1em;
+  border-bottom: 1px dashed #d97706;
+  border-radius: 2px 2px 0 0;
+  background: rgba(245, 158, 11, 0.16);
+  padding: 0 0.3em;
+  font-size: 0.92em;
+  font-weight: 400;
+  color: inherit;
+  cursor: pointer;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  transition: background-color 150ms ease;
+}
+.cc-paper [data-cc-pending]:hover,
+.cc-paper [data-cc-pending]:focus-visible {
+  background: rgba(245, 158, 11, 0.28);
+  outline: none;
+}
+.cc-paper [data-cc-pending-row] {
+  background-image: linear-gradient(rgba(217, 119, 6, 0.55), rgba(217, 119, 6, 0.55));
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 100% 1px;
+}
+
+/* 浮层：在纸外、按界面比例显示，纸缩得再小也好操作 */
+.cc-pop {
+  position: absolute;
+  z-index: 20;
+  width: min(420px, calc(100% - 16px));
+  border: 1px solid var(--cc-line);
+  border-radius: 10px;
+  background: var(--cc-surface);
+  padding: 8px;
+  box-shadow:
+    0 12px 32px -12px rgba(24, 24, 27, 0.28),
+    0 2px 6px rgba(24, 24, 27, 0.06);
+  animation: cc-pop-in 120ms ease-out;
+}
+.cc-pop[data-mode="actions"] {
+  width: auto;
+  max-width: calc(100% - 16px);
+  padding: 4px;
+}
+@keyframes cc-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+}
+.cc-pop-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  padding: 0 8px 8px 22px;
+  gap: 2px;
 }
-.cc-row-actions button {
+.cc-pop-actions button {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  border: 1px solid var(--cc-line);
-  border-radius: 7px;
-  background: var(--cc-surface);
-  padding: 2px 9px;
-  font-size: 12px;
+  gap: 5px;
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 12.5px;
   color: var(--cc-body);
-  transition: border-color 150ms ease, color 150ms ease;
+  transition: background-color 150ms ease, color 150ms ease;
 }
-.cc-row-actions button:hover:not(:disabled) {
-  border-color: #a1a1aa;
+.cc-pop-actions button:hover:not(:disabled),
+.cc-pop-actions button:focus-visible {
+  background: var(--cc-soft);
   color: var(--cc-ink);
+  outline: none;
 }
-.cc-row-actions button:disabled {
+.cc-pop-actions button:disabled {
   cursor: not-allowed;
   opacity: 0.45;
 }
-.cc-row-actions svg {
+.cc-pop-actions svg {
   color: var(--cc-faint);
 }
 .cc-row-notice {
-  padding: 0 8px 6px;
+  padding: 6px 2px 0;
   font-size: 12px;
   color: #b45309;
 }
-
-/* 待补 */
-.cc-pending {
-  display: inline;
-  margin: 0 2px;
-  border: 1px dashed var(--cc-pending-line);
-  border-radius: 5px;
-  background: var(--cc-pending-bg);
-  padding: 0 5px;
-  font-size: 0.92em;
-  font-weight: 400;
-  color: var(--cc-pending-ink);
-  cursor: pointer;
-  transition: border-color 150ms ease;
-  -webkit-box-decoration-break: clone;
-  box-decoration-break: clone;
-}
-.cc-pending:hover,
-.cc-pending:focus-visible {
-  border-style: solid;
-  outline: none;
-}
 .cc-fill {
-  display: inline-flex;
+  display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 2px;
-  max-width: 100%;
-  margin: 0 2px;
-  vertical-align: middle;
-  border: 1px solid var(--cc-pending-line);
-  border-radius: 6px;
-  background: var(--cc-surface);
-  padding: 1px 2px 1px 6px;
-  font-weight: 400;
+  gap: 4px;
 }
 .cc-fill input {
-  width: 14em;
-  max-width: 100%;
-  min-width: 6em;
-  background: transparent;
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--cc-pending-line);
+  border-radius: 7px;
+  background: var(--cc-surface);
+  padding: 5px 8px;
   font-size: 13px;
   color: var(--cc-ink);
   outline: none;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.12);
 }
 .cc-fill button {
   display: inline-flex;
-  border-radius: 4px;
-  padding: 3px;
+  border-radius: 6px;
+  padding: 6px;
   color: var(--cc-muted);
 }
 .cc-fill button:hover {
@@ -926,20 +865,17 @@
 }
 
 /* 就地编辑 */
-.cc-line-editor {
-  padding: 4px 0;
-}
 .cc-line-editor textarea {
   display: block;
   width: 100%;
   resize: none;
   overflow: hidden;
   border: 1px solid #a1a1aa;
-  border-radius: 8px;
+  border-radius: 7px;
   background: var(--cc-surface);
   padding: 6px 8px;
   font-size: 13.5px;
-  line-height: 1.7;
+  line-height: 1.65;
   color: var(--cc-ink);
   outline: none;
   box-shadow: 0 0 0 3px rgba(161, 161, 170, 0.15);
@@ -949,7 +885,7 @@
   align-items: center;
   justify-content: flex-end;
   gap: 6px;
-  margin-top: 6px;
+  margin-top: 8px;
   font-size: 12px;
 }
 .cc-line-editor-actions span {
@@ -963,7 +899,7 @@
 .cc-line-editor-actions button {
   flex-shrink: 0;
   border-radius: 6px;
-  padding: 2px 10px;
+  padding: 3px 10px;
   color: var(--cc-muted);
 }
 .cc-line-editor-actions button:hover {
@@ -976,37 +912,6 @@
 }
 .cc-line-editor-actions button.is-primary:hover {
   background: #3f3f46;
-}
-.cc-bullet.is-editing,
-.cc-text.is-editing {
-  padding: 0 8px;
-}
-
-.cc-draft-empty {
-  max-width: 420px;
-  margin: 12vh auto 0;
-  text-align: center;
-  font-size: 13px;
-  line-height: 1.75;
-  color: var(--cc-muted);
-}
-.cc-draft-empty-title {
-  margin-bottom: 4px;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--cc-ink);
-}
-.cc-draft-empty button {
-  margin-top: 14px;
-  border: 1px solid var(--cc-line);
-  border-radius: 8px;
-  background: var(--cc-surface);
-  padding: 4px 12px;
-  font-size: 12.5px;
-  color: var(--cc-body);
-}
-.cc-draft-empty button:hover {
-  border-color: #a1a1aa;
 }
 
 /* ---------- 窄屏：对话 / 简历 两个标签 ---------- */
@@ -1054,11 +959,18 @@
   .cc-doc-head {
     height: 44px;
   }
-  .cc-doc-body {
-    padding: 16px 12px 48px;
+  .cc-doc-head {
+    gap: 8px;
+    padding: 0 12px;
   }
-  .cc-draft {
-    border-radius: 10px;
+  .cc-doc-hint {
+    display: none;
+  }
+  .cc-doc-design {
+    margin-left: auto;
+  }
+  .cc-doc-body {
+    padding: 12px 8px 72px;
   }
 }
 @media (max-width: 959px) {
@@ -1070,7 +982,8 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .cc-flash,
+  .cc-paper [data-cc-state="flash"],
+  .cc-pop,
   .cc-caret,
   .cc-thinking span,
   .cc-loading span {
@@ -1092,7 +1005,6 @@
     --cc-pending-bg: rgba(146, 64, 14, 0.18);
     --cc-pending-ink: #fcd34d;
     --cc-pending-line: rgba(252, 211, 77, 0.45);
-    --cc-flash: rgba(16, 185, 129, 0.16);
   }
   .cc-send,
   .cc-primary,
@@ -1118,7 +1030,26 @@
     background: transparent;
     color: #fca5a5;
   }
-  .cc-doc-body.is-preview {
-    background: #09090b;
+  /* 纸面保持主题本色，只把周围画布压暗 */
+  .cc-doc-body {
+    background: #0c0c0e;
+  }
+  .cc-paper .resume-page {
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.08),
+      0 12px 35px -5px rgba(0, 0, 0, 0.75),
+      0 24px 50px -10px rgba(0, 0, 0, 0.9);
+  }
+  .cc-pop {
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.04),
+      0 16px 36px -10px rgba(0, 0, 0, 0.7);
+  }
+  .cc-doc-fit[data-warning="true"] {
+    color: #fbbf24;
+  }
+  .cc-row-notice,
+  .cc-fill-error {
+    color: #fbbf24;
   }
 }

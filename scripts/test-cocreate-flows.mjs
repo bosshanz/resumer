@@ -88,8 +88,14 @@ try {
     await page.waitForSelector(".cc-chat-inner");
     await page.waitForSelector(".cc-loading", { hidden: true });
   };
-  // 点在行首圆点附近，避免点到行内的「待补」按钮
-  const selectBullet = (text) => page.locator(`.cc-row[aria-label*="${text}"]`).click({ offset: { x: 4, y: 10 } });
+  // 稿面就是当前主题的成品；点在行首，避免点到行内的「待补」标记
+  const selectBullet = (text) => page.locator(`.cc-paper [data-cc-kind="bullet"][aria-label*="${text}"]`).click({ offset: { x: 3, y: 6 } });
+  const paperVariant = () => page.$eval(".cc-paper .folio", (node) => [...node.classList].find((name) => /^folio-(minimal|editorial|ledger|authority|blueprint)$/.test(name)));
+  const messageCount = () => page.$$eval(".cc-thread .cc-msg", (nodes) => nodes.length);
+  const pickTheme = async (name) => {
+    await page.click(`#design-drawer [role="radio"][title^="${name}"]`);
+    await page.waitForFunction((value) => document.querySelector(`#design-drawer [role="radio"][title^="${value}"]`)?.getAttribute("aria-checked") === "true", {}, name);
+  };
 
   // 登录（每次用新用户，互不干扰）
   await page.goto(base);
@@ -124,17 +130,40 @@ try {
   assert.match(doc, /重构订单服务的缓存层，效果「待补：量化结果」/);
   await shot("02-mid-interview");
 
-  // 3. 在稿面上直接填「待补」
-  await page.click("[data-pending]");
+  // 2b. 稿面跟随主题：同一个模板组件渲染，「待补」叠加在主题纸面上
+  assert.equal(await paperVariant(), "folio-minimal");
+  await page.waitForSelector(".cc-paper [data-cc-pending]");
+  assert.match(await page.$eval(".cc-doc-fit", (node) => node.textContent), /页/);
+  await shot("13-theme-minimal-pending");
+  const before = await messageCount();
+  await page.click(".cc-doc-design");
+  await page.waitForSelector("#design-drawer:not([inert])");
+  await pickTheme("构筑");
+  await until(async () => (await paperVariant()) === "folio-blueprint");
+  assert.equal(await messageCount(), before, "theme switch keeps the conversation");
+  assert.match(await page.$eval(".cc-doc-hint", (node) => node.textContent), /构筑/);
+  await shot("13-theme-switch-in-design-panel");
+  await pickTheme("纸刊");
+  await until(async () => (await paperVariant()) === "folio-editorial");
+  await page.click('#design-drawer button[aria-label="关闭设计面板"]');
+  await page.waitForSelector("#design-drawer[inert]");
+  assert.equal(await messageCount(), before, "closing the panel keeps the conversation");
+  await page.waitForSelector(".cc-paper [data-cc-pending]");
+  await shot("13-theme-editorial-mid-interview");
+
+  // 3. 在主题稿面上直接填「待补」
+  await page.click(".cc-paper [data-cc-pending]");
   await page.waitForSelector(".cc-fill input");
   await page.keyboard.type("缓存命中率从 82% 提升到 97%");
   await shot("03-fill-pending");
+  await shot("13-theme-pending-fill");
   await page.keyboard.press("Enter");
   await until(async () => /重构订单服务的缓存层，效果缓存命中率从 82% 提升到 97%/.test(await content()));
 
   // 4. 选中一条要点，用快捷动作
   await selectBullet("搭建了压测平台");
-  await page.waitForSelector(".cc-row-actions");
+  await page.waitForSelector(".cc-pop-actions");
+  assert.ok(await page.$('.cc-paper [data-cc-state="selected"]'), "selected bullet is highlighted on the paper");
   await shot("04-selection-toolbar");
   await clickText("按 STAR 重写");
   await idle();
@@ -145,7 +174,7 @@ try {
   // 5. 人工改动：AI 下一轮看得到，并且不覆盖
   const human = "搭建全链路压测平台，支撑大促前的容量评估";
   await selectBullet("搭建了压测平台");
-  await page.click(".cc-row-actions button:first-child");
+  await page.click(".cc-pop-actions button:first-child");
   await page.waitForSelector(".cc-line-editor textarea");
   await page.$eval(".cc-line-editor textarea", (node) => node.select());
   await page.keyboard.type(human);
@@ -176,8 +205,17 @@ try {
   assert.ok(overflow <= 0, `no horizontal overflow (got ${overflow}px)`);
   await shot("08-narrow-chat");
   await page.click('.cc-tabs [data-tab-key="doc"]');
-  await page.waitForSelector(".cc-draft");
+  await page.waitForSelector(".cc-paper .resume-page");
+  const paperOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  assert.ok(paperOverflow <= 0, `paper fits the narrow window (got ${paperOverflow}px)`);
   await shot("09-narrow-resume");
+  await shot("13-theme-narrow");
+  await selectBullet("全链路压测平台");
+  await page.waitForSelector(".cc-pop-actions");
+  const pop = await page.$eval(".cc-pop", (node) => { const rect = node.getBoundingClientRect(); return { left: rect.left, right: rect.right, width: innerWidth }; });
+  assert.ok(pop.left >= 0 && pop.right <= pop.width, "selection toolbar stays inside the narrow window");
+  await shot("13-theme-narrow-toolbar");
+  await page.keyboard.press("Escape");
   await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 2 });
 
   // 9. 导入旧简历：回到示例简历，粘贴文本
@@ -206,9 +244,18 @@ try {
   assert.match(doc, /搭建经营看板，覆盖 12 个城市/);
   await shot("11-import-done");
 
-  // 10. 深色模式
+  // 10. 深色模式：界面变深，纸面仍是主题本色
   await page.emulateMediaFeatures([{ name: "prefers-color-scheme", value: "dark" }]);
   await shot("12-dark-mode");
+  await page.click(".cc-doc-design");
+  await page.waitForSelector("#design-drawer:not([inert])");
+  await pickTheme("序列");
+  await until(async () => (await paperVariant()) === "folio-ledger");
+  await page.click('#design-drawer button[aria-label="关闭设计面板"]');
+  await page.waitForSelector("#design-drawer[inert]");
+  await selectBullet("搭建经营看板");
+  await page.waitForSelector(".cc-pop-actions");
+  await shot("13-theme-ledger-dark");
 
   const unexpected = errors.filter((message) => !/Failed to load resource/.test(message));
   assert.deepEqual(unexpected, [], "no page errors");

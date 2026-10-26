@@ -13,6 +13,7 @@ export function Folio({
   body,
   themeVariables,
   photo,
+  editing,
 }: TemplateProps & { variant: CollectionId }) {
   const vars = mergeThemeVariables(collectionThemes[variant], themeVariables);
   const language = getResumeLanguage(fm, body);
@@ -56,8 +57,9 @@ export function Folio({
             ? "resume-dropcap"
             : undefined
         }
+        {...editing?.fieldProps("summary")}
       >
-        {fm.summary}
+        {editing ? editing.fieldText("summary", fm.summary) : fm.summary}
       </p>
     </section>
   );
@@ -84,13 +86,13 @@ export function Folio({
               </span>
             )}
             {section.heading ? (
-              <ResumeMarkdown>{section.heading}</ResumeMarkdown>
+              <ResumeMarkdown editing={editing}>{section.heading}</ResumeMarkdown>
             ) : (
               <h2>{section.title}</h2>
             )}
           </div>
           <div className="resume-body folio-section-content">
-            <ResumeMarkdown>{section.body}</ResumeMarkdown>
+            <ResumeMarkdown editing={editing}>{section.body}</ResumeMarkdown>
           </div>
         </section>
       ))}
@@ -110,8 +112,17 @@ export function Folio({
           className={`folio-header${photo && variant !== "editorial" ? " folio-with-photo" : ""}`}
         >
           <div className="folio-identity">
-            {fm.name && <h1>{fm.name}</h1>}
-            {fm.title && <p className="folio-role">{fm.title}</p>}
+            {/* 编辑时空字段也占位，方便从零开始直接填写 */}
+            {(fm.name || editing) && (
+              <h1 {...editing?.fieldProps("name")}>
+                {editing ? editing.fieldText("name", fm.name) : fm.name}
+              </h1>
+            )}
+            {(fm.title || editing) && (
+              <p className="folio-role" {...editing?.fieldProps("title")}>
+                {editing ? editing.fieldText("title", fm.title) : fm.title}
+              </p>
+            )}
           </div>
           {variant !== "editorial" && portrait}
           {!rail && contact}
