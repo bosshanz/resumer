@@ -84,6 +84,8 @@
   color: var(--resume-accent);
   line-height: 1.5;
   margin-bottom: 2.5mm !important;
+  break-after: avoid;
+  page-break-after: avoid;
 }
 .folio-profile {
   margin-bottom: 6mm;

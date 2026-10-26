@@ -7,6 +7,8 @@ import { readResumeTemplateCss } from "./templates/css";
 import { ThemeVariables } from "./types";
 import { buildPdfChrome, buildPdfPageCss } from "./pdf-chrome";
 import { loadEmbeddedFontCss } from "./pdf-fonts";
+import { getPageGeometry } from "./pagination";
+import { paginationScript } from "./paginate-dom";
 
 function getExecutablePath(): string {
   if (process.env.PUPPETEER_EXECUTABLE_PATH) {
@@ -98,8 +100,8 @@ export async function renderResumeHtml(
 
   // next/font 字体（woff2 内联）。放在模板样式之后，以便覆盖 .next 中
   // 实际生成的字体族名；找不到构建产物时为空，回落到系统字体栈。
-  // 只内嵌正文（含样式里 content 生成的符号）用得到的字形切片。
-  const fontCss = loadEmbeddedFontCss(undefined, `${css}${bodyHtml}`) ?? "";
+  // 只内嵌正文（含样式里 content 生成的符号）用得到的字形切片；「（续）」由分页脚本在页面里补上。
+  const fontCss = loadEmbeddedFontCss(undefined, `${css}${bodyHtml}（续）`) ?? "";
 
   return `<!DOCTYPE html>
 <html>
@@ -123,7 +125,7 @@ export async function generateResumePdf(
 ): Promise<Buffer> {
   const html = await renderResumeHtml(content, templateId, themeVariables, photo);
   const { frontmatter } = parseResumeContent(content);
-  const { themeVariables: mergedTheme } = resolveTemplateSettings(templateId, themeVariables);
+  const { template, themeVariables: mergedTheme } = resolveTemplateSettings(templateId, themeVariables);
   const chrome = buildPdfChrome(frontmatter, mergedTheme);
 
   let page: Page;
@@ -141,6 +143,8 @@ export async function generateResumePdf(
     // 内嵌的 data: 字体是同步资源，但字体应用仍需等 fonts.ready，
     // 否则首帧分页可能按回退字体计算。
     await page.evaluate(() => document.fonts.ready);
+    // 与预览同一套分页：在屏幕排版下测量并插入分页点和「（续）」，再切到打印
+    await page.evaluate(paginationScript(getPageGeometry({ ...template.defaultTheme, ...mergedTheme }, template.id)));
     await page.emulateMediaType("print");
 
     const pdf = await page.pdf({

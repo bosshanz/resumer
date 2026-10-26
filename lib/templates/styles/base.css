@@ -47,6 +47,12 @@
 }
 
 @media print {
+  .resume-page-break {
+    height: 0 !important;
+    break-before: page;
+    page-break-before: always;
+  }
+
   .resume-page {
     margin: 0;
     box-shadow: none;
@@ -153,25 +159,39 @@
   margin-top: 0.7em;
 }
 
+/* 分页（lib/paginate-dom.ts 插入）：屏幕上用高度把下一块推到下一页起点，
+   打印时同一个块变成强制分页，两边的分页位置一致。 */
+.resume-page-break {
+  display: block;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  list-style: none;
+}
+
+.resume-body li.resume-page-break::before,
+.resume-body li.resume-continue::before {
+  content: none !important;
+  display: none !important;
+}
+
+/* 新页的第一块不带上边距：浏览器自然分页时也会截掉它 */
+.resume-page-break + * {
+  margin-top: 0 !important;
+}
+
+/* 经历跨页时，新页顶部的「公司 · 职位（续）」 */
 .resume-continue {
   break-after: avoid;
   page-break-after: avoid;
   break-inside: avoid;
   page-break-inside: avoid;
-  margin: 0.85em 0 0.25em;
-  font-weight: 650;
-  font-size: 1.02em;
-}
-
-.resume-body li.resume-continue {
+  margin: 0 0 0.35em;
+  padding: 0;
+  font-weight: 600;
+  font-size: 0.92em;
+  color: var(--resume-muted, #6b7280);
   list-style: none;
-  padding-left: 0;
-  margin-left: 0;
-}
-
-.resume-body li.resume-continue::before {
-  content: none !important;
-  display: none !important;
 }
 
 .resume-body a {

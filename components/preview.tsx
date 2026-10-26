@@ -11,6 +11,7 @@ import {
   seamOffsetsMm,
 } from "@/lib/pagination";
 import { describePageFit, estimateLineHeightMm, PageFit } from "@/lib/page-fit";
+import { paginateResumePage } from "@/lib/paginate-dom";
 import { fitPreviewScale } from "@/lib/preview-scale";
 
 interface PreviewProps {
@@ -80,6 +81,8 @@ export function Preview({ content, templateId, themeVariables: savedTheme, photo
     );
 
     const measure = () => {
+      // 与 PDF 导出同一套分页：先插分页点和「（续）」，再量总高
+      paginateResumePage(page, geometry);
       const baseWidth = page.offsetWidth;
       const nextScale = fitPreviewScale(baseWidth, viewport.clientWidth, scale);
       const pxPerMm = baseWidth / A4_WIDTH_MM;
@@ -112,9 +115,13 @@ export function Preview({ content, templateId, themeVariables: savedTheme, photo
     const observer = new ResizeObserver(measure);
     observer.observe(viewport);
     observer.observe(page);
+    // 网页字体晚到时行高会变，重新分页
+    const fonts = typeof document !== "undefined" ? document.fonts : undefined;
+    fonts?.addEventListener?.("loadingdone", measure);
 
     return () => {
       observer.disconnect();
+      fonts?.removeEventListener?.("loadingdone", measure);
       onPageFitRef.current?.(null);
     };
   }, [content, template.id, themeKey, themeVariables, photo, scale, template.defaultTheme]);
