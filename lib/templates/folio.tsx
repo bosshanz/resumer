@@ -42,7 +42,7 @@ export function Folio({
           <span>{value}</span>
         </span>
       ))}
-      {basics.length > 0 && <span className="folio-contact-item">{basics.join(" · ")}</span>}
+      {basics.length > 0 && <span className="folio-contact-item folio-contact-basics">{basics.join(" · ")}</span>}
     </div>
   );
   const profile = fm.summary && (

@@ -112,6 +112,10 @@
 .folio .resume-skill-groups {
   gap: 1.4mm;
 }
+/* 分隔符自带前后空格，再叠加 flex 间距会让「·」左宽右窄。 */
+.folio .resume-skill-group-items {
+  column-gap: 0;
+}
 /* Single-column categories share a fixed track, including wrapped rows. */
 .folio > .folio-skills .resume-skill-groups--labeled .resume-skill-group {
   display: grid;
@@ -372,6 +376,10 @@
 .folio-ledger .folio-contact-label {
   width: 15mm;
 }
+/* 学历等补充信息没有标签，缩进到与联系方式的值同一列。 */
+.folio-ledger .folio-contact-basics {
+  padding-left: calc(15mm + 2mm);
+}
 .folio-ledger .folio-header.folio-with-photo > .folio-contact {
   flex-basis: 100%;
   flex-direction: row;
@@ -518,9 +526,22 @@
   }
 }
 
-.folio-rail .resume-skill-group-items { display: flex; flex-direction: column; align-items: flex-start; gap: 1mm; }
+/* 资料栏的技能按行内流排列（以 · 分隔），而不是一词一行：
+   一词一行会把 15+ 项技能拉成 100mm 以上的竖条，挤到第二页的空栏里。 */
+.folio-rail .resume-skill-group-items { display: block; line-height: 1.7; }
+.folio-rail .resume-skill-group-items > span { display: inline; }
+.folio-rail .resume-skill-tag { display: inline; font-size: 0.84em; line-height: inherit; }
+/* 分隔点挂在行尾而不是行首，换行后每行都从栏线开始。 */
 .folio-rail .resume-skill-sep { display: none; }
-.folio-rail .resume-skill-groups { gap: 3mm; }
+.folio-rail .resume-skill-group-items > span:not(:last-child)::after {
+  content: " · ";
+  font-size: 0.84em;
+  color: var(--resume-muted);
+}
+.folio-rail .resume-skill-groups { gap: 2.4mm; }
+/* 栏内技能可以在分组之间换页，单个分组保持完整。 */
+.folio-rail .folio-skills { break-inside: auto; page-break-inside: auto; }
+.folio-rail .resume-skill-group { break-inside: avoid; }
 /* A multiline employer/role/date heading must never split across sheets. */
 .folio .resume-body h3 { break-inside: avoid; page-break-inside: avoid; }
 
