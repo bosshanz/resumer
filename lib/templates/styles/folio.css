@@ -1,4 +1,4 @@
-/* The five-piece collection. All dimensions describe the printed sheet. */
+/* The eight-piece collection. All dimensions describe the printed sheet. */
 .folio {
   --folio-line: color-mix(in srgb, var(--resume-fg) 19%, transparent);
   --folio-wash: color-mix(in srgb, var(--resume-accent) 5%, var(--resume-bg));
@@ -595,3 +595,400 @@
 .folio-blueprint .folio-with-photo .folio-identity { grid-column: 1; grid-row: 1; }
 .folio-blueprint .folio-with-photo .folio-photo { grid-column: 2; grid-row: 1; }
 .folio-blueprint .folio-header.folio-with-photo h1 { font-size: 2.95em; }
+
+/* ============================================================
+   06 / 精密 — 工程密排：一行一事实，等宽元信息，克制的钴蓝标记。
+   比「序列」更密：没有左侧索引栏，章节标题压成小号标签，
+   正文 9.4pt / 1.5 行距，让一页容纳更多可量化的项目事实。
+   ============================================================ */
+.folio-precision {
+  /* 中文回落到比例黑体：等宽中文字距过松 */
+  --folio-mono: var(--font-geist-mono), var(--resume-cjk-sans);
+  --folio-line: color-mix(in srgb, var(--resume-fg) 16%, transparent);
+}
+.folio-precision .folio-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2.4mm;
+  padding-bottom: 3.6mm;
+  margin-bottom: 4.2mm;
+  border-bottom: 0.45mm solid var(--resume-fg);
+}
+.folio-precision .folio-identity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 4mm;
+  row-gap: 1mm;
+}
+.folio-precision .folio-header h1 {
+  font-size: 2.35em;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--resume-fg);
+}
+.folio-precision .folio-role {
+  margin-top: 0 !important;
+  font-size: 1em;
+  letter-spacing: 0;
+  color: var(--resume-accent);
+  font-weight: 500;
+}
+/* 联系方式是一行等宽参数；只用留白分隔，换行时行首不会挂分隔符。 */
+.folio-precision .folio-contact {
+  font-family: var(--folio-mono);
+  font-size: 0.76em;
+  column-gap: 4.5mm;
+  row-gap: 0.6mm;
+  color: var(--resume-muted);
+}
+.folio-precision .folio-profile {
+  margin-bottom: 3.6mm;
+}
+.folio-precision .folio-profile .folio-label {
+  display: none;
+}
+.folio-precision .folio-profile p {
+  font-size: 0.97em;
+  line-height: 1.6;
+}
+.folio-precision .folio-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 2mm;
+  margin-bottom: 2mm;
+  padding-bottom: 1mm;
+  border-bottom: 0.2mm solid var(--folio-line);
+}
+.folio-precision .folio-section-heading::before {
+  content: "";
+  flex: none;
+  width: 1.5mm;
+  height: 1.5mm;
+  background: var(--resume-accent);
+}
+.folio-precision .folio-section-heading h2 {
+  font-size: 0.88em;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+  color: var(--resume-fg);
+}
+.folio-precision .folio-skills {
+  margin-bottom: 4.2mm;
+}
+.folio-precision .resume-skill-groups {
+  gap: 0.6mm;
+}
+.folio-precision > .folio-skills .resume-skill-groups--labeled .resume-skill-group {
+  grid-template-columns: 6.6em minmax(0, 1fr);
+}
+.folio-precision .resume-skill-group-label {
+  font-family: var(--folio-mono);
+  font-size: 0.74em;
+  font-weight: 500;
+  color: var(--resume-accent);
+  line-height: 1.95;
+}
+.folio-precision .resume-skill-tag,
+.folio-precision .resume-skill-sep {
+  font-size: 0.9em;
+  line-height: 1.55;
+}
+.folio-precision .resume-skill-sep {
+  color: var(--resume-muted);
+}
+.folio-precision .folio-section {
+  margin-top: 4.4mm;
+}
+.folio-precision .folio-section:first-child {
+  margin-top: 0;
+}
+.folio-precision .resume-body {
+  font-size: 0.96em;
+}
+.folio-precision .resume-body h3 {
+  font-family: var(--resume-heading-font) !important;
+  font-size: 1.02em;
+  font-weight: 650;
+  margin-bottom: 0.6mm;
+  line-height: 1.45;
+}
+.folio-precision .resume-entry-date {
+  font-family: var(--folio-mono);
+  font-size: 0.76em;
+  font-weight: 400;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+.folio-precision .resume-entry-role {
+  color: var(--resume-accent);
+  font-weight: 500;
+}
+.folio-precision .resume-body .resume-entry + .resume-entry {
+  margin-top: 2.8mm;
+}
+.folio-precision .resume-body .resume-entry > * + * {
+  margin-top: 0.8mm;
+}
+.folio-precision .resume-body li {
+  margin: 0.08em 0;
+}
+/* 短横线项目符号，比圆点更像技术文档。 */
+.folio-precision .resume-body ul > li::before {
+  width: 1.3mm;
+  height: 0.18mm;
+  border-radius: 0;
+  top: 0.78em;
+  left: -2.8mm;
+  background: var(--resume-muted);
+}
+.folio-precision { --portrait-width: 20mm; --portrait-height: 25mm; }
+.folio-precision.folio-portrait-large { --portrait-width: 24mm; --portrait-height: 30mm; }
+.folio-precision .folio-header.folio-with-photo {
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 6mm;
+  align-items: start;
+}
+.folio-precision .folio-with-photo .folio-identity { grid-column: 1; grid-row: 1; padding-top: 1mm; }
+.folio-precision .folio-with-photo .folio-contact { grid-column: 1; grid-row: 2; align-self: end; }
+.folio-precision .folio-with-photo .folio-photo { grid-column: 2; grid-row: 1 / span 2; padding: 0; border: 0; }
+
+/* ============================================================
+   07 / 书院 — 古典衬线：宋体正文、双线页首、居中的疏排章节名。
+   与「沉静」的区别：正文也是衬线（书籍排印），章节标题居中于两条细线之间，
+   页首不用色块与底纹，只有一道双线。
+   ============================================================ */
+.folio-scholar {
+  --folio-line: color-mix(in srgb, var(--resume-fg) 22%, transparent);
+}
+.folio-scholar .folio-header {
+  display: block;
+  text-align: center;
+  padding-bottom: 5mm;
+  margin-bottom: 6.5mm;
+  border-bottom: 0.9mm double color-mix(in srgb, var(--resume-accent) 75%, transparent);
+}
+.folio-scholar .folio-header h1 {
+  font-size: 2.75em;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  line-height: 1.2;
+  color: var(--resume-fg);
+  /* 字距会在末字后多出一格，用等量缩进抵消，保证视觉居中 */
+  text-indent: 0.14em;
+}
+.folio-scholar .folio-role {
+  margin-top: 2mm !important;
+  font-style: italic;
+  font-size: 0.98em;
+  letter-spacing: 0.04em;
+  color: var(--resume-accent);
+}
+/* 不用分隔符而用留白：换行时不会出现悬在行首的「·」。 */
+.folio-scholar .folio-contact {
+  justify-content: center;
+  margin-top: 3mm;
+  column-gap: 5mm;
+  row-gap: 1mm;
+  font-size: 0.8em;
+}
+.folio-scholar .folio-profile {
+  margin: 0 auto 6mm;
+  max-width: 150mm;
+}
+.folio-scholar .folio-profile .folio-label {
+  display: none;
+}
+.folio-scholar .folio-profile p {
+  font-size: 0.98em;
+  line-height: 1.85;
+  text-align: justify;
+}
+.folio-scholar .folio-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 4mm;
+  margin-bottom: 3.6mm;
+}
+.folio-scholar .folio-section-heading::before,
+.folio-scholar .folio-section-heading::after {
+  content: "";
+  flex: 1;
+  height: 0.2mm;
+  background: var(--folio-line);
+}
+.folio-scholar .folio-section-heading h2 {
+  font-size: 1em;
+  font-weight: 600;
+  letter-spacing: 0.32em;
+  /* 末字后的字距由左侧等量内边距平衡 */
+  padding-left: 0.32em;
+  color: var(--resume-accent);
+}
+.folio-scholar .folio-section {
+  margin-top: 6.5mm;
+}
+.folio-scholar .folio-section:first-child {
+  margin-top: 0;
+}
+.folio-scholar .folio-label,
+.folio-scholar .resume-skill-group-label {
+  font-family: var(--resume-heading-font);
+  font-style: italic;
+  letter-spacing: 0.02em;
+}
+.folio-scholar .resume-skill-group-label {
+  font-size: 0.86em;
+  font-weight: 500;
+  color: var(--resume-accent);
+}
+.folio-scholar .resume-body h3 {
+  font-family: var(--resume-heading-font) !important;
+  font-size: 1.05em;
+  font-weight: 600;
+}
+.folio-scholar .resume-entry-role {
+  font-style: italic;
+  font-size: 0.94em;
+}
+.folio-scholar .resume-entry-date {
+  font-family: var(--resume-heading-font);
+  font-style: italic;
+  font-size: 0.86em;
+  font-variant-numeric: oldstyle-nums;
+}
+.folio-scholar .resume-body ul > li::before {
+  background: var(--resume-accent);
+  opacity: 0.75;
+}
+.folio-scholar { --portrait-width: 23mm; --portrait-height: 29mm; }
+.folio-scholar.folio-portrait-large { --portrait-width: 27mm; --portrait-height: 34mm; }
+/* 有照片时仍保持姓名居中：照片放进右侧对称轨道。 */
+.folio-scholar .folio-header.folio-with-photo {
+  display: grid;
+  grid-template-columns: calc(var(--portrait-width) + 2mm) minmax(0, 1fr) calc(var(--portrait-width) + 2mm);
+  column-gap: 4mm;
+  align-items: center;
+}
+.folio-scholar .folio-with-photo .folio-identity { grid-column: 2; grid-row: 1; }
+.folio-scholar .folio-with-photo .folio-photo { grid-column: 3; grid-row: 1 / span 2; align-self: start; }
+.folio-scholar .folio-with-photo .folio-contact { grid-column: 2; grid-row: 2; }
+
+/* ============================================================
+   08 / 侧栏 — 现代双栏：左侧通栏色带承载姓名、照片、联系与技能，
+   主栏只放简介与经历。色带画在纸面背景上，打印时随每页重复。
+   ============================================================ */
+.theme-sidebar {
+  --sidebar-band: color-mix(in srgb, var(--resume-accent) 10%, var(--resume-bg));
+  --sidebar-edge: calc(var(--resume-pad-left) + 52mm);
+  background-image: linear-gradient(
+    to right,
+    var(--sidebar-band) 0,
+    var(--sidebar-band) var(--sidebar-edge),
+    transparent var(--sidebar-edge)
+  );
+}
+.folio-sidebar .folio-columns {
+  grid-template-columns: 44mm minmax(0, 1fr);
+  column-gap: 16mm;
+}
+.folio-sidebar .folio-header {
+  display: block;
+  padding: 0;
+  margin: 0 0 7mm;
+  border: 0;
+}
+.folio-sidebar .folio-header h1 {
+  font-size: 2.45em;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  color: var(--resume-fg);
+}
+.folio-sidebar .folio-role {
+  margin-top: 2.4mm !important;
+  font-size: 0.94em;
+  letter-spacing: 0.01em;
+  line-height: 1.5;
+  color: var(--resume-accent);
+  font-weight: 500;
+}
+.folio-sidebar .folio-rail .folio-contact {
+  border-bottom-color: color-mix(in srgb, var(--resume-accent) 22%, transparent);
+  padding-bottom: 5.5mm;
+  margin-bottom: 5.5mm;
+}
+.folio-sidebar .folio-contact-label {
+  color: var(--resume-accent);
+  opacity: 1;
+}
+.folio-sidebar .folio-label {
+  font-size: 0.8em;
+  letter-spacing: 0.12em;
+  margin-bottom: 2.2mm !important;
+}
+.folio-sidebar .folio-rail .resume-skill-group-label {
+  color: var(--resume-fg);
+  font-weight: 600;
+}
+.folio-sidebar .folio-main {
+  min-width: 0;
+}
+.folio-sidebar .folio-main > .folio-profile {
+  margin-bottom: 7mm;
+  padding-bottom: 6mm;
+  border-bottom: 0.2mm solid var(--folio-line);
+}
+.folio-sidebar .folio-main > .folio-profile .folio-label {
+  display: none;
+}
+.folio-sidebar .folio-main > .folio-profile p {
+  font-size: 1.04em;
+  line-height: 1.8;
+}
+.folio-sidebar .folio-section-heading h2 {
+  font-size: 1.1em;
+  font-weight: 650;
+  color: var(--resume-fg);
+}
+.folio-sidebar .folio-section-heading::after {
+  content: "";
+  display: block;
+  width: 8mm;
+  height: 0.6mm;
+  margin-top: 1.6mm;
+  background: var(--resume-accent);
+}
+.folio-sidebar .resume-entry-role {
+  color: var(--resume-accent);
+}
+.folio-sidebar { --portrait-width: 44mm; --portrait-height: 52mm; }
+.folio-sidebar.folio-portrait-large { --portrait-width: 44mm; --portrait-height: 58mm; }
+.folio-sidebar .folio-header .folio-photo {
+  margin: 0 0 6mm !important;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.folio-sidebar .folio-photo .resume-photo { display: block; }
+/* 打印时 Chrome 会在每一页重复 fixed 元素：色带因此铺满每页（含末页），
+   而不是在内容结束处截断。屏幕预览仍用纸面渐变。 */
+@media print {
+  .resume-page.theme-sidebar {
+    position: relative;
+    z-index: 0;
+    background-image: none;
+  }
+  .resume-page.theme-sidebar::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: var(--sidebar-edge);
+    background: var(--sidebar-band);
+    z-index: -1;
+  }
+}

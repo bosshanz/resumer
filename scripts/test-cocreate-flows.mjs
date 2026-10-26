@@ -90,7 +90,7 @@ try {
   };
   // 稿面就是当前主题的成品；点在行首，避免点到行内的「待补」标记
   const selectBullet = (text) => page.locator(`.cc-paper [data-cc-kind="bullet"][aria-label*="${text}"]`).click({ offset: { x: 3, y: 6 } });
-  const paperVariant = () => page.$eval(".cc-paper .folio", (node) => [...node.classList].find((name) => /^folio-(minimal|editorial|ledger|authority|blueprint)$/.test(name)));
+  const paperVariant = () => page.$eval(".cc-paper .folio", (node) => [...node.classList].find((name) => /^folio-(minimal|editorial|ledger|authority|blueprint|precision|scholar|sidebar)$/.test(name)));
   const messageCount = () => page.$$eval(".cc-thread .cc-msg", (nodes) => nodes.length);
   const pickTheme = async (name) => {
     await page.click(`#design-drawer [role="radio"][title^="${name}"]`);
@@ -143,6 +143,15 @@ try {
   assert.equal(await messageCount(), before, "theme switch keeps the conversation");
   assert.match(await page.$eval(".cc-doc-hint", (node) => node.textContent), /构筑/);
   await shot("13-theme-switch-in-design-panel");
+  // 新主题：稿面同样可编辑（侧栏把姓名放进色带里，字段仍可点）
+  for (const [name, variant] of [["精密", "precision"], ["书院", "scholar"], ["侧栏", "sidebar"]]) {
+    await pickTheme(name);
+    await until(async () => (await paperVariant()) === `folio-${variant}`);
+    await page.waitForSelector(".cc-paper [data-cc-pending]");
+    await page.waitForSelector('.cc-paper [data-cc-field="name"]');
+    await shot(`13-theme-${variant}`);
+  }
+  assert.ok(await page.$('.cc-paper .folio-rail [data-cc-field="name"]'), "sidebar keeps the name editable in the rail");
   await pickTheme("纸刊");
   await until(async () => (await paperVariant()) === "folio-editorial");
   await page.click('#design-drawer button[aria-label="关闭设计面板"]');
@@ -256,6 +265,19 @@ try {
   await selectBullet("搭建经营看板");
   await page.waitForSelector(".cc-pop-actions");
   await shot("13-theme-ledger-dark");
+
+  // 每套主题都走真实导出接口生成 PDF（当前简历内容 + 主题默认外观）
+  const exportContent = await content();
+  for (const templateId of ["minimal", "editorial", "ledger", "authority", "blueprint", "precision", "scholar", "sidebar"]) {
+    const result = await page.evaluate(async (body) => {
+      const response = await fetch("/api/export/pdf", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const bytes = new Uint8Array(await response.arrayBuffer());
+      return { status: response.status, head: String.fromCharCode(...bytes.slice(0, 4)), size: bytes.length };
+    }, { content: exportContent, templateId, themeVariables: {} });
+    assert.equal(result.status, 200, `${templateId} PDF export`);
+    assert.equal(result.head, "%PDF", `${templateId} PDF header`);
+    assert.ok(result.size > 10000, `${templateId} PDF is not empty`);
+  }
 
   const unexpected = errors.filter((message) => !/Failed to load resource/.test(message));
   assert.deepEqual(unexpected, [], "no page errors");

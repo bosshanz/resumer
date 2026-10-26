@@ -59,7 +59,10 @@ export function TemplateBase({
     | "compact"
     | "ledger"
     | "authority"
-    | "blueprint";
+    | "blueprint"
+    | "precision"
+    | "scholar"
+    | "sidebar";
   vars: ThemeVariables;
   language?: "zh-CN" | "en";
   children: React.ReactNode;

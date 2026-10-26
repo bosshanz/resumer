@@ -6,7 +6,7 @@ import { alignSource, findPendingLine, indexTargets, locateContext, remarkPendin
 import { parseResumeContent } from "../parser";
 import { splitResumeSections } from "../templates/sections";
 import { ResumeMarkdown } from "../templates/resume-markdown";
-import { resolveTemplateSettings } from "../templates";
+import { resolveTemplateSettings, templates } from "../templates";
 import type { ResumeEditing } from "../templates/editing";
 import { makePiece, togglePiece } from "../resume-builder";
 
@@ -150,7 +150,7 @@ describe("ResumeMarkdown editing", () => {
 
 describe("template editing hooks", () => {
   it("keeps every theme's markup unchanged when editing is absent", () => {
-    for (const id of ["minimal", "editorial", "ledger", "authority", "blueprint"]) {
+    for (const { id } of templates) {
       const { template, themeVariables } = resolveTemplateSettings(id, {});
       const { frontmatter, body } = parseResumeContent(content);
       const html = renderToStaticMarkup(createElement(template.component, { frontmatter, body, themeVariables }));
@@ -158,17 +158,19 @@ describe("template editing hooks", () => {
     }
   });
 
-  it("marks fields and placeholders for empty name/title in edit mode", () => {
-    const { template, themeVariables } = resolveTemplateSettings("minimal", {});
+  it("marks fields and placeholders for empty name/title in edit mode in every theme", () => {
     const editing: ResumeEditing = {
       remarkPlugins: [],
       blockProps: () => undefined,
       fieldProps: (field) => ({ "data-cc-field": field }),
       fieldText: (field, value) => value || `[${field}]`,
     };
-    const html = renderToStaticMarkup(createElement(template.component, { frontmatter: {}, body: "", themeVariables, editing }));
-    expect(html).toContain('data-cc-field="name"');
-    expect(html).toContain("[name]");
-    expect(html).toContain('data-cc-field="title"');
+    for (const { id } of templates) {
+      const { template, themeVariables } = resolveTemplateSettings(id, {});
+      const html = renderToStaticMarkup(createElement(template.component, { frontmatter: {}, body: "", themeVariables, editing }));
+      expect(html, id).toContain('data-cc-field="name"');
+      expect(html, id).toContain("[name]");
+      expect(html, id).toContain('data-cc-field="title"');
+    }
   });
 });

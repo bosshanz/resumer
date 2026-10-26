@@ -3,6 +3,9 @@ import { EditorialTemplate } from "./editorial";
 import { LedgerTemplate } from "./ledger";
 import { AuthorityTemplate } from "./authority";
 import { BlueprintTemplate } from "./blueprint";
+import { PrecisionTemplate } from "./precision";
+import { ScholarTemplate } from "./scholar";
+import { SidebarTemplate } from "./sidebar";
 import type { TemplateProps } from "./base";
 import type { ThemeVariables } from "../types";
 import { collectionThemes, type CollectionId } from "./collection";
@@ -71,6 +74,27 @@ const definitions: [
     "技术档案 · 墨蓝页首与左侧资料栏，适合工程与系统岗位",
     BlueprintTemplate,
     "mono-accent",
+  ],
+  [
+    "precision",
+    "精密",
+    "工程密排 · 等宽元信息与紧凑节奏，适合 AI、算法与研发岗位",
+    PrecisionTemplate,
+    "compact",
+  ],
+  [
+    "scholar",
+    "书院",
+    "古典衬线 · 宋体正文、双线页首与居中章节，适合学术、研究与咨询",
+    ScholarTemplate,
+    "serif",
+  ],
+  [
+    "sidebar",
+    "侧栏",
+    "现代双栏 · 左侧通栏色带承载身份与技能，适合产品、运营与综合岗位",
+    SidebarTemplate,
+    "grid",
   ],
 ];
 export const templates: TemplateDefinition[] = definitions.map(

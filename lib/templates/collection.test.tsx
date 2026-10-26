@@ -12,9 +12,20 @@ import { legacyDefaults } from "./legacy-defaults";
 import { defaultResumeContent } from "../types";
 import { parseResumeContent } from "../parser";
 
-describe("five-theme collection compatibility", () => {
-  it("exposes five compositions while resolving every retired identifier", () => {
-    expect(templates).toHaveLength(5);
+describe("eight-theme collection compatibility", () => {
+  it("exposes eight compositions while resolving every retired identifier", () => {
+    expect(templates).toHaveLength(8);
+    expect(templates.map((t) => t.id)).toEqual([
+      "minimal",
+      "editorial",
+      "ledger",
+      "authority",
+      "blueprint",
+      "precision",
+      "scholar",
+      "sidebar",
+    ]);
+    expect(new Set(templates.map((t) => t.name)).size).toBe(templates.length);
     for (const [old, next] of Object.entries(retiredTemplateIds))
       expect(getTemplate(old)?.id).toBe(next);
   });
@@ -86,4 +97,62 @@ describe("five-theme collection compatibility", () => {
       expect(html).not.toContain("VOL ·");
     },
   );
+});
+
+describe("new themes", () => {
+  const loadedFonts = [
+    "--font-geist-sans",
+    "--font-geist-mono",
+    "--font-fraunces",
+    "--font-plex-sans",
+    "--font-plex-mono",
+    "--font-inter-tight",
+  ];
+  const sample = parseResumeContent(defaultResumeContent);
+
+  it("registers Chinese names and descriptions for the design panel", () => {
+    for (const id of ["precision", "scholar", "sidebar"]) {
+      const template = getTemplate(id)!;
+      expect(template.id).toBe(id);
+      expect(template.name).toMatch(/^[\u4e00-\u9fa5]{2}$/);
+      expect(template.description.length).toBeGreaterThan(10);
+    }
+  });
+
+  it("only uses fonts that the app already loads", () => {
+    for (const template of templates) {
+      const stacks = `${template.defaultTheme.fontFamily} ${template.defaultTheme.headingFontFamily}`;
+      for (const name of stacks.match(/--font-[a-z-]+/g) ?? [])
+        expect(loadedFonts).toContain(name);
+    }
+  });
+
+  it("renders identity, contact, skills and every section in each new theme", () => {
+    for (const id of ["precision", "scholar", "sidebar"]) {
+      const { template, themeVariables } = resolveTemplateSettings(id, {});
+      const html = renderToStaticMarkup(
+        React.createElement(template.component, { ...sample, themeVariables, photo: "data:image/png;base64,AA==" }),
+      );
+      expect(html).toContain(`theme-${id}`);
+      expect(html).toContain(`folio-${id}`);
+      expect(html).toContain("folio-has-portrait");
+      expect(html).toContain(sample.frontmatter.name!);
+      expect(html).toContain("folio-skills");
+      for (const section of splitResumeSections(sample.body))
+        expect(html).toContain(section.title);
+    }
+  });
+
+  it("puts the sidebar identity in the tinted column and keeps the profile in the main column", () => {
+    const { template, themeVariables } = resolveTemplateSettings("sidebar", {});
+    const html = renderToStaticMarkup(
+      React.createElement(template.component, { ...sample, themeVariables }),
+    );
+    const rail = html.slice(html.indexOf('<aside class="folio-rail">'), html.indexOf("</aside>"));
+    expect(rail).toContain('class="folio-header"');
+    expect(rail).toContain("folio-contact");
+    expect(rail).not.toContain("folio-profile");
+    expect(html.indexOf("folio-main")).toBeGreaterThan(html.indexOf("</aside>"));
+    expect(html.match(/<h1/g)).toHaveLength(1);
+  });
 });

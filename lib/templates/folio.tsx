@@ -6,7 +6,7 @@ import { hasSkills, ResumeSkills } from "./resume-skills";
 import { basicsValues, splitResumeSections } from "./sections";
 import { getResumeLanguage } from "./language";
 
-/** Five compositions share content semantics and a print-safe typography system. */
+/** Eight compositions share content semantics and a print-safe typography system. */
 export function Folio({
   variant,
   frontmatter: fm,
@@ -19,7 +19,9 @@ export function Folio({
   const language = getResumeLanguage(fm, body);
   const zh = language === "zh-CN";
   const sections = splitResumeSections(body);
-  const rail = variant === "editorial" || variant === "blueprint";
+  const rail = variant === "editorial" || variant === "blueprint" || variant === "sidebar";
+  // 侧栏：姓名、照片和联系方式都在通栏色带里，主栏只放简介与经历。
+  const identityInRail = variant === "sidebar";
   const contacts = Object.entries(fm.contact ?? {}).filter(([, value]) =>
     value?.trim(),
   );
@@ -36,7 +38,7 @@ export function Folio({
     <div className="folio-contact">
       {contacts.map(([key, value]) => (
         <span key={key} className="folio-contact-item">
-          {(variant === "ledger" || variant === "blueprint") && (
+          {(variant === "ledger" || variant === "blueprint" || variant === "sidebar") && (
             <span className="folio-contact-label">{labels[key]}</span>
           )}
           <span>{value}</span>
@@ -105,37 +107,49 @@ export function Folio({
     <img src={photo} className="resume-photo" alt="" width={300} height={400}
       style={{ objectFit: vars.photoFit === "contain" ? "contain" : "cover", objectPosition: `50% ${imagePosition}%` }} />
   </figure> : null;
+  const header = (
+    <header
+      className={`folio-header${photo && variant !== "editorial" && !identityInRail ? " folio-with-photo" : ""}`}
+    >
+      {identityInRail && portrait}
+      <div className="folio-identity">
+        {/* 编辑时空字段也占位，方便从零开始直接填写 */}
+        {(fm.name || editing) && (
+          <h1 {...editing?.fieldProps("name")}>
+            {editing ? editing.fieldText("name", fm.name) : fm.name}
+          </h1>
+        )}
+        {(fm.title || editing) && (
+          <p className="folio-role" {...editing?.fieldProps("title")}>
+            {editing ? editing.fieldText("title", fm.title) : fm.title}
+          </p>
+        )}
+      </div>
+      {variant !== "editorial" && !identityInRail && portrait}
+      {!rail && contact}
+    </header>
+  );
   return (
     <TemplateBase themeId={variant} vars={vars} language={language}>
       <div className={`folio folio-${variant}${photo ? " folio-has-portrait" : ""}${photo && vars.photoLayout === "floating-monolith" ? " folio-portrait-large" : ""}`}>
-        <header
-          className={`folio-header${photo && variant !== "editorial" ? " folio-with-photo" : ""}`}
-        >
-          <div className="folio-identity">
-            {/* 编辑时空字段也占位，方便从零开始直接填写 */}
-            {(fm.name || editing) && (
-              <h1 {...editing?.fieldProps("name")}>
-                {editing ? editing.fieldText("name", fm.name) : fm.name}
-              </h1>
-            )}
-            {(fm.title || editing) && (
-              <p className="folio-role" {...editing?.fieldProps("title")}>
-                {editing ? editing.fieldText("title", fm.title) : fm.title}
-              </p>
-            )}
-          </div>
-          {variant !== "editorial" && portrait}
-          {!rail && contact}
-        </header>
+        {!identityInRail && header}
         {rail ? (
           <div className="folio-columns">
             <aside className="folio-rail">
+              {identityInRail && header}
               {variant === "editorial" && portrait}
               {contact}
-              {profile}
+              {!identityInRail && profile}
               {skills}
             </aside>
-            {experience}
+            {identityInRail ? (
+              <div className="folio-main">
+                {profile}
+                {experience}
+              </div>
+            ) : (
+              experience
+            )}
           </div>
         ) : (
           <>
