@@ -3,7 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { getDatabase } from "@/lib/db";
 import { normalizeResume } from "@/lib/resumes";
 import { resolveResumePhoto } from "@/lib/photos";
-import { defaultResumeContent } from "@/lib/types";
+import { blankResumeContent, defaultResumeContent } from "@/lib/types";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import crypto from "crypto";
@@ -12,6 +12,8 @@ export const runtime = "nodejs";
 
 const createSchema = z.object({
   sourceResumeId: z.string().optional(),
+  // true：创建空白稿，用于“和 AI 从零开始写”
+  blank: z.boolean().optional(),
 });
 
 export async function GET() {
@@ -52,7 +54,7 @@ export async function POST(request: Request) {
   }
 
   let title = "未命名简历";
-  let content = defaultResumeContent;
+  let content = parsed.data.blank ? blankResumeContent : defaultResumeContent;
   let templateId = "minimal";
   let themeVariables = JSON.stringify({});
   let photo: string | null = null;

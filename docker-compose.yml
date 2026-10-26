@@ -15,6 +15,10 @@ services:
       - AUTH_PASSWORD=${AUTH_PASSWORD}
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
       - DEEPSEEK_MODEL=${DEEPSEEK_MODEL}
+      - AI_PROVIDER=${AI_PROVIDER:-}
+      - AI_MODEL=${AI_MODEL:-}
+      - AI_API_KEY=${AI_API_KEY:-}
+      - AI_BASE_URL=${AI_BASE_URL:-}
     volumes:
       - ./data:/app/data
     restart: unless-stopped

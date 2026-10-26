@@ -1,8 +1,16 @@
 import type { ThemeVariables } from "../types";
 export type CollectionId =
-  "minimal" | "editorial" | "ledger" | "authority" | "blueprint";
+  | "minimal"
+  | "editorial"
+  | "ledger"
+  | "authority"
+  | "blueprint"
+  | "precision"
+  | "scholar"
+  | "sidebar";
 const sans = "var(--font-geist-sans), var(--resume-cjk-sans)";
 const serif = "var(--font-fraunces), var(--resume-cjk-serif)";
+const tight = "var(--font-inter-tight), var(--resume-cjk-sans)";
 const core: ThemeVariables = {
   collectionVersion: 2,
   fontFamily: sans,
@@ -73,6 +81,47 @@ export const collectionThemes: Record<CollectionId, ThemeVariables> = {
     marginTop: "16mm",
     marginBottom: "16mm",
     marginLeft: "16mm",
+    marginRight: "16mm",
+    baseFontSize: "9.8pt",
+    lineHeight: 1.6,
+  },
+  precision: {
+    ...core,
+    primaryColor: "#2b46a8",
+    secondaryColor: "#5a6370",
+    textColor: "#1c2128",
+    fontFamily: tight,
+    headingFontFamily: tight,
+    marginTop: "14mm",
+    marginBottom: "14mm",
+    marginLeft: "15mm",
+    marginRight: "15mm",
+    baseFontSize: "9.4pt",
+    lineHeight: 1.5,
+  },
+  scholar: {
+    ...core,
+    primaryColor: "#6b2a2a",
+    secondaryColor: "#6c6660",
+    textColor: "#26221f",
+    backgroundColor: "#fffdf8",
+    fontFamily: serif,
+    headingFontFamily: serif,
+    marginTop: "20mm",
+    marginBottom: "18mm",
+    marginLeft: "22mm",
+    marginRight: "22mm",
+    baseFontSize: "10pt",
+    lineHeight: 1.7,
+  },
+  sidebar: {
+    ...core,
+    primaryColor: "#7a4f2c",
+    secondaryColor: "#6b645d",
+    textColor: "#24211e",
+    marginTop: "17mm",
+    marginBottom: "16mm",
+    marginLeft: "13mm",
     marginRight: "16mm",
     baseFontSize: "9.8pt",
     lineHeight: 1.6,

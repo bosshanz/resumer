@@ -7,6 +7,8 @@ import { normalizeResume } from "@/lib/resumes";
 import { photoRef, pruneOrphanPhotos, resolveResumePhoto } from "@/lib/photos";
 import { deleteResumeVersionsForResume, snapshotIfDue } from "@/lib/resume-versions";
 import { themeVariablesSchema } from "@/lib/types";
+import { rebaseEdits } from "@/lib/cocreate/edits";
+import { deleteCocreateForResume, lastEditSeq, listEditsAfter } from "@/lib/cocreate/store";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -20,6 +22,9 @@ const updateSchema = z.object({
   photo: z.string().optional(),
   // 手动保存（Cmd/Ctrl+S）传 true：跳过快照间隔限制，立即留档
   snapshot: z.boolean().optional(),
+  // 客户端已合入的最后一条 AI 修改序号；传了才会把之后的 AI 修改重放到提交的正文上，
+  // 避免自动保存用旧正文覆盖 AI 刚写入的内容
+  aiEditSeq: z.number().int().min(0).optional(),
 });
 
 async function getResumeForUser(db: Database.Database, resumeId: string, userId: string) {
@@ -84,8 +89,13 @@ export async function PATCH(
       values.push(parsed.data.title);
     }
     if (parsed.data.content !== undefined) {
+      let content = parsed.data.content;
+      if (parsed.data.aiEditSeq !== undefined) {
+        const pending = listEditsAfter(db, id, parsed.data.aiEditSeq);
+        if (pending.length) content = rebaseEdits(content, pending.map((record) => record.edit)).content;
+      }
       updates.push("content = ?");
-      values.push(parsed.data.content);
+      values.push(content);
     }
     if (parsed.data.templateId !== undefined) {
       updates.push("template_id = ?");
@@ -125,7 +135,7 @@ export async function PATCH(
     pruneOrphanPhotos(db);
     return resolveResumePhoto(db, normalizeResume(resume));
   })();
-  return NextResponse.json({ resume });
+  return NextResponse.json({ resume, aiEditSeq: lastEditSeq(db) });
 }
 
 export async function DELETE(
@@ -147,6 +157,7 @@ export async function DELETE(
   const remove = db.transaction(() => {
     deleteRewriteSessionsForResume(db, id);
     deleteResumeVersionsForResume(db, id);
+    deleteCocreateForResume(db, id);
     db.prepare(`DELETE FROM resumes WHERE id = ?`).run(id);
     pruneOrphanPhotos(db);
   });

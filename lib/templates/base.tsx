@@ -1,11 +1,14 @@
 import { ResumeFrontmatter, ThemeVariables } from "../types";
 import React from "react";
+import type { ResumeEditing } from "./editing";
 
 export interface TemplateProps {
   frontmatter: ResumeFrontmatter;
   body: string;
   themeVariables: ThemeVariables;
   photo?: string;
+  /** 仅 AI 共创的可编辑稿面使用；预览与 PDF 不传 */
+  editing?: ResumeEditing;
 }
 
 export function mergeThemeVariables(
@@ -56,7 +59,10 @@ export function TemplateBase({
     | "compact"
     | "ledger"
     | "authority"
-    | "blueprint";
+    | "blueprint"
+    | "precision"
+    | "scholar"
+    | "sidebar";
   vars: ThemeVariables;
   language?: "zh-CN" | "en";
   children: React.ReactNode;

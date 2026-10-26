@@ -16,9 +16,11 @@ export const resumeSkillsSchema = z
 
 export type ResumeSkills = z.infer<typeof resumeSkillsSchema>;
 
+// 斜杠只有带空格时才是分隔符："Java / Go" 拆成两项，
+// 而 A/B Testing、CI/CD、TCP/IP 这类术语本身含斜杠，必须保持完整。
 export function splitSkillTokens(value: string): string[] {
   return value
-    .split(/\s*(?:\/+|·+|,|，|\|)\s*/)
+    .split(/\s*(?:·+|,|，|\|)\s*|\s+\/+\s*|\s*\/+\s+/)
     .map((part) => part.trim())
     .filter(Boolean);
 }

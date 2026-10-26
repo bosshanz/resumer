@@ -21,6 +21,10 @@ import { PageFit } from "@/lib/page-fit";
 import { EditorDrawer, toggleEditorDrawer } from "@/lib/editor-drawer";
 import { getDefaultTheme, getTemplate, resolveTemplateSettings } from "@/lib/templates";
 import { transitionTheme } from "@/lib/theme-transition";
+import { CocreateWorkspace } from "./cocreate/cocreate-workspace";
+import { useCocreate, type CocreateBridge } from "./cocreate/use-cocreate";
+import { applyEdit, isResumeBlank, normalizeLine, type ResumeEdit } from "@/lib/cocreate/edits";
+import type { EditRecord } from "@/lib/cocreate/types";
 import {
   Download,
   Palette,
@@ -37,6 +41,8 @@ interface EditorProps {
 }
 
 type SaveStatus = "saved" | "saving" | "unsaved" | "error";
+type EditorMode = "visual" | "source" | "cocreate";
+const FLASH_MS = 2400;
 type SavePayload = Pick<Resume, "title" | "content" | "templateId" | "themeVariables" | "photo">;
 
 function resolveThemeVariables(resume: Resume): ThemeVariables {
@@ -66,7 +72,15 @@ export function Editor({ initialResume }: EditorProps) {
   const rewriteOpen = drawer === "rewrite";
   const [rewritePreview, setRewritePreview] = useState<RewritePreviewState | null>(null);
   const [pageFit, setPageFit] = useState<PageFit | null>(null);
-  const [editorMode, setEditorMode] = useState<"visual" | "source">("visual");
+  const [editorMode, setEditorModeState] = useState<EditorMode>("visual");
+  // 共创对话一旦打开就保持连接：切回可视化/Markdown 时 AI 的修改照样同步进来
+  const [cocreateOpened, setCocreateOpened] = useState(false);
+  const setEditorMode = useCallback((mode: EditorMode) => {
+    setEditorModeState(mode);
+    if (mode === "cocreate") setCocreateOpened(true);
+  }, []);
+  const [flashLines, setFlashLines] = useState<Set<string>>(() => new Set());
+  const [startingScratch, setStartingScratch] = useState(false);
   const [focusMode, setFocusMode] = useState<FocusMode>("split");
   const [photo, setPhotoState] = useState<string | undefined>(initialResume.photo);
   const [resumes, setResumes] = useState<ResumeListItem[]>([]);
@@ -88,12 +102,15 @@ export function Editor({ initialResume }: EditorProps) {
     photo: initialResume.photo,
   });
   const currentResumeIdRef = useRef(initialResume.id);
+  // 共创同步：contentRef 是编辑器里的最新正文；aiEditSeqRef 是本地已包含的 AI 修改水位（null 表示未知，不做服务端合并）
+  const contentRef = useRef(initialResume.content);
+  const aiEditSeqRef = useRef<number | null>(null);
   // 串行化保存请求，避免快速连续保存时旧响应覆盖新数据
   const saveChainRef = useRef<Promise<boolean>>(Promise.resolve(false));
 
   const editRevision = useRef(0);
   const markUnsaved = useCallback(() => { editRevision.current += 1; setSaveStatus("unsaved"); }, []);
-  const setContent = useCallback((v: string) => { setContentState(v); markUnsaved(); }, [markUnsaved]);
+  const setContent = useCallback((v: string) => { contentRef.current = v; setContentState(v); markUnsaved(); }, [markUnsaved]);
   const setTitle = useCallback((v: string) => { setTitleState(v); markUnsaved(); }, [markUnsaved]);
   const setTemplateId = useCallback((v: string, preserveAdjustments = true) => {
     if (v === templateId) return;
@@ -113,16 +130,31 @@ export function Editor({ initialResume }: EditorProps) {
       const revision = editRevision.current;
       const run = saveChainRef.current.then(async () => {
         try {
+          // 带上 AI 修改水位：期间 AI 写入但本地还没收到的修改，由服务端合并进来，不会被这次保存覆盖
+          const seq = data.content !== undefined ? aiEditSeqRef.current : null;
+          const body: Record<string, unknown> = options?.snapshot ? { ...data, snapshot: true } : { ...data };
+          if (seq !== null) body.aiEditSeq = seq;
           const res = await fetch(`/api/resumes/${resumeId}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(options?.snapshot ? { ...data, snapshot: true } : data),
+            body: JSON.stringify(body),
           });
           if (!res.ok) throw new Error("Save failed");
-          const { resume: savedResume } = await res.json() as { resume: Resume };
+          const { resume: savedResume, aiEditSeq } = await res.json() as { resume: Resume; aiEditSeq?: number };
           // 保存期间可能已切换简历，此时不要把旧简历的数据混入新快照
           if (currentResumeIdRef.current === resumeId) {
             lastSavedRef.current = { ...lastSavedRef.current, ...data };
+            if (data.content !== undefined && seq !== null) {
+              lastSavedRef.current.content = savedResume.content;
+              if (savedResume.content === data.content) {
+                if (typeof aiEditSeq === "number") aiEditSeqRef.current = aiEditSeq;
+              } else if (contentRef.current === data.content) {
+                // 服务端合并了 AI 的修改，本地也没有新输入：直接采用合并结果
+                contentRef.current = savedResume.content;
+                setContentState(savedResume.content);
+                if (typeof aiEditSeq === "number") aiEditSeqRef.current = aiEditSeq;
+              }
+            }
             setSaveStatus(editRevision.current === revision ? "saved" : "unsaved");
             setResumes((prev) => prev.map((r) => r.id === resumeId
               ? { ...r, title: savedResume.title, updatedAt: savedResume.updatedAt } : r));
@@ -250,6 +282,9 @@ export function Editor({ initialResume }: EditorProps) {
     currentResumeIdRef.current = resume.id;
     setCurrentResumeId(resume.id);
     setTitleState(resume.title);
+    contentRef.current = resume.content;
+    aiEditSeqRef.current = null;
+    setFlashLines(new Set());
     setContentState(resume.content);
     setTemplateIdState(getTemplate(resume.templateId)?.id ?? "minimal");
     const theme = resolveThemeVariables(resume);
@@ -316,6 +351,63 @@ export function Editor({ initialResume }: EditorProps) {
     }
     return saveResume(diff);
   }, [diffPayload, saveResume]);
+
+  // ---- AI 共创：把服务端的 AI 修改同步进编辑器，且不吞掉用户未保存的输入 ----
+  const flashEdits = useCallback((edits: ResumeEdit[]) => {
+    const lines = edits.flatMap((edit) => (edit.kind === "lines" ? edit.after.map(normalizeLine).filter(Boolean) : []));
+    if (!lines.length) return;
+    setFlashLines(new Set(lines));
+    window.setTimeout(() => setFlashLines((current) => (lines.every((line) => current.has(line)) ? new Set() : current)), FLASH_MS);
+  }, []);
+
+  const syncRemote = useCallback((edits: ResumeEdit[], serverContent: string, seq: number | null) => {
+    const saved = lastSavedRef.current;
+    const local = contentRef.current;
+    let next = serverContent;
+    if (local !== saved.content) {
+      // 本地有未保存的人工修改：在本地稿上重放这些修改，保存时服务端会再按水位合并一次
+      let applied = true;
+      next = local;
+      for (const edit of edits) {
+        const result = applyEdit(next, edit);
+        if (result.ok) next = result.content;
+        else applied = false;
+      }
+      lastSavedRef.current = { ...saved, content: serverContent };
+      if (applied && seq !== null && aiEditSeqRef.current !== null) aiEditSeqRef.current = Math.max(aiEditSeqRef.current, seq);
+    } else {
+      lastSavedRef.current = { ...saved, content: serverContent };
+      if (seq !== null && aiEditSeqRef.current !== null) aiEditSeqRef.current = Math.max(aiEditSeqRef.current, seq);
+    }
+    if (next !== local) {
+      contentRef.current = next;
+      setContentState(next);
+    }
+  }, []);
+
+  const cocreateBridge = useMemo<CocreateBridge>(() => ({
+    flush: flushCurrentResume,
+    onRemoteEdit: (record: EditRecord, serverContent: string) => {
+      syncRemote([record.edit], serverContent, record.seq);
+      flashEdits([record.edit]);
+    },
+    onRemoteRevert: (inverse: ResumeEdit[], serverContent: string) => {
+      syncRemote(inverse, serverContent, null);
+      flashEdits(inverse);
+    },
+    onSync: (lastEditSeq: number, serverContent: string) => {
+      if (contentRef.current === lastSavedRef.current.content) {
+        lastSavedRef.current = { ...lastSavedRef.current, content: serverContent };
+        if (serverContent !== contentRef.current) {
+          contentRef.current = serverContent;
+          setContentState(serverContent);
+        }
+        aiEditSeqRef.current = lastEditSeq;
+      }
+    },
+  }), [flushCurrentResume, syncRemote, flashEdits]);
+
+  const cocreate = useCocreate(currentResumeId, cocreateOpened, cocreateBridge);
 
   const applyRewrite = async (sessionId: string, download = false) => {
     if (applyBusyRef.current || exportBusyRef.current) return;
@@ -399,6 +491,45 @@ export function Editor({ initialResume }: EditorProps) {
     },
     [flushCurrentResume, loadResumes, applyResume, router]
   );
+
+  // 从零开始：当前稿是空的就原地开始；否则新建一份空白简历，绝不清空已有内容
+  const handleStartScratch = useCallback(async () => {
+    if (isResumeBlank(contentRef.current)) {
+      await cocreate.startScratch();
+      return;
+    }
+    setStartingScratch(true);
+    setIsSwitching(true);
+    try {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      if (!(await flushCurrentResume())) {
+        setActionError("保存当前简历失败，请检查网络后重试。");
+        return;
+      }
+      const res = await fetch("/api/resumes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ blank: true }),
+      });
+      if (!res.ok) throw new Error("Create failed");
+      const resume = (await res.json()).resume as Resume;
+      // 先写入开场白，切换后对话面板直接载入
+      await fetch(`/api/resumes/${resume.id}/cocreate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind: "opener" }),
+      });
+      await loadResumes();
+      applyResume(resume);
+      router.replace(`/?resumeId=${resume.id}`);
+    } catch (err) {
+      console.error(err);
+      setActionError("新建空白简历失败，请重试。");
+    } finally {
+      setIsSwitching(false);
+      setStartingScratch(false);
+    }
+  }, [cocreate, flushCurrentResume, loadResumes, applyResume, router]);
 
   const handleDuplicateResume = useCallback(async () => {
     setIsSwitching(true);
@@ -595,7 +726,7 @@ export function Editor({ initialResume }: EditorProps) {
         </div>
 
         <div className="order-3 flex w-full items-center justify-end gap-1.5 border-t border-zinc-200 py-2 dark:border-zinc-800 lg:order-2 lg:w-auto lg:border-0">
-          <div className="studio-mode-toggle" aria-label="编辑模式"><button type="button" aria-pressed={editorMode === "visual"} onClick={() => setEditorMode("visual")}>可视化</button><button type="button" aria-pressed={editorMode === "source"} onClick={() => setEditorMode("source")} aria-label="Markdown"><span className="hidden sm:inline">Markdown</span><span className="sm:hidden">源码</span></button></div>
+          <div className="studio-mode-toggle" aria-label="编辑模式"><button type="button" aria-pressed={editorMode === "cocreate"} onClick={() => setEditorMode("cocreate")} aria-label="AI 共创"><span className="hidden sm:inline">AI 共创</span><span className="sm:hidden">共创</span></button><button type="button" aria-pressed={editorMode === "visual"} onClick={() => setEditorMode("visual")}>可视化</button><button type="button" aria-pressed={editorMode === "source"} onClick={() => setEditorMode("source")} aria-label="Markdown"><span className="hidden sm:inline">Markdown</span><span className="sm:hidden">源码</span></button></div>
           {editorMode === "source" && <FocusToggle value={focusMode} onChange={setFocusMode} />}
 
         <button
@@ -673,6 +804,24 @@ export function Editor({ initialResume }: EditorProps) {
       </div>}
       <main inert={historyOpen || backupOpen || applyingRewrite} className="editor-workspace relative flex min-h-0 flex-1 overflow-hidden" data-panel-open={!!drawer} data-panel-view={panelView}>
         <div className={editorMode === "visual" ? "studio-workspace contents" : "hidden"}><ResumeStudio key={currentResumeId} content={content} previewContent={previewContent} templateId={templateId} themeVariables={themeVariables} photo={photo} onChange={setContent} onPageFit={editorMode === "visual" ? setPageFit : ignorePageFit} pageFit={pageFit} onSource={() => setEditorMode("source")} onDesign={() => { setPanelView("settings"); setDrawer("design"); }} onInspect={closeDrawer} panelOpen={!!drawer} panelView={panelView} suggestion={!!(rewriteOpen && rewritePreview?.ready)} generating={!!(rewriteOpen && rewritePreview?.generating)} /></div>
+        {cocreateOpened && (
+          <div className={editorMode === "cocreate" ? "cocreate-host flex min-h-0 min-w-0 flex-1" : "hidden"}>
+            <CocreateWorkspace
+              key={currentResumeId}
+              controller={cocreate}
+              content={content}
+              onChange={setContent}
+              templateId={templateId}
+              themeVariables={themeVariables}
+              photo={photo}
+              flashLines={flashLines}
+              onStartScratch={() => void handleStartScratch()}
+              startingScratch={startingScratch}
+              onDesign={() => { setPanelView("settings"); setDrawer("design"); }}
+              showDoc={!!drawer && panelView === "preview"}
+            />
+          </div>
+        )}
         <div className={editorMode === "source" ? "source-workspace flex min-h-0 min-w-0 flex-1" : "hidden"}>
           <div
             hidden={!showEditor || !!drawer}

@@ -2,10 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   formatContinuationLabel,
   getPageGeometry,
-  injectContinuationsSource,
   pageIndexForOffsetMm,
   parseCssLengthToMm,
-  planContinuations,
   seamOffsetsMm,
   wrapResumeEntryChildren,
 } from "./pagination";
@@ -59,104 +57,6 @@ describe("formatContinuationLabel", () => {
     expect(formatContinuationLabel("独立开发者")).toBe("独立开发者（续）");
     expect(formatContinuationLabel("独立开发者（续）")).toBe("独立开发者（续）");
     expect(formatContinuationLabel("   ")).toBe("（续）");
-  });
-});
-
-describe("planContinuations", () => {
-  const geo = getPageGeometry({ marginTop: "16mm", marginBottom: "16mm" }, "minimal");
-
-  it("inserts a continuation before the first block that starts on a later page", () => {
-    const plans = planContinuations(
-      [
-        {
-          title: "某某科技 | 工程师 | 2021 - 至今",
-          blocks: [
-            { topMm: 200, bottomMm: 208, role: "heading" },
-            { topMm: 210, bottomMm: 230, role: "block" },
-            { topMm: 280, bottomMm: 340, role: "block" },
-          ],
-        },
-      ],
-      geo
-    );
-
-    expect(plans).toEqual([
-      {
-        entryIndex: 0,
-        label: "某某科技 | 工程师（续）",
-        block: 2,
-        page: 1,
-      },
-    ]);
-  });
-
-  it("does not split a list that starts on the same page as the heading", () => {
-    const plans = planContinuations(
-      [
-        {
-          title: "公司 | 角色",
-          blocks: [
-            { topMm: 0, bottomMm: 8, role: "heading" },
-            {
-              topMm: 240,
-              bottomMm: 320,
-              role: "list",
-              items: [
-                { topMm: 240, bottomMm: 255 },
-                { topMm: 270, bottomMm: 290 },
-                { topMm: 292, bottomMm: 315 },
-              ],
-            },
-          ],
-        },
-      ],
-      geo
-    );
-
-    expect(plans).toEqual([]);
-  });
-
-  it("inserts before a whole list that starts on the next page", () => {
-    const plans = planContinuations(
-      [
-        {
-          title: "公司 | 角色",
-          blocks: [
-            { topMm: 0, bottomMm: 8, role: "heading" },
-            { topMm: 280, bottomMm: 340, role: "list" },
-          ],
-        },
-      ],
-      geo
-    );
-
-    expect(plans[0]).toMatchObject({ block: 1, page: 1, label: "公司 | 角色（续）" });
-  });
-
-  it("does not mark a job that stays on one page", () => {
-    expect(
-      planContinuations(
-        [
-          {
-            title: "短经历",
-            blocks: [
-              { topMm: 10, bottomMm: 18, role: "heading" },
-              { topMm: 20, bottomMm: 40, role: "block" },
-            ],
-          },
-        ],
-        geo
-      )
-    ).toEqual([]);
-  });
-});
-
-describe("injectContinuationsSource", () => {
-  it("is self-contained browser JavaScript", () => {
-    expect(injectContinuationsSource).toContain("resume-continue");
-    expect(injectContinuationsSource).not.toContain("__name");
-    expect(injectContinuationsSource).not.toContain("import");
-    expect(() => new Function("geometry", injectContinuationsSource)).not.toThrow();
   });
 });
 

@@ -23,6 +23,7 @@ RUN apt-get update && apt-get install -y \
     libxfixes3 \
     libxrandr2 \
     xdg-utils \
+    poppler-utils \
     wget \
     ca-certificates \
     --no-install-recommends \

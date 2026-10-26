@@ -4,12 +4,14 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { parseResumeContent } from "@/lib/parser";
 import { resolveTemplateSettings } from "@/lib/templates";
 import { ThemeVariables } from "@/lib/types";
+import type { ResumeEditing } from "@/lib/templates/editing";
 import {
   A4_WIDTH_MM,
   getPageGeometry,
   seamOffsetsMm,
 } from "@/lib/pagination";
 import { describePageFit, estimateLineHeightMm, PageFit } from "@/lib/page-fit";
+import { paginateResumePage } from "@/lib/paginate-dom";
 import { fitPreviewScale } from "@/lib/preview-scale";
 
 interface PreviewProps {
@@ -19,6 +21,7 @@ interface PreviewProps {
   photo?: string;
   scale?: number;
   onPageFit?: (fit: PageFit | null) => void;
+  editing?: ResumeEditing;
 }
 
 function PageSeams({
@@ -45,7 +48,7 @@ function PageSeams({
   );
 }
 
-export function Preview({ content, templateId, themeVariables: savedTheme, photo, scale = 1, onPageFit }: PreviewProps) {
+export function Preview({ content, templateId, themeVariables: savedTheme, photo, scale = 1, onPageFit, editing }: PreviewProps) {
   const { frontmatter, body, frontmatterError } = parseResumeContent(content);
   const { template, themeVariables } = useMemo(() => resolveTemplateSettings(templateId, savedTheme), [templateId, savedTheme]);
   const mergedTheme = themeVariables;
@@ -78,6 +81,8 @@ export function Preview({ content, templateId, themeVariables: savedTheme, photo
     );
 
     const measure = () => {
+      // 与 PDF 导出同一套分页：先插分页点和「（续）」，再量总高
+      paginateResumePage(page, geometry);
       const baseWidth = page.offsetWidth;
       const nextScale = fitPreviewScale(baseWidth, viewport.clientWidth, scale);
       const pxPerMm = baseWidth / A4_WIDTH_MM;
@@ -110,9 +115,13 @@ export function Preview({ content, templateId, themeVariables: savedTheme, photo
     const observer = new ResizeObserver(measure);
     observer.observe(viewport);
     observer.observe(page);
+    // 网页字体晚到时行高会变，重新分页
+    const fonts = typeof document !== "undefined" ? document.fonts : undefined;
+    fonts?.addEventListener?.("loadingdone", measure);
 
     return () => {
       observer.disconnect();
+      fonts?.removeEventListener?.("loadingdone", measure);
       onPageFitRef.current?.(null);
     };
   }, [content, template.id, themeKey, themeVariables, photo, scale, template.defaultTheme]);
@@ -146,7 +155,7 @@ export function Preview({ content, templateId, themeVariables: savedTheme, photo
               {frontmatterError}
             </div>
           )}
-          <Component frontmatter={frontmatter} body={body} themeVariables={mergedTheme} photo={photo} />
+          <Component frontmatter={frontmatter} body={body} themeVariables={mergedTheme} photo={photo} editing={editing} />
           <PageSeams seams={seams} width={pageWidth} />
         </div>
       </div>

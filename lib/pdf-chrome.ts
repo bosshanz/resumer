@@ -56,7 +56,7 @@ export function buildPdfChrome(
   // paints any reserved header strip the same color as the paper.
   const headerTemplate = `<div style="font-size:0;height:0;margin:0;padding:0;line-height:0;width:100%;background:${bg};"></div>`;
 
-  const footerTemplate = `<div style="width:100%;box-sizing:border-box;padding:0 ${padR} 0 ${padL};font-size:8px;line-height:1.2;color:#6b7280;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Noto Sans SC',sans-serif;display:flex;justify-content:space-between;align-items:center;border-top:0.4px solid #d4d4d8;padding-top:3px;background:${bg};-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+  const footerTemplate = `<div style="width:100%;box-sizing:border-box;padding:0 ${padR} 0 ${padL};font-size:8px;line-height:1.2;color:#6b7280;font-family:'Geist','Noto Sans SC',-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB',sans-serif;display:flex;justify-content:space-between;align-items:center;border-top:0.4px solid #d4d4d8;padding-top:3px;background:${bg};-webkit-print-color-adjust:exact;print-color-adjust:exact;">
     <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:78%;">${identity}</span>
     <span style="flex-shrink:0;letter-spacing:0.04em;"><span class="pageNumber"></span> / <span class="totalPages"></span></span>
   </div>`;

@@ -82,7 +82,7 @@ const thumbnailResume = parseResumeContent(defaultResumeContent);
 const thumbnailTheme = {};
 
 // Render a public text sample with the current portrait to compare photo compositions.
-// Memoization keeps all five Markdown previews out of selection/settings updates.
+// Memoization keeps all eight Markdown previews out of selection/settings updates.
 const TemplateThumbnail = memo(function TemplateThumbnail({ templateId, small, photo }: { templateId: string; small: boolean; photo?: string }) {
   const template = templates.find((item) => item.id === templateId)!;
   const Component = template.component;

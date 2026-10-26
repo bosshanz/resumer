@@ -6,6 +6,12 @@ describe("splitSkillTokens", () => {
   it("splits slash, pipe, and middot lists", () => {
     expect(splitSkillTokens("Java / Kotlin / Go")).toEqual(["Java", "Kotlin", "Go"]);
     expect(splitSkillTokens("Agent · RAG · Memory")).toEqual(["Agent", "RAG", "Memory"]);
+    expect(splitSkillTokens("Java /Kotlin/ Go")).toEqual(["Java", "Kotlin", "Go"]);
+  });
+
+  it("keeps slash terms such as A/B Testing and CI/CD intact", () => {
+    expect(splitSkillTokens("A/B Testing")).toEqual(["A/B Testing"]);
+    expect(splitSkillTokens("CI/CD / TCP/IP / I/O")).toEqual(["CI/CD", "TCP/IP", "I/O"]);
   });
 });
 

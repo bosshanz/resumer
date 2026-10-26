@@ -1,8 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { Agent } from "@earendil-works/pi-agent-core";
-import { createModels } from "@earendil-works/pi-ai";
-import { deepseekProvider } from "@earendil-works/pi-ai/providers/deepseek";
+import { AiConfigError, createAgentRuntime, resolveAiConfig } from "../ai/provider";
 import { AGENT_TIMEOUT_MS, MAX_AGENT_TURNS } from "./limits";
 import { REWRITE_SKILL } from "./skill";
 import { createRewriteTools, createToolContext, ToolTraceEntry } from "./tools";
@@ -32,15 +31,6 @@ export function readMarkdownRules(cwd = process.cwd()): string {
   }
 }
 
-export function getDeepseekApiKey(): string | undefined {
-  const key = process.env.DEEPSEEK_API_KEY?.trim();
-  return key || undefined;
-}
-
-function resolveModelId(): string {
-  return process.env.DEEPSEEK_MODEL?.trim() || "deepseek-v4-flash";
-}
-
 export async function runRewriteAgent(input: {
   sourceContent: string;
   brief: string;
@@ -49,16 +39,12 @@ export async function runRewriteAgent(input: {
   markdownRules?: string;
   timeoutMs?: number;
 }): Promise<RewriteAgentResult> {
-  const apiKey = getDeepseekApiKey();
-  if (!apiKey) {
-    throw new RewriteConfigError("未配置 DEEPSEEK_API_KEY，无法生成建议稿。");
-  }
-
-  const models = createModels();
-  models.setProvider(deepseekProvider());
-  const model = models.getModel("deepseek", resolveModelId());
-  if (!model) {
-    throw new RewriteConfigError(`未知 DeepSeek 模型：${resolveModelId()}`);
+  let runtime;
+  try {
+    runtime = await createAgentRuntime(resolveAiConfig());
+  } catch (error) {
+    if (error instanceof AiConfigError) throw new RewriteConfigError(`${error.message}无法生成建议稿。`);
+    throw error;
   }
 
   const ctx = createToolContext({
@@ -71,12 +57,12 @@ export async function runRewriteAgent(input: {
   const agent = new Agent({
     initialState: {
       systemPrompt: REWRITE_SKILL,
-      model,
+      model: runtime.model,
       thinkingLevel: "off",
       tools: createRewriteTools(ctx),
     },
-    streamFn: models.streamSimple.bind(models),
-    getApiKey: (provider) => (provider === "deepseek" ? apiKey : undefined),
+    streamFn: runtime.streamFn,
+    getApiKey: runtime.getApiKey,
     toolExecution: "sequential",
     shouldStopAfterTurn: () => {
       turns += 1;
